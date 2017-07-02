@@ -167,6 +167,26 @@ date-picker{
     }
 }
 
+custom-input{
+    label{
+        span{
+            font-size: 12px;
+            color: #999;
+            display: block;
+            margin-bottom: 3px;
+        }
+        input{
+            padding: 5px;
+        }
+    }
+    &.invalid{
+        input{
+            border-color: red;
+            outline-color: red;
+        }
+    }
+}
+
 date-range-picker{
     border-radius: 4px;
     display: inline-block;

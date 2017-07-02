@@ -16,7 +16,6 @@
 			padding: 20px;
 			font-family: sans-serif;
 		}
-
 		section {
 			border: 1px solid #ccc;
 			padding: 3px;
@@ -46,13 +45,23 @@
 
 		suite('create / destroy', function () {
 
-			test('it should load a standard calendar', function () {
-				var node = dom('date-picker', { }, body);
+			test.only('it should load custom input of type `date`', function () {
+				var node = dom('custom-input', {type:'date', label: 'Date', value:'' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test('it should load a standard range calendar', function () {
-				var node = dom('date-picker', { 'range-picker': true}, body);
+			test('it should load a standard calendar', function () {
+				var node = dom('date-picker', {}, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+			test('it should load a range calendar', function () {
+				var node = dom('date-picker', { 'range-picker': true }, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+			test('it should load a date input', function () {
+				var node = dom('date-input', { }, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 		});

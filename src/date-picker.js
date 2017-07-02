@@ -4,7 +4,7 @@ require('BaseComponent/src/refs');
 const BaseComponent = require('BaseComponent');
 const dates = require('dates');
 
-const props = ['label', 'name'];
+const props = [];
 
 // range-left/range-right mean that this is one side of a date-range-picker
 const bools = ['range-picker', 'range-left', 'range-right'];
