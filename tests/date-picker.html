@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<title>Test DatePicker</title>
+	<link rel="stylesheet" href="../node_modules/mocha/mocha.css">
+	<script src="../node_modules/mocha/mocha.js"></script>
+	<script src="../node_modules/chai/chai.js"></script>
+	<script src="./dist/vendor.js"></script>
+	<script src="./dist/output.js"></script>
+
+	<script src="//localhost:35750/livereload.js"></script>
+
+	<style>
+		body {
+			padding: 20px;
+			font-family: sans-serif;
+		}
+
+		section {
+			border: 1px solid #ccc;
+			padding: 3px;
+			margin: 5px;
+		}
+	</style>
+</head>
+<body>
+<h1>Test DatePicker</h1>
+
+<div id="mocha"></div>
+
+<script>
+	window.mocha.setup('tdd');
+
+	suite('DatePicker', function () {
+		this.timeout(3000);
+		var suite = window.suite,
+			test = window.test,
+			dom = window.dom,
+			on = window.on,
+			expect = chai.expect,
+			body = document.body;
+
+		suite('create / destroy', function () {
+
+			test('it should load', function () {
+				var node = dom('date-picker', { }, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+		});
+
+	});
+
+	window.mocha.run();
+
+</script>
+</body>
+</html>
