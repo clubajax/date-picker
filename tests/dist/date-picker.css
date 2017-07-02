@@ -66,7 +66,7 @@ date-picker {
       background: transparent;
       transition: background 300ms; }
       date-picker .cal-body div.off {
-        color: #333; }
+        color: #999; }
       date-picker .cal-body div.on, date-picker .cal-body div.off {
         cursor: pointer;
         border-radius: 3px; }
@@ -76,19 +76,19 @@ date-picker {
         background: #666;
         color: white; }
       date-picker .cal-body div.ay-selected {
-        background: #0968d2;
+        background: #5dbae0;
         color: white; }
         date-picker .cal-body div.ay-selected:hover {
-          background: #096df2; }
+          background: #57add1; }
       date-picker .cal-body div.ay-range.on {
-        background: cyan;
+        background: #beecff;
         border-radius: 0; }
       date-picker .cal-body div.ay-range-first.on {
-        background: blue;
+        background: #5dbae0;
         color: white;
         border-radius: 3px 0 0 3px; }
       date-picker .cal-body div.ay-range-second.on {
-        background: blue;
+        background: #5dbae0;
         color: white;
         border-radius: 0 3px 3px 0; }
     date-picker .cal-body.year div, date-picker .cal-body.decade div {

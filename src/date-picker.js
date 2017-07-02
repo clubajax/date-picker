@@ -5,7 +5,9 @@ const BaseComponent = require('BaseComponent');
 const dates = require('dates');
 
 const props = ['label', 'name'];
-const bools = ['no-event', 'disabled', 'readonly', 'checked', 'range-picker', 'range-left', 'range-right'];
+
+// range-left/range-right mean that this is one side of a date-range-picker
+const bools = ['range-picker', 'range-left', 'range-right'];
 
 class DatePicker extends BaseComponent {
 
@@ -347,12 +349,12 @@ class DatePicker extends BaseComponent {
 	}
 
 	domReady () {
-		if (this.hasAttribute('range-left')) {
+		if (this['range-left']) {
 			this.rgtNode.style.display = 'none';
 			this['range-picker'] = true;
 			this.isOwned = true;
 		}
-		if (this.hasAttribute('range-right')) {
+		if (this['range-right']) {
 			this.lftNode.style.display = 'none';
 			this['range-picker'] = true;
 			this.isOwned = true;

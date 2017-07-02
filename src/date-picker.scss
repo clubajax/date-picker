@@ -3,19 +3,19 @@ $calendar-bg: white;
 $calendar-header: #eee;
 $calendar-header-hov: #d2f0ff;
 $calendar-header-nav: #0968d2;
-$calendar-txt: #333;
+$calendar-off-txt: #999;
 $calendar-link: #0968d2;
 $calendar-today: #666; //selected day
 $calendar-today-txt: white;
 
 $calendar-hov: #eee;
-$calendar-sel: #0968d2;
+$calendar-sel: #5dbae0;
 $calendar-sel-txt: white;
-$calendar-sel-hov: #096df2;
+$calendar-sel-hov: #57add1;
 
 
-$calendar-range: cyan;
-$calendar-range-select: blue;
+$calendar-range: #beecff;
+$calendar-range-select: #5dbae0;
 
 date-picker{
     display: inline-block;
@@ -98,7 +98,7 @@ date-picker{
             background: transparent;
             transition: background 300ms;
             &.off{
-                color: $calendar-txt;
+                color: $calendar-off-txt;
             }
             &.on, &.off{
                 cursor: pointer;

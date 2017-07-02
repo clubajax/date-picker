@@ -22,6 +22,9 @@
 			padding: 3px;
 			margin: 5px;
 		}
+		date-picker{
+			margin: 5px;
+		}
 	</style>
 </head>
 <body>
@@ -43,11 +46,15 @@
 
 		suite('create / destroy', function () {
 
-			test('it should load', function () {
+			test('it should load a standard calendar', function () {
 				var node = dom('date-picker', { }, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
+			test('it should load a standard range calendar', function () {
+				var node = dom('date-picker', { 'range-picker': true}, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
 		});
 
 	});
