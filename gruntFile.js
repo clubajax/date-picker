@@ -92,8 +92,47 @@ module.exports = function (grunt) {
                 }
             }
         },
+
+		sass: {
+			main: {
+				options: {
+					// case sensitive!
+					sourceMap: true
+				},
+				// 'path/to/result.css': 'path/to/source.scss'
+				files: {
+					'dist/ui-shared.css': 'styles/main.scss'
+				}
+			},
+			dev: {
+				options: {
+					// case sensitive!
+					sourceMap: true
+				},
+				// 'path/to/result.css': 'path/to/source.scss'
+				files: {
+					'tests/dist/date-picker.css': 'src/date-picker.scss'
+				}
+			}
+		},
         
         watch: {
+			less: {
+				files: ['./src/date-picker.scss'],
+				tasks: ['sass'],
+				options: {
+					// keep from refreshing the page
+					// the page does not care if a less file has changed
+					livereload: false
+				}
+			},
+			// css module is needed for css reload
+			// watch the main file. When it changes it will notify the page
+			// the livereload.js file will check if this is CSS - and if so, reload
+			// the stylesheet, and not the whole page
+			css: {
+				files: 'tests/dist/date-picker.css'
+			},
             scripts: {
                 files: ['tests/src/*.js', 'src/*.js', 'tests/*.html'],
                 tasks: ['build-dev']
@@ -134,6 +173,7 @@ module.exports = function (grunt) {
     // watch build task
     grunt.registerTask('build-dev', function (which) {
         console.time('build');
+		grunt.task.run('sass');
         grunt.task.run('browserify:dev');
 
     });
@@ -156,14 +196,15 @@ module.exports = function (grunt) {
     });
 
 	grunt.registerTask('deploy', function (which) {
-		const compile = require('./scripts/compile');
-		compile('BaseComponent');
-		compile('properties');
-		compile('template');
-		compile('refs');
-		compile('item-template');
+		// const compile = require('./scripts/compile');
+		// compile('BaseComponent');
+		// compile('properties');
+		// compile('template');
+		// compile('refs');
+		// compile('item-template');
 	});
 
+	grunt.loadNpmTasks('grunt-sass');
 	grunt.loadNpmTasks('grunt-concurrent');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-browserify');
