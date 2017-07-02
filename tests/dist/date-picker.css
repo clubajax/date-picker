@@ -1,5 +1,122 @@
 date-picker {
   display: inline-block;
-  border: 1px solid #ccc; }
+  font-size: 13px; }
+  date-picker .calendar {
+    border-radius: 4px;
+    display: inline-block;
+    border: 1px solid #ccc;
+    padding: 3px;
+    background: white; }
+  date-picker .cal-container {
+    width: 200px;
+    height: 180px; }
+  date-picker .cal-header {
+    border-radius: 3px;
+    position: relative;
+    padding: 3px;
+    overflow: auto;
+    background: #eee; }
+  date-picker .cal-month {
+    cursor: pointer;
+    display: block;
+    position: absolute;
+    text-align: center;
+    border-radius: 2px;
+    top: 2px;
+    bottom: 2px;
+    left: 26px;
+    right: 26px;
+    line-height: 22px; }
+    date-picker .cal-month:hover {
+      background: #d2f0ff; }
+  date-picker .day-of-week {
+    border-bottom: 1px solid #ccc; }
+  date-picker .cal-lft, date-picker .cal-rgt {
+    cursor: pointer;
+    border-radius: 2px;
+    position: relative;
+    width: 20px;
+    height: 20px; }
+    date-picker .cal-lft:before, date-picker .cal-rgt:before {
+      position: absolute;
+      content: '\25B6';
+      color: #0968d2; }
+    date-picker .cal-lft:hover, date-picker .cal-rgt:hover {
+      background: #d2f0ff; }
+  date-picker .cal-lft {
+    float: left; }
+    date-picker .cal-lft:before {
+      transform: rotate(180deg);
+      left: 4px;
+      top: 2px; }
+  date-picker .cal-rgt {
+    float: right; }
+    date-picker .cal-rgt:before {
+      right: 4px;
+      top: 3px; }
+  date-picker .cal-body {
+    margin-top: 3px;
+    height: 100%; }
+    date-picker .cal-body div {
+      float: left;
+      width: 14.285%;
+      height: 14.285%;
+      text-align: center;
+      line-height: 2;
+      background: transparent;
+      transition: background 300ms; }
+      date-picker .cal-body div.off {
+        color: #333; }
+      date-picker .cal-body div.on, date-picker .cal-body div.off {
+        cursor: pointer;
+        border-radius: 3px; }
+        date-picker .cal-body div.on:hover, date-picker .cal-body div.off:hover {
+          background: #eee; }
+      date-picker .cal-body div.today {
+        background: #666;
+        color: white; }
+      date-picker .cal-body div.ay-selected {
+        background: #0968d2;
+        color: white; }
+        date-picker .cal-body div.ay-selected:hover {
+          background: #096df2; }
+      date-picker .cal-body div.ay-range.on {
+        background: cyan;
+        border-radius: 0; }
+      date-picker .cal-body div.ay-range-first.on {
+        background: blue;
+        color: white;
+        border-radius: 3px 0 0 3px; }
+      date-picker .cal-body div.ay-range-second.on {
+        background: blue;
+        color: white;
+        border-radius: 0 3px 3px 0; }
+    date-picker .cal-body.year div, date-picker .cal-body.decade div {
+      cursor: pointer;
+      width: 25%;
+      height: 33%;
+      line-height: 5;
+      border-radius: 3px; }
+      date-picker .cal-body.year div:hover, date-picker .cal-body.decade div:hover {
+        background: #eee; }
+  date-picker .cal-footer {
+    text-align: center;
+    padding: 5px; }
+    date-picker .cal-footer a {
+      color: #0968d2;
+      text-decoration: none; }
+      date-picker .cal-footer a:hover {
+        text-decoration: underline; }
+  date-picker.minimal .calendar {
+    border: 0; }
+  date-picker.minimal .cal-footer {
+    display: none; }
+
+date-range-picker {
+  border-radius: 4px;
+  display: inline-block;
+  border: 1px solid #ccc;
+  padding: 3px;
+  background: white; }
 
 /*# sourceMappingURL=date-picker.css.map */

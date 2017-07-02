@@ -40,6 +40,7 @@
   "dependencies": {
     "BaseComponent": "clubajax/BaseComponent",
     "dom": "clubajax/dom#v2.0.alpha",
-    "on": "clubajax/on#v2.0.alpha"
+    "on": "clubajax/on#v2.0.alpha",
+		"dates": "clubajax/dates"
   }
 }

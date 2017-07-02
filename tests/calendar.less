@@ -1,31 +1,18 @@
-$calendar-brd: #ccc;
-$calendar-bg: white;
-$calendar-header: #eee;
-$calendar-header-hov: #d2f0ff;
-$calendar-header-nav: #0968d2;
-$calendar-txt: #333;
-$calendar-link: #0968d2;
-$calendar-today: #666; //selected day
-$calendar-today-txt: white;
+//
+// calendar.less
+//
 
-$calendar-hov: #eee;
-$calendar-sel: #0968d2;
-$calendar-sel-txt: white;
-$calendar-sel-hov: #096df2;
+@import "themes/default/colors";
 
-
-$calendar-range: cyan;
-$calendar-range-select: blue;
-
-date-picker{
+ay-calendar{
     display: inline-block;
-    font-size: 13px;
+
     .calendar{
         border-radius: 4px;
         display: inline-block;
-        border: 1px solid $calendar-brd;
+        border: 1px solid @calendar-brd;
         padding: 3px;
-        background: $calendar-bg;
+        background: @calendar-bg;
     }
     .cal-container{
         width: 200px;
@@ -36,7 +23,7 @@ date-picker{
         position: relative;
         padding: 3px;
         overflow: auto;
-        background:  $calendar-header;
+        background:  @calendar-header;
     }
     .cal-month{
         cursor: pointer;
@@ -50,11 +37,11 @@ date-picker{
         right: 26px;
         line-height: 22px;
         &:hover{
-            background: $calendar-header-hov;
+            background: @calendar-header-hov;
         }
     }
     .day-of-week{
-        border-bottom: 1px solid $calendar-brd;
+        border-bottom: 1px solid @calendar-brd;
     }
     .cal-lft, .cal-rgt{
         cursor: pointer;
@@ -65,10 +52,10 @@ date-picker{
         &:before{
             position: absolute;
             content: '\25B6';
-            color: $calendar-header-nav;
+            color: @calendar-header-nav;
         }
         &:hover{
-            background:  $calendar-header-hov;
+            background:  @calendar-header-hov;
         }
     }
     .cal-lft{
@@ -98,37 +85,36 @@ date-picker{
             background: transparent;
             transition: background 300ms;
             &.off{
-                color: $calendar-txt;
+                color: @calendar-txt;
             }
             &.on, &.off{
                 cursor: pointer;
                 border-radius: 3px;
                 &:hover{
-                    background: $calendar-hov;
+                    background: @calendar-hov;
                 }
             }
             &.today{
-                background: $calendar-today;
-                color: $calendar-today-txt;
+                background: @calendar-brd-alt;
             }
             &.ay-selected{
-                background: $calendar-sel;
-                color: $calendar-sel-txt;
+                background: @calendar-sel;
+                color: @calendar-sel-txt;
                 &:hover{
-                    background: $calendar-sel-hov;
+                    background: @calendar-sel-hov;
                 }
             }
             &.ay-range.on{
-                background: $calendar-range;
+                background: @calendar-range;
                 border-radius: 0;
             }
             &.ay-range-first.on{
-                background: $calendar-range-select;
+                background: @calendar-range-select;
                 color: white;
                 border-radius: 3px 0 0 3px;
             }
             &.ay-range-second.on{
-                background: $calendar-range-select;
+                background: @calendar-range-select;
                 color: white;
                 border-radius: 0 3px 3px 0;
             }
@@ -141,7 +127,7 @@ date-picker{
                 line-height: 5;
                 border-radius: 3px;
                 &:hover {
-                    background: $calendar-hov;
+                    background: @calendar-hov;
                 }
             }
         }
@@ -150,7 +136,7 @@ date-picker{
         text-align: center;
         padding: 5px;
         a{
-            color: $calendar-link;
+            color: @calendar-a;
             text-decoration: none;
             &:hover{
                 text-decoration:underline;
@@ -167,10 +153,10 @@ date-picker{
     }
 }
 
-date-range-picker{
+ay-date-range-picker{
     border-radius: 4px;
     display: inline-block;
-    border: 1px solid $calendar-brd;
+    border: 1px solid @calendar-brd;
     padding: 3px;
-    background: $calendar-bg;
+    background: @calendar-bg;
 }
