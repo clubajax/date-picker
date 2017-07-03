@@ -1,0 +1,236 @@
+<link rel="import" href="../../ay-calendar/ay-date-range-picker.html">
+<link rel="import" href="../../ay-pop-up/ay-pop-up.html">
+<script>
+    (function () {
+        'use strict';
+
+        var
+            DELIMITER = ' - ',
+            defaultValue = alloy.dates.formatDate(new Date(), 'mm/dd/yyyy') + DELIMITER + alloy.dates.formatDate(new Date(), 'mm/dd/yyyy');
+
+
+
+        window.alloy.fieldTypeExtensions['date-range'] = {
+            onAttach: function (uid) {
+                this.inputNode = dom('input', {attr:{type:'text', name:this.name}}, dom('div', {className:'ay-icon-calendar'}, this));
+            },
+
+            setValue: function (value) {
+                setInputValue(this.inputNode, formatValue(value));
+                if(this.picker) {
+                    this.handleChange();
+                }
+            },
+
+            getValue: function () {
+                if(!this.inputNode){
+                    return this.initialValue;
+                }
+                return this.inputNode.value;
+            },
+
+            getRange: function () {
+                var
+                    value = this.getValue(),
+                    datesStr = split(value),
+                    left = datesStr[0],
+                    right = datesStr[1];
+
+                if(!value){
+                    return '';
+                }
+                return [
+                    {
+                        dateStr: left,
+                        date: alloy.dates.strToDate(left)
+                    },{
+                        dateStr: right,
+                        date: alloy.dates.strToDate(right)
+                    }
+                ]
+            },
+
+            onDomReady: function () {
+                this.connectCalendar();
+                this.connectEvents();
+
+                if(!this.getValue()){
+                    this.picker.setValue(defaultValue);
+                }
+                this.previousValue = this.getValue();
+            },
+
+            handleChange: function () {
+                var
+                    value = this.getValue(),
+                    range = this.getRange();
+
+                if(value) {
+                    if (!this.isInvalid && this.previousValue === value) {
+                        // no longer invalid, due to comparing against a previous value, which is valid
+                        this.classList.remove('invalid');
+                        return;
+                    }
+                    if (!alloy.dates.isValid(range[0].dateStr)) {
+                        this.classList.add('invalid');
+                        this.isInvalid = true;
+                        return;
+                    }
+                    if (!alloy.dates.isValid(range[1].dateStr)) {
+                        this.classList.add('invalid');
+                        this.isInvalid = true;
+                        return;
+                    }
+                }
+                this.isInvalid = false;
+                this.inputNode.classList.remove('invalid');
+                this.previousValue = value;
+                this.picker.setValue(value);
+            },
+
+            handleFocus: function (e) {
+                if(this.hasFocus && this.contains(e.target)){
+                    return;
+                }
+                this.hasFocus = true;
+                this.picker.setDisplay();
+                this.emit('focus');
+            },
+
+            handleBlur: function (e) {
+                setTimeout(function () {
+                    if(this.contains(document.activeElement) || this.popup.contains(document.activeElement)){
+                        return;
+                    }
+                    this.hasFocus = false;
+                    if(this.isInvalid){
+                        this.setValue(this.previousValue);
+                        this.handleChange();
+                    }
+                    this.popup.close();
+                    this.emit('blur');
+                }.bind(this), 100);
+            },
+
+            checkClose: function (e) {
+                if(e.key === 'Enter'){
+                    this.popup.close();
+                    this.emit('change', {value: e.value});
+                }else if(e.key === 'Escape'){
+                    // have a revert value?
+                    this.popup.close();
+                }
+            },
+
+            connectEvents: function () {
+                this.on(document.body, 'keyup', this.checkClose.bind(this));
+                this.on(this.inputNode, 'keyup', this.handleChange.bind(this));
+                this.on(this.inputNode, 'change', this.handleChange.bind(this));
+                this.on(this.inputNode, 'focus', this.handleFocus.bind(this));
+                this.on(this.picker, 'focus', this.handleFocus.bind(this));
+                this.on(this.inputNode, 'blur', this.handleBlur.bind(this));
+                this.on(this.picker, 'blur', this.handleBlur.bind(this));
+
+                this.on(this.picker, 'click', function () {
+                    // Fixes IE bug, does not focus when child is clicked
+                    this.picker.focus();
+                }.bind(this));
+            },
+
+            connectCalendar: function () {
+                this.popup = dom('ay-pop-up', {}, document.body);
+                this.picker = dom('ay-date-range-picker', {attr: {value: this.initialValue, 'range-expands':true}}, this.popup);
+                this.popup.bindButton(this, {clickToOpen:true, minWidth:false, clickPopupClose:false, noKeys:true, selfClose:true});
+                this.picker.init = function () {
+                    this.picker.on('change', function (e) {
+                        //this.value = e.value;
+                        setInputValue(this.inputNode, e.value);
+                        if(!this.hasFocus) {
+                            setTimeout(function () {
+                                this.popup.close();
+                                this.emit('change', {value: e.value});
+                            }.bind(this), 500);
+                        }
+                    }.bind(this));
+                }.bind(this);
+            }
+        };
+
+        function split (value) {
+            var
+                regexp,
+                regComma = /\s*,\s*/,
+                regOneDash = /\s*-\s*/,
+                regMultDash = /\s-\s/,
+                numberOfDashes = value.match(/-/g);
+
+            if(value.indexOf(',')>-1){
+                regexp = regComma;
+            }else if(numberOfDashes && numberOfDashes.length > 1){
+                regexp = regMultDash;
+            }else{
+                regexp = regOneDash;
+            }
+            return value.split(regexp).map(function (str) {
+                return str.trim();
+            });
+        }
+
+        function format (value) {
+            if(!value){ return ''; }
+            var a = split(value);
+            return a[0] + DELIMITER + a[1];
+        }
+
+        function formatValue (value) {
+            var d1, d2, parts;
+            if(!value){
+                return '';
+            }
+
+            if(typeof value === 'object'){ // array
+                d1 = alloy.dates.strToDate(value[0]);
+                d2 = alloy.dates.strToDate(value[1]);
+            }else{
+                parts = split(value);
+                d1 = alloy.dates.strToDate(parts[0]);
+                d2 = alloy.dates.strToDate(parts[1]);
+            }
+            return alloy.dates.formatDate(d1, 'mm/dd/yyyy') + DELIMITER + alloy.dates.formatDate(d2, 'mm/dd/yyyy')
+        }
+
+        function setInputValue(input, value){
+            var
+                focused = document.activeElement === input,
+                index = input.selectionStart;
+            input.value = format(value);
+            if(focused) {
+                input.setSelectionRange(index, index);
+            }
+        }
+
+        function buildField(node, which){
+
+            var
+                uid = dom.uid('_uid'),
+                handle;
+
+            node[which + 'Node'] = dom('div', {className: 'ay-icon-calendar'}, node);
+            node[which + 'Label'] = dom('label', {attr:{'for':uid}}, node[which + 'Node']);
+            node[which + 'Input'] = dom('input', {attr:{type:'text'}, id:uid}, node[which + 'Node']);
+
+            handle = alloy.bindIncrementors(node[which + 'Input'], /\/|,/);
+            node.on(node[which + 'Input'], 'keyup', node.handleChange.bind(node));
+            node.on(node[which + 'Input'], 'change', node.handleChange.bind(node));
+            node.on(node[which + 'Input'], 'focus', node.handleFocus.bind(node));
+            node.on(node[which + 'Input'], 'blur', function (e) {
+                setTimeout(function () {
+                    node.handleBlur(e);
+                }, 100);
+            });
+
+            // return event handle
+            return handle;
+        }
+    }());
+</script>

@@ -45,7 +45,9 @@
 
 		suite('create / destroy', function () {
 
-			test.only('it should load custom input of type `date`', function () {
+			// does node.value work?
+			//
+			test('it should load custom input of type `date`', function () {
 				var node = dom('date-input', {type:'date', label: 'Date', value:'' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {
@@ -65,6 +67,11 @@
 
 			test('it should load a date input', function () {
 				var node = dom('date-input', { }, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+			test.only('it should load a date range picker', function () {
+				var node = dom('date-range-picker', {}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 		});

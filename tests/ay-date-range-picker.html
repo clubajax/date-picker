@@ -1,0 +1,270 @@
+<link rel="import" href="./ay-calendar.html">
+<template id="ay-date-range-picker-template">
+    <ay-calendar data-attach="leftCal" range-left></ay-calendar>
+    <ay-calendar data-attach="rightCal" range-right></ay-calendar>
+</template>
+
+<script>
+    (function () {
+        'use strict';
+
+        var
+            DELIMITER = ' - ',
+            today = new Date();
+
+        function str(d){
+            if(!d){ return null; }
+            return alloy.dates.dateToStr(d);
+        }
+
+        function split (value) {
+            if(value.indexOf(',')>-1){
+                return value.split(/\s*,\s*/);
+            }
+            return value.split(/\s*-\s*/);
+        }
+
+        function isDateCloserToLeft(date, left, right){
+            var diff1 = alloy.dates.diff(date, left),
+                diff2 = alloy.dates.diff(date, right);
+            return diff1 <= diff2;
+        }
+
+        alloy.createComponent({
+            tag:        'ay-date-range-picker',
+            templateId: 'ay-date-range-picker-template',
+
+            properties: [
+                'range',
+                'range-expands'
+            ],
+
+            domReady: function () {
+                // this allows us to tell if we are the focused element or not
+                this.setAttribute('tabindex', 0);
+
+                this.rangeExpands = this['range-expands'];
+
+                if(this.hasAttribute('value')){
+                    var attr = this.getAttribute('value');
+                    if(attr !== 'null') {
+                        this.setValue(this.getAttribute('value'));
+                    }
+                }
+                this.connectEvents();
+                if(this.initalValue){
+                    this.setValue(this.initalValue);
+                }else{
+                    this.setDisplay();
+                }
+                this.domReady = function () {};
+            },
+
+            value: {
+                get: function () {
+                    return this.getValue();
+                },
+                set: function (value) {
+                    this.setValue(value);
+                    this.lastValidValue = value;
+                }
+            },
+
+            setValue: function (value) {
+                if(this.DOMSTATE !== 'domready'){
+                    this.initalValue = value;
+                    return;
+                }
+                if(!value){
+                    this.valueDate = '';
+                    this.clearRange();
+
+                }else if(typeof value === 'string'){
+                    var dateStrings = split(value);
+                    this.firstRange = alloy.dates.strToDate(dateStrings[0]);
+                    this.secondRange = alloy.dates.strToDate(dateStrings[1]);
+                    this.setDisplay();
+                    this.setRange();
+                }
+            },
+
+            getValue: function () {
+                if(!this.valueDate) {
+                    var value = this.getAttribute('value') || today;
+                    this.valueDate = alloy.dates.strToDate(value);
+                }
+                return this.valueDate;
+            },
+
+            attributeChanged: function (prop, value) {
+                if(prop === 'value'){
+                    this.setValue(value);
+                }
+            },
+
+            setDisplay: function () {
+                var
+                    first = this.firstRange ? new Date(this.firstRange.getTime()) : new Date(),
+                    second = new Date(first.getTime());
+
+                second.setMonth(second.getMonth() + 1);
+                this.leftCal.setDisplay(first);
+                this.rightCal.setDisplay(second);
+            },
+
+            setRange: function () {
+                this.leftCal.setRange(this.firstRange, this.secondRange);
+                this.rightCal.setRange(this.firstRange, this.secondRange);
+                if(this.firstRange && this.secondRange){
+
+                    var
+                        beg = alloy.dates.dateToStr(this.firstRange),
+                        end = alloy.dates.dateToStr(this.secondRange);
+
+                    this.emit('change', {
+                        firstRange: this.firstRange,
+                        secondRange: this.secondRange,
+                        begin: beg,
+                        end: end,
+                        value: beg + DELIMITER + end
+
+                    });
+                }
+            },
+
+            clearRange: function () {
+                this.leftCal.clearRange();
+                this.rightCal.clearRange();
+            },
+
+            calculateRange: function(e, which){
+                e = e.detail || e;
+
+                if(e.first === this.leftCal.firstRange){
+                   if(!e.second) {
+                       this.rightCal.clearRange();
+                       this.rightCal.setRange(this.leftCal.firstRange, null);
+                   }else{
+                       this.rightCal.setRange(this.leftCal.firstRange, this.leftCal.secondRange);
+                   }
+                }
+            },
+
+            connectEvents: function () {
+                this.leftCal.on('display-change', function (e) {
+                    var
+                        m = e.detail.month,
+                        y = e.detail.year;
+                    if(m + 1 > 11){
+                        m = 0;
+                        y++;
+                    }else{
+                        m++;
+                    }
+                    this.rightCal.setDisplay(y, m);
+                }.bind(this));
+
+                this.rightCal.on('display-change', function (e) {
+                    var
+                        m = e.detail.month,
+                        y = e.detail.year;
+                    if(m - 1 < 0){
+                        m = 11;
+                        y--;
+                    }else{
+                        m--;
+                    }
+                    this.leftCal.setDisplay(y, m);
+                }.bind(this));
+
+                this.leftCal.on('change', function(e){
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    return false;
+                }.bind(this));
+
+                this.rightCal.on('change', function(e){
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    return false;
+                }.bind(this));
+
+
+
+                if(!this.rangeExpands) {
+                    this.rightCal.on('reset-range', function (e) {
+                        this.leftCal.clearRange();
+                    }.bind(this));
+
+                    this.leftCal.on('reset-range', function (e) {
+                        this.rightCal.clearRange();
+                    }.bind(this));
+                }
+
+
+                this.leftCal.on('select-range', function(e){
+                    this.calculateRange(e, 'left');
+                    e = e.detail;
+                    if(this.rangeExpands && e.first && e.second) {
+                        if(isDateCloserToLeft(e.current, e.first, e.second)){
+                            this.firstRange = e.current;
+                        }else{
+                            this.secondRange = e.current;
+                        }
+                        this.setRange();
+                    }else if(e.first && e.second){
+                        // new range
+                        this.clearRange();
+                        this.firstRange = e.current;
+                        this.secondRange = null;
+                        this.setRange();
+                    }else if(e.first && !e.second){
+                        this.secondRange = e.current;
+                        this.setRange();
+                    }
+                    else{
+                        this.firstRange = e.current;
+                        this.setRange();
+                    }
+                }.bind(this));
+
+                this.rightCal.on('select-range', function(e){
+                    this.calculateRange(e, 'right');
+
+                    e = e.detail;
+                    if(this.rangeExpands && e.first && e.second) {
+                        if(isDateCloserToLeft(e.current, e.first, e.second)){
+                            this.firstRange = e.current;
+                        }else{
+                            this.secondRange = e.current;
+                        }
+                        this.setRange();
+                    }else if(e.first && e.second){
+                        // new range
+                        this.clearRange();
+                        this.firstRange = e.current;
+                        this.secondRange = null;
+                        this.setRange();
+                    }else if(e.first && !e.second){
+                        this.secondRange = e.current;
+                        this.setRange();
+                    }
+                    else{
+                        this.firstRange = e.current;
+                        this.setRange();
+                    }
+                }.bind(this));
+
+                this.on(this.rightCal, 'mouseover', function () {
+                    this.leftCal.displayRangeToEnd();
+                }.bind(this));
+            },
+
+            destroy: function () {
+                this.rightCal.destroy();
+                this.leftCal.destroy();
+            }
+        });
+
+    }());
+</script>

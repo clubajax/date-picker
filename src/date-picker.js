@@ -57,6 +57,7 @@ class DatePicker extends BaseComponent {
 
 	constructor () {
 		super();
+		this.current = new Date();
 		this.previous = {};
 		this.modes = ['month', 'year', 'decade'];
 		this.mode = 0;
@@ -74,6 +75,7 @@ class DatePicker extends BaseComponent {
 		} else {
 			this.current.setMonth(args[0]);
 		}
+		this.valueDate = copy(this.current);
 		this.noEvents = true;
 		this.render();
 	}
