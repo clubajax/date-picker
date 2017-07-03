@@ -112,18 +112,23 @@ date-picker {
   date-picker.minimal .cal-footer {
     display: none; }
 
-custom-input label span {
-  font-size: 12px;
-  color: #999;
-  display: block;
-  margin-bottom: 3px; }
-
-custom-input label input {
-  padding: 5px; }
-
-custom-input.invalid input {
-  border-color: red;
-  outline-color: red; }
+date-input {
+  position: relative; }
+  date-input label span {
+    font-size: 12px;
+    color: #999;
+    display: block;
+    margin-bottom: 3px; }
+  date-input label input {
+    padding: 5px; }
+  date-input.invalid input {
+    border-color: red;
+    outline-color: red; }
+  date-input date-picker {
+    display: none;
+    position: absolute;
+    top: 20px;
+    left: -5px; }
 
 date-range-picker {
   border-radius: 4px;

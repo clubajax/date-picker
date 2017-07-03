@@ -46,8 +46,11 @@
 		suite('create / destroy', function () {
 
 			test.only('it should load custom input of type `date`', function () {
-				var node = dom('custom-input', {type:'date', label: 'Date', value:'' }, body);
+				var node = dom('date-input', {type:'date', label: 'Date', value:'' }, body);
 				expect(dom.isNode(node)).to.equal(true);
+				node.on('change', function (e) {
+					console.log('change', e.value);
+				});
 			});
 
 			test('it should load a standard calendar', function () {

@@ -167,7 +167,9 @@ date-picker{
     }
 }
 
-custom-input{
+date-input{
+    position: relative;
+    //outline: none;
     label{
         span{
             font-size: 12px;
@@ -184,6 +186,12 @@ custom-input{
             border-color: red;
             outline-color: red;
         }
+    }
+    date-picker{
+        display: none;
+        position: absolute;
+        top: 20px;
+        left: -5px;
     }
 }
 
