@@ -64,6 +64,7 @@ class DateInput extends BaseComponent {
 		}
 		dom.classList.toggle(this, 'invalid', !valid);
 		if(valid && len){
+			this.picker.value = value;
 			this.emit('change', {value: value});
 		}
 	}
@@ -117,22 +118,18 @@ class DateInput extends BaseComponent {
 	}
 
 	domReady () {
-		//this.setAttribute('tabindex', '0');
 		this.labelNode.innerHTML = this.label || '';
 		this.input.setAttribute('type', 'text');
 		this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
 		this.on(this.input, 'keydown', stopEvent);
 		this.on(this.input, 'keypress', stopEvent);
 		this.on(this.input, 'keyup', this.onKey.bind(this));
-		// this.on('focus', this.show.bind(this));
-		// this.on('blur', this.hide.bind(this));
 
-		// look up how I did it in alloy
+		this.picker.on('change', (e) => {
+			this.setValue(e.value);
+		});
 
-		//this.on(this.input, 'focus', this.show.bind(this));
-		//this.on(this.input, 'blur', this.hide.bind(this));
-
-		handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this))
+		this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
 	}
 }
 
