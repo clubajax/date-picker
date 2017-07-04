@@ -36,15 +36,16 @@ class DateRangeInput extends DateInput {
 
 	constructor () {
 		super();
+		this.mask = 'XX/XX/XXXX - XX/XX/XXXX'
 	}
 
-	onKey () {
-
-	}
-
-	connectKeys () {
-		this.on(this.input, 'keyup', this.onKey.bind(this));
-	}
+	// onKey () {
+	//
+	// }
+	//
+	// connectKeys () {
+	// 	this.on(this.input, 'keyup', this.onKey.bind(this));
+	// }
 
 	// domReady () {
 	// 	dom();

@@ -70,7 +70,7 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test.only('it should load a date input', function () {
+			test('it should load a date input', function () {
 				var node = dom('date-input', { value: '12/22/2000'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
@@ -85,7 +85,7 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test('it should load a date range input', function () {
+			test.only('it should load a date range input', function () {
 				window.keepPopupsOpen = 1;
 				var node = dom('date-range-input', {}, body);
 				expect(dom.isNode(node)).to.equal(true);

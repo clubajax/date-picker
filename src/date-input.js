@@ -56,7 +56,7 @@ class DateInput extends BaseComponent {
 	setValue (value) {
 		this.typedValue = value;
 		this.input.value = value;
-		const len = this.input.value.length === 10;
+		const len = this.input.value.length === this.mask.length;
 		let valid;
 		if (len) {
 			valid = dates.isValid(value);
@@ -71,13 +71,23 @@ class DateInput extends BaseComponent {
 	}
 
 	format (s) {
+		function sub (pos) {
+			let subStr = '';
+			for(let i = pos; i < mask.length; i++){
+				if(mask[i] === 'X'){
+					break;
+				}
+				subStr += mask[i];
+			}
+			return subStr;
+		}
 		s = s.replace(/\D/g, '');
 		const mask = this.mask;
 		let f = '';
 		const len = Math.min(s.length, this.maskLength);
 		for (let i = 0; i < len; i++){
 			if(mask[f.length] !== 'X'){
-				f += mask[f.length];
+				f += sub(f.length);
 			}
 			f += s[i];
 		}
@@ -89,7 +99,7 @@ class DateInput extends BaseComponent {
 		const beg = e.target.selectionStart;
 		const end = e.target.selectionEnd;
 		const k = e.key;
-		//console.log(k, ':', beg, end, '/', str.length);
+
 		if(!isNum(k)){
 			// handle paste, backspace
 			if(this.input.value !== this.typedValue) {
@@ -102,7 +112,9 @@ class DateInput extends BaseComponent {
 			// handle selection or middle-string edit
 			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
 			this.setValue(this.format(temp));
-			//console.log('sel', end);
+			// TODO
+			// This might not be exactly right...
+			// have to allow for the slashes
 			if(end - beg) {
 				e.target.selectionEnd = end - (end - beg - 1);
 			} else {
@@ -143,10 +155,9 @@ class DateInput extends BaseComponent {
 	}
 
 	domReady () {
-		console.log('this.mask', this.mask);
 		this.mask = this.mask || defaultMask;
 		this.maskLength = this.mask.match(/X/g).join('').length;
-		console.log('this.mask', this.mask);
+
 		this.labelNode.innerHTML = this.label || '';
 		this.input.setAttribute('type', 'text');
 		this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);

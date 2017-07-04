@@ -24,7 +24,7 @@ class DateRangePicker extends BaseComponent {
 		// might need attributeChanged
 		this.strDate = dates.isDateType(value) ? value : '';
 		onDomReady(this, () => {
-			this.setValue(this.strDate);
+			this.setValue(this.strDate, true);
 		});
 	}
 
@@ -32,7 +32,7 @@ class DateRangePicker extends BaseComponent {
 		super();
 	}
 
-	setValue (value) {
+	setValue (value, noEmit) {
 		if (!value) {
 			this.valueDate = '';
 			this.clearRange();
@@ -43,7 +43,7 @@ class DateRangePicker extends BaseComponent {
 			this.firstRange = dates.strToDate(dateStrings[0]);
 			this.secondRange = dates.strToDate(dateStrings[1]);
 			this.setDisplay();
-			this.setRange();
+			this.setRange(noEmit);
 		}
 	}
 
@@ -53,11 +53,11 @@ class DateRangePicker extends BaseComponent {
 		this.rangeExpands = this['range-expands'];
 
 		this.connectEvents();
-		if (this.initalValue) {
-			this.setValue(this.initalValue);
-		} else {
-			this.setDisplay();
-		}
+		// if (this.initalValue) {
+		// 	this.setValue(this.initalValue);
+		// } else {
+		// 	this.setDisplay();
+		// }
 	}
 
 	setDisplay () {
@@ -70,10 +70,10 @@ class DateRangePicker extends BaseComponent {
 		this.rightCal.setDisplay(second);
 	}
 
-	setRange () {
+	setRange (noEmit) {
 		this.leftCal.setRange(this.firstRange, this.secondRange);
 		this.rightCal.setRange(this.firstRange, this.secondRange);
-		if (this.firstRange && this.secondRange) {
+		if (!noEmit && this.firstRange && this.secondRange) {
 
 			const
 				beg = dates.dateToStr(this.firstRange),
