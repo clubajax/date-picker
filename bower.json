@@ -1,0 +1,31 @@
+{
+  "name": "date-picker",
+	"version": "0.7.1",
+  "description": "Calendar custom-element",
+  "main": "dist/date-picker.js",
+  "authors": [
+    "anm9tr@gmail.com"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "custom-element",
+    "web-component",
+    "javascript",
+    "calendar",
+    "date-picker"
+  ],
+  "homepage": "https://github.com/clubajax/date-picker",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+	"dependencies": {
+		"BaseComponent": "clubajax/BaseComponent",
+		"dom": "clubajax/dom#v2.0.0",
+		"on": "clubajax/on#v2.0.0",
+		"dates": "clubajax/dates"
+	}
+}
