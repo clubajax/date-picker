@@ -3,13 +3,13 @@ const DateInput = require('./date-input');
 const dates = require('dates');
 const dom = require('dom');
 
-const props = ['label', 'name', 'placeholder', 'value'];
+const props = ['label', 'name', 'placeholder'];
 const bools = ['range-expands'];
 
 class DateRangeInput extends DateInput {
 
 	static get observedAttributes () {
-		return [...props, ...bools];
+		return [...props, ...bools, 'value'];
 	}
 
 	get props () {
@@ -19,10 +19,6 @@ class DateRangeInput extends DateInput {
 	get bools () {
 		return bools;
 	}
-
-	// onValue (value) {
-	//
-	// }
 
 	get templateString () {
 		return `
@@ -39,17 +35,10 @@ class DateRangeInput extends DateInput {
 		this.mask = 'XX/XX/XXXX - XX/XX/XXXX'
 	}
 
-	// onKey () {
-	//
-	// }
-	//
-	// connectKeys () {
-	// 	this.on(this.input, 'keyup', this.onKey.bind(this));
-	// }
-
-	// domReady () {
-	// 	dom();
-	// }
+	isValid (value) {
+		const ds = value.split(/\s*-\s*/);
+		return dates.isDateType(ds[0]) && dates.isDateType(ds[1]);
+	}
 }
 
 customElements.define('date-range-input', DateRangeInput);

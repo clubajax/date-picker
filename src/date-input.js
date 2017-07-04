@@ -4,13 +4,13 @@ const dates = require('dates');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
-const props = ['label', 'name', 'placeholder', 'value', 'mask'];
+const props = ['label', 'name', 'placeholder', 'mask'];
 const bools = [];
 
 class DateInput extends BaseComponent {
 
 	static get observedAttributes () {
-		return [...props, ...bools];
+		return [...props, ...bools, 'value'];
 	}
 
 	get props () {
@@ -21,16 +21,22 @@ class DateInput extends BaseComponent {
 		return bools;
 	}
 
-	// FIXME
-	// need to manage value manually
+	attributeChanged (name, value) {
+		// need to manage value manually
+		console.log('attr', name, value);
+		if(name === 'value'){
+			this.value = value;
+		}
+	}
 
-	onValue (value) {
-		this.strDate = dates.isDateType(value) ? value : '';
-		this.setValue(this.strDate);
+	set value (value) {
+		this.strDate = this.isValid(value) ? value : '';
+		onDomReady(this, () => {
+			this.setValue(this.strDate);
+		});
 	}
 
 	get value () {
-		console.log('get value');
 		return this.strDate;
 	}
 	
@@ -49,6 +55,10 @@ class DateInput extends BaseComponent {
 		this.showing = false;
 	}
 
+	isValid (value) {
+		return dates.isDateType(value);
+	}
+
 	setValue (value) {
 		this.typedValue = value;
 		this.input.value = value;
@@ -61,7 +71,7 @@ class DateInput extends BaseComponent {
 		}
 		dom.classList.toggle(this, 'invalid', !valid);
 		if(valid && len){
-			//this.value = value;
+			this.strDate = value;
 			this.picker.value = value;
 			this.emit('change', {value: value});
 		}
