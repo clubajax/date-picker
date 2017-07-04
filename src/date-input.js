@@ -4,7 +4,7 @@ const dates = require('dates');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
-const props = ['label', 'name', 'type', 'placeholder', 'value', 'mask'];
+const props = ['label', 'name', 'placeholder', 'value', 'mask'];
 const bools = [];
 
 class DateInput extends BaseComponent {
@@ -21,13 +21,8 @@ class DateInput extends BaseComponent {
 		return bools;
 	}
 
-	set value (value) {
-		// might need attributeChanged
-		this.strDate = dates.isDateType(value) ? value : '';
-		onDomReady(this, () => {
-			this.setValue(this.strDate);
-		});
-	}
+	// FIXME
+	// need to manage value manually
 
 	onValue (value) {
 		this.strDate = dates.isDateType(value) ? value : '';
@@ -35,6 +30,7 @@ class DateInput extends BaseComponent {
 	}
 
 	get value () {
+		console.log('get value');
 		return this.strDate;
 	}
 	
@@ -65,6 +61,7 @@ class DateInput extends BaseComponent {
 		}
 		dom.classList.toggle(this, 'invalid', !valid);
 		if(valid && len){
+			//this.value = value;
 			this.picker.value = value;
 			this.emit('change', {value: value});
 		}
@@ -100,11 +97,23 @@ class DateInput extends BaseComponent {
 		const end = e.target.selectionEnd;
 		const k = e.key;
 
+		function setSelection (amt) {
+			// TODO
+			// This might not be exactly right...
+			// have to allow for the slashes
+			if(end - beg) {
+				e.target.selectionEnd = end - (end - beg - 1);
+			} else {
+				e.target.selectionEnd = end + amt;
+			}
+		}
+
 		if(!isNum(k)){
 			// handle paste, backspace
 			if(this.input.value !== this.typedValue) {
 				this.setValue(this.input.value);
 			}
+			setSelection(0);
 			stopEvent(e);
 			return;
 		}
@@ -112,14 +121,8 @@ class DateInput extends BaseComponent {
 			// handle selection or middle-string edit
 			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
 			this.setValue(this.format(temp));
-			// TODO
-			// This might not be exactly right...
-			// have to allow for the slashes
-			if(end - beg) {
-				e.target.selectionEnd = end - (end - beg - 1);
-			} else {
-				e.target.selectionEnd = end + 1;
-			}
+
+			setSelection(1);
 			stopEvent(e);
 			return;
 		}

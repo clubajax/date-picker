@@ -70,11 +70,6 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test('it should load a date input', function () {
-				var node = dom('date-input', { value: '12/22/2000'}, body);
-				expect(dom.isNode(node)).to.equal(true);
-			});
-
 			test('it should load a date range picker', function () {
 				var node = dom('date-range-picker', {}, body);
 				expect(dom.isNode(node)).to.equal(true);
@@ -85,9 +80,14 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
+			test('it should load a date input', function () {
+				var node = dom('date-input', { value: '12/22/2000', label: 'El Date Input'}, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
 			test.only('it should load a date range input', function () {
 				window.keepPopupsOpen = 1;
-				var node = dom('date-range-input', {}, body);
+				var node = dom('date-range-input', {label:'El Date Picker', value:'01/10/2017 - 02/142017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 		});

@@ -3,7 +3,7 @@ const DateInput = require('./date-input');
 const dates = require('dates');
 const dom = require('dom');
 
-const props = ['value'];
+const props = ['label', 'name', 'placeholder', 'value'];
 const bools = ['range-expands'];
 
 class DateRangeInput extends DateInput {
@@ -20,9 +20,9 @@ class DateRangeInput extends DateInput {
 		return bools;
 	}
 
-	onValue (value) {
-
-	}
+	// onValue (value) {
+	//
+	// }
 
 	get templateString () {
 		return `
