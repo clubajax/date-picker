@@ -241,7 +241,7 @@ function split (value) {
 }
 
 function isDateCloserToLeft (date, left, right) {
-	var diff1 = dates.diff(date, left),
+	const diff1 = dates.diff(date, left),
 		diff2 = dates.diff(date, right);
 	return diff1 <= diff2;
 }

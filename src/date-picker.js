@@ -85,7 +85,6 @@ class DatePicker extends BaseComponent {
 	}
 
 	emitValue () {
-		// TODO options for timestamp or other formats
 		const event = {
 			value: this.getFormattedValue(),
 			date: this.valueDate
@@ -113,7 +112,7 @@ class DatePicker extends BaseComponent {
 	}
 
 	onClickDay (node) {
-		var
+		const
 			day = +node.innerHTML,
 			isFuture = node.classList.contains('future'),
 			isPast = node.classList.contains('past');
@@ -159,13 +158,13 @@ class DatePicker extends BaseComponent {
 	}
 
 	onClickYear (node) {
-		var index = dates.getMonthIndex(node.innerHTML);
+		const index = dates.getMonthIndex(node.innerHTML);
 		this.current.setMonth(index);
 		this.render();
 	}
 
 	onClickDecade (node) {
-		var year = +node.innerHTML;
+		const year = +node.innerHTML;
 		this.current.setFullYear(year);
 		this.setMode(this.mode - 1);
 	}
@@ -188,9 +187,8 @@ class DatePicker extends BaseComponent {
 	setYearMode () {
 		destroy(this.bodyNode);
 
-		var
-			i,
-			node = dom('div', { class: 'cal-body year' });
+		let i;
+		const node = dom('div', { class: 'cal-body year' });
 
 		for (i = 0; i < 12; i++) {
 			dom('div', { html: dates.months.abbr[i], class: 'year' }, node);
@@ -202,10 +200,9 @@ class DatePicker extends BaseComponent {
 	}
 
 	setDecadeMode () {
-		var
-			i,
-			node = dom('div', { class: 'cal-body decade' }),
-			year = this.current.getFullYear() - 6;
+		let i;
+		const node = dom('div', { class: 'cal-body decade' });
+		let year = this.current.getFullYear() - 6;
 
 		for (i = 0; i < 12; i++) {
 			dom('div', { html: year, class: 'decade' }, node);
@@ -220,9 +217,8 @@ class DatePicker extends BaseComponent {
 		if (this['range-picker']) {
 			return;
 		}
-		var
-			now = this.querySelector('.ay-selected'),
-			node = this.dayMap[this.current.getDate()];
+		const now = this.querySelector('.ay-selected');
+		const node = this.dayMap[this.current.getDate()];
 		if (now) {
 			now.classList.remove('ay-selected');
 		}
@@ -243,7 +239,7 @@ class DatePicker extends BaseComponent {
 	}
 
 	clickSelectRange () {
-		var
+		const
 			prevFirst = !!this.firstRange,
 			prevSecond = !!this.secondRange,
 			rangeDate = copy(this.current);
@@ -296,10 +292,9 @@ class DatePicker extends BaseComponent {
 	}
 
 	displayRange () {
-		var
-			beg = this.firstRange,
-			end = this.secondRange ? this.secondRange.getTime() : this.hoverDate,
-			map = this.dayMap;
+		let beg = this.firstRange;
+		let end = this.secondRange ? this.secondRange.getTime() : this.hoverDate;
+		const map = this.dayMap;
 		if (!beg || !end) {
 			Object.keys(map).forEach(function (key, i) {
 				map[key].classList.remove('ay-range');
@@ -340,7 +335,7 @@ class DatePicker extends BaseComponent {
 	}
 
 	clearEndPoints () {
-		var first = this.querySelector('.ay-range-first'),
+		const first = this.querySelector('.ay-range-first'),
 			second = this.querySelector('.ay-range-second');
 		if (first) {
 			first.classList.remove('ay-range-first');
@@ -382,7 +377,7 @@ class DatePicker extends BaseComponent {
 
 		this.dayMap = {};
 
-		var
+		let
 			node = dom('div', { class: 'cal-body' }),
 			i, tx, nextMonth = 0, isThisMonth, day, css,
 			today = new Date(),
@@ -448,10 +443,8 @@ class DatePicker extends BaseComponent {
 	}
 
 	setFooter () {
-		var
-			d = new Date(),
-			str = dates.days.full[d.getDay()] + ' ' + dates.months.full[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
-		this.footerLink.innerHTML = str;
+		const d = new Date();
+		this.footerLink.innerHTML = dates.days.full[d.getDay()] + ' ' + dates.months.full[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
 	}
 
 	connect () {
@@ -470,7 +463,7 @@ class DatePicker extends BaseComponent {
 
 		this.on(this.container, 'click', (e) => {
 			this.fire('pre-click', e, true, true);
-			var node = e.target;
+			const node = e.target;
 			if (node.classList.contains('day')) {
 				this.onClickDay(node);
 			}

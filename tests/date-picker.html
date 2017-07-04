@@ -12,6 +12,9 @@
 	<script src="//localhost:35750/livereload.js"></script>
 
 	<style>
+		html, body{
+			height: 100%;
+		}
 		body {
 			padding: 20px;
 			font-family: sans-serif;
@@ -21,8 +24,10 @@
 			padding: 3px;
 			margin: 5px;
 		}
-		date-picker{
-			margin: 5px;
+		.BR{
+			position: absolute;
+			right: 20px;
+			bottom: 20px;
 		}
 	</style>
 </head>
@@ -65,13 +70,24 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test('it should load a date input', function () {
-				var node = dom('date-input', { }, body);
+			test.only('it should load a date input', function () {
+				var node = dom('date-input', { value: '12/22/2000'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test.only('it should load a date range picker', function () {
+			test('it should load a date range picker', function () {
 				var node = dom('date-range-picker', {}, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+			test('it should open to the top left', function () {
+				var node = dom('date-input', { class:'BR' }, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+			test('it should load a date range input', function () {
+				window.keepPopupsOpen = 1;
+				var node = dom('date-range-input', {}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 		});

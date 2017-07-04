@@ -36,7 +36,6 @@ date-picker{
         position: relative;
         padding: 3px;
         overflow: auto;
-        background:  $calendar-header;
     }
     .cal-month{
         cursor: pointer;
@@ -167,7 +166,7 @@ date-picker{
     }
 }
 
-date-input{
+date-input, date-range-input{
     position: relative;
     //outline: none;
     label{
@@ -187,18 +186,50 @@ date-input{
             outline-color: red;
         }
     }
-    date-picker{
+    date-picker,
+    date-range-picker{
         display: none;
         position: absolute;
-        top: 20px;
-        left: -5px;
+        top: 25px;
+        left: 0;
+        z-index: 1;
+        &.bottom-align{
+            top: auto;
+            bottom: 110%;
+        }
+        &.right-align{
+            left: auto;
+            right: 0;
+        }
+        &.show {
+            display: inline-block;
+        }
+    }
+    date-range-picker{
+        width: 412px;
+        date-picker{
+            position: relative;
+            top: auto;
+            left: auto;
+        }
     }
 }
 
+date-range-input{
+    input{
+        width: 130px;
+    }
+}
 date-range-picker{
     border-radius: 4px;
     display: inline-block;
     border: 1px solid $calendar-brd;
     padding: 3px;
     background: $calendar-bg;
+    &.show{
+        display: inline-block;
+        date-picker{
+            display: inline-block;
+        }
+    }
 }

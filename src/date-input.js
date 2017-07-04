@@ -3,7 +3,8 @@ const BaseComponent = require('BaseComponent');
 const dates = require('dates');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
-const props = ['label', 'name', 'type', 'placeholder', 'value'];
+const defaultMask = 'XX/XX/XXXX';
+const props = ['label', 'name', 'type', 'placeholder', 'value', 'mask'];
 const bools = [];
 
 class DateInput extends BaseComponent {
@@ -69,36 +70,49 @@ class DateInput extends BaseComponent {
 		}
 	}
 
+	format (s) {
+		s = s.replace(/\D/g, '');
+		const mask = this.mask;
+		let f = '';
+		const len = Math.min(s.length, this.maskLength);
+		for (let i = 0; i < len; i++){
+			if(mask[f.length] !== 'X'){
+				f += mask[f.length];
+			}
+			f += s[i];
+		}
+		return f;
+	}
+
 	onKey (e) {
-		let str = this.typedValue;
+		let str = this.typedValue || '';
+		const beg = e.target.selectionStart;
+		const end = e.target.selectionEnd;
 		const k = e.key;
-		if(control[k]){
-			if(k === 'Backspace'){
-				// TODO: check Delete key
+		//console.log(k, ':', beg, end, '/', str.length);
+		if(!isNum(k)){
+			// handle paste, backspace
+			if(this.input.value !== this.typedValue) {
 				this.setValue(this.input.value);
 			}
-			return;
-		}
-		if(!isNum(k)){
 			stopEvent(e);
 			return;
 		}
-		switch(str.length){
-			case 0:
-			case 1:
-			case 3:
-			case 4:
-			case 6:
-			case 7:
-			case 8:
-			case 9:
-				str += k;
-				break;
-			case 2:
-			case 5:
-				str += '/' + k;
+		if(str.length !== end || beg !== end){
+			// handle selection or middle-string edit
+			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
+			this.setValue(this.format(temp));
+			//console.log('sel', end);
+			if(end - beg) {
+				e.target.selectionEnd = end - (end - beg - 1);
+			} else {
+				e.target.selectionEnd = end + 1;
+			}
+			stopEvent(e);
+			return;
 		}
-		this.setValue(str);
+
+		this.setValue(this.format(str + k));
 	}
 
 	show () {
@@ -106,30 +120,49 @@ class DateInput extends BaseComponent {
 			return;
 		}
 		this.showing = true;
-		this.picker.style.display = 'block';
+		this.picker.classList.add('show');
+
+		window.requestAnimationFrame(() => {
+			const win = dom.box(window);
+			const box = dom.box(this.picker);
+			if(box.x + box.w > win.h){
+				this.picker.classList.add('right-align');
+			}
+			if(box.y + box.h > win.h){
+				this.picker.classList.add('bottom-align');
+			}
+		});
 	}
 
 	hide () {
-		if(!this.showing){
+		if(!this.showing || window.keepPopupsOpen){
 			return;
 		}
 		this.showing = false;
-		this.picker.style.display = '';
+		dom.classList.remove(this.picker, 'right-align bottom-align show');
 	}
 
 	domReady () {
+		console.log('this.mask', this.mask);
+		this.mask = this.mask || defaultMask;
+		this.maskLength = this.mask.match(/X/g).join('').length;
+		console.log('this.mask', this.mask);
 		this.labelNode.innerHTML = this.label || '';
 		this.input.setAttribute('type', 'text');
 		this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
-		this.on(this.input, 'keydown', stopEvent);
-		this.on(this.input, 'keypress', stopEvent);
-		this.on(this.input, 'keyup', this.onKey.bind(this));
-
 		this.picker.on('change', (e) => {
 			this.setValue(e.value);
 		});
-
+		this.connectKeys();
 		this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
+	}
+
+	connectKeys () {
+		this.on(this.input, 'keydown', stopEvent);
+		this.on(this.input, 'keypress', stopEvent);
+		this.on(this.input, 'keyup', (e) => {
+			this.onKey(e);
+		});
 	}
 }
 
@@ -191,7 +224,7 @@ const control = {
 	'Tab': 1
 };
 function stopEvent (e) {
-	if(control[e.key]){
+	if(e.metaKey || control[e.key]){
 		return;
 	}
 	e.preventDefault();

@@ -81,12 +81,12 @@ module.exports = function (grunt) {
 			},
             deploy: {
                 files: {
-                    'dist/core.js': ['src/deploy.js']
+                    'dist/date-picker.js': ['tests/src/date-picker-tests.js']
                 },
                 options: {
 					transform: babelTransform,
                     browserifyOptions: {
-						standalone: 'core',
+						standalone: 'date-picker',
                         debug: false
                     }
                 }
@@ -94,14 +94,14 @@ module.exports = function (grunt) {
         },
 
 		sass: {
-			main: {
+			deploy: {
 				options: {
 					// case sensitive!
 					sourceMap: true
 				},
 				// 'path/to/result.css': 'path/to/source.scss'
 				files: {
-					'dist/ui-shared.css': 'styles/main.scss'
+					'dist/date-picker.css': 'src/date-picker.scss'
 				}
 			},
 			dev: {
@@ -196,6 +196,8 @@ module.exports = function (grunt) {
     });
 
 	grunt.registerTask('deploy', function (which) {
+		grunt.task.run('browserify:deploy');
+		grunt.task.run('sass:deploy');
 		// const compile = require('./scripts/compile');
 		// compile('BaseComponent');
 		// compile('properties');
