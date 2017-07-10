@@ -4,7 +4,7 @@ require('BaseComponent/src/refs');
 const BaseComponent = require('BaseComponent');
 const dates = require('dates');
 
-const props = [];
+const props = ['min', 'max'];
 
 // range-left/range-right mean that this is one side of a date-range-picker
 const bools = ['range-picker', 'range-left', 'range-right'];
@@ -40,7 +40,7 @@ class DatePicker extends BaseComponent {
 
 	set value (value) {
 		// might need attributeChanged
-		this.valueDate = dates.isDateType(value) ? dates.strToDate(value) : today;
+		this.valueDate = dates.isDateType(value) ? dates.toDate(value) : today;
 		this.current = this.valueDate;
 		onDomReady(this, () => {
 			this.render();
@@ -50,7 +50,7 @@ class DatePicker extends BaseComponent {
 	get value () {
 		if (!this.valueDate) {
 			const value = this.getAttribute('value') || today;
-			this.valueDate = dates.strToDate(value);
+			this.valueDate = dates.toDate(value);
 		}
 		return this.valueDate;
 	}
@@ -81,7 +81,7 @@ class DatePicker extends BaseComponent {
 	}
 
 	getFormattedValue () {
-		return this.valueDate === today ? '' : !!this.valueDate ? dates.dateToStr(this.valueDate) : '';
+		return this.valueDate === today ? '' : !!this.valueDate ? dates.format(this.valueDate) : '';
 	}
 
 	emitValue () {
@@ -112,10 +112,16 @@ class DatePicker extends BaseComponent {
 	}
 
 	onClickDay (node) {
+		console.log('onClickDay');
 		const
 			day = +node.innerHTML,
 			isFuture = node.classList.contains('future'),
-			isPast = node.classList.contains('past');
+			isPast = node.classList.contains('past'),
+			isDisabled = node.classList.contains('disabled');
+
+		if (isDisabled) {
+			return;
+		}
 
 		this.current.setDate(day);
 		if (isFuture) {
@@ -217,12 +223,13 @@ class DatePicker extends BaseComponent {
 		if (this['range-picker']) {
 			return;
 		}
-		const now = this.querySelector('.ay-selected');
+		console.log('DAY');
+		const now = this.querySelector('.selected');
 		const node = this.dayMap[this.current.getDate()];
 		if (now) {
-			now.classList.remove('ay-selected');
+			now.classList.remove('selected');
 		}
-		node.classList.add('ay-selected');
+		node.classList.add('selected');
 
 	}
 
@@ -297,15 +304,15 @@ class DatePicker extends BaseComponent {
 		const map = this.dayMap;
 		if (!beg || !end) {
 			Object.keys(map).forEach(function (key, i) {
-				map[key].classList.remove('ay-range');
+				map[key].classList.remove('range');
 			});
 		} else {
 			beg = beg.getTime();
 			Object.keys(map).forEach(function (key, i) {
 				if (inRange(map[key]._date, beg, end)) {
-					map[key].classList.add('ay-range');
+					map[key].classList.add('range');
 				} else {
-					map[key].classList.remove('ay-range');
+					map[key].classList.remove('range');
 				}
 			});
 		}
@@ -326,22 +333,22 @@ class DatePicker extends BaseComponent {
 		this.clearEndPoints();
 		if (this.firstRange) {
 			if (this.firstRange.getMonth() === this.current.getMonth()) {
-				this.dayMap[this.firstRange.getDate()].classList.add('ay-range-first');
+				this.dayMap[this.firstRange.getDate()].classList.add('range-first');
 			}
 			if (this.secondRange && this.secondRange.getMonth() === this.current.getMonth()) {
-				this.dayMap[this.secondRange.getDate()].classList.add('ay-range-second');
+				this.dayMap[this.secondRange.getDate()].classList.add('range-second');
 			}
 		}
 	}
 
 	clearEndPoints () {
-		const first = this.querySelector('.ay-range-first'),
-			second = this.querySelector('.ay-range-second');
+		const first = this.querySelector('.range-first'),
+			second = this.querySelector('.range-second');
 		if (first) {
-			first.classList.remove('ay-range-first');
+			first.classList.remove('range-first');
 		}
 		if (second) {
-			second.classList.remove('ay-range-second');
+			second.classList.remove('range-second');
 		}
 	}
 
@@ -358,6 +365,16 @@ class DatePicker extends BaseComponent {
 		}
 		if (this.isOwned) {
 			this.classList.add('minimal');
+		}
+
+		if (this.min) {
+			this.minDate = dates.toDate(this.min);
+			this.minInt = dates.toDate(this.min).getTime();
+		}
+
+		if (this.max) {
+			this.maxDate = dates.toDate(this.max);
+			this.maxInt = dates.toDate(this.max).getTime();
 		}
 
 		this.current = copy(this.value);
@@ -379,17 +396,23 @@ class DatePicker extends BaseComponent {
 
 		let
 			node = dom('div', { class: 'cal-body' }),
-			i, tx, nextMonth = 0, isThisMonth, day, css,
-			today = new Date(),
+			i, tx, nextMonth = 0, isThisMonth, day, css, isSelected, isToday,
 			isRange = this['range-picker'],
 			d = this.current,
 			incDate = copy(d),
+			intDate = incDate.getTime(),
 			daysInPrevMonth = dates.getDaysInPrevMonth(d),
 			daysInMonth = dates.getDaysInMonth(d),
 			dateNum = dates.getFirstSunday(d),
 			dateToday = getSelectedDate(today, d),
-			dateSelected = getSelectedDate(this.valueDate, d);
+			dateSelected = getSelectedDate(this.valueDate, d),
+			dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum),
+			min = this.minInt,
+			max = this.maxInt,
+			m1, m2,
+			minmax;
 
+		console.log('render', dateObj);
 		this.monthNode.innerHTML = dates.getMonthName(d) + ' ' + d.getFullYear();
 
 		for (i = 0; i < 7; i++) {
@@ -397,19 +420,33 @@ class DatePicker extends BaseComponent {
 		}
 
 		for (i = 0; i < 42; i++) {
+			//minmax = min && min < intDate || max && max > intDate;
+
+			minmax = dates.isLess(dateObj, this.minDate) || dates.isGreater(dateObj, this.maxDate);
+
+			// console.log('');
+			// console.log(new Date(min));
+			// console.log(new Date(max));
+			// console.log(new Date(intDate));
+
 			tx = dateNum + 1 > 0 && dateNum + 1 <= daysInMonth ? dateNum + 1 : "&nbsp;";
 
 			isThisMonth = false;
+			isSelected = false;
+			isToday = false;
+
 			if (dateNum + 1 > 0 && dateNum + 1 <= daysInMonth) {
 				// current month
 				tx = dateNum + 1;
 				isThisMonth = true;
 				css = 'day on';
 				if (dateToday === tx) {
+					isToday = true;
 					css += ' today';
 				}
 				if (dateSelected === tx && !isRange) {
-					css += ' ay-selected';
+					isSelected = true;
+					css += ' selected';
 				}
 			} else if (dateNum < 0) {
 				// previous month
@@ -421,9 +458,20 @@ class DatePicker extends BaseComponent {
 				css = 'day off future';
 			}
 
+			if (minmax) {
+				css = 'day disabled';
+				if(isSelected){
+					css += ' selected';
+				}
+				if(isToday){
+					css += ' today';
+				}
+			}
+
 			day = dom("div", { innerHTML: tx, class: css }, node);
 
 			dateNum++;
+			dateObj.setDate(dateObj.getDate() + 1);
 			if (isThisMonth) {
 				// Keep a map of all the days
 				// use it for adding and removing selection/hover classes
@@ -491,7 +539,7 @@ class DatePicker extends BaseComponent {
 	}
 }
 
-const today = new Date();
+const today = new Date(2017, 6, 3);
 
 function getSelectedDate (date, current) {
 	if (date.getMonth() === current.getMonth() && date.getFullYear() === current.getFullYear()) {

@@ -1,6 +1,6 @@
 {
   "name": "date-picker",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "Calendar custom-element",
   "main": "index.js",
   "scripts": {
@@ -41,6 +41,6 @@
     "BaseComponent": "clubajax/BaseComponent",
     "dom": "clubajax/dom#v2.0.0",
     "on": "clubajax/on#v2.0.0",
-		"dates": "clubajax/dates"
+		"dates": "clubajax/dates#v1.4.0"
   }
 }

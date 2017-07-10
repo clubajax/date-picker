@@ -60,8 +60,13 @@
 				});
 			});
 
-			test('it should load a standard calendar', function () {
+			test('it should load a date picker', function () {
 				var node = dom('date-picker', {}, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+			test.only('it should not allow selection before min of after max', function () {
+				var node = dom('date-picker', {min:'07/05/2017', max:'07/19/2017', value:'07/01/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
@@ -85,7 +90,7 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test.only('it should load a date range input', function () {
+			test('it should load a date range input', function () {
 				window.keepPopupsOpen = 1;
 				var node = dom('date-range-input', {label:'El Date Picker', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);

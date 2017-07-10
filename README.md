@@ -47,10 +47,20 @@ Usage:
 
 Both components will emit change events, upon completion of a valid date.
 
+### Attributes
+
+ * **min** Do not allow a date selection before this date
+ * **max** Do not allow a date selection after this date
+ 
+Usage:
+```jsx harmony
+<date-input value="12/25/2017" label="Enter Date" name="date-field" min="12/05/2017" max="12/31/2017" />
+```
+ 
 ## TODO
 
 Features coming soon:
- * Restricted dates (for example, not allowing past dates)
+ * Separate input date range pickers
 
 ## License
 

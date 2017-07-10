@@ -74,22 +74,35 @@ date-picker {
       date-picker .cal-body div.today {
         background: #666;
         color: white; }
-      date-picker .cal-body div.ay-selected {
+      date-picker .cal-body div.selected {
         background: #5dbae0;
         color: white; }
-        date-picker .cal-body div.ay-selected:hover {
+        date-picker .cal-body div.selected:hover {
           background: #57add1; }
-      date-picker .cal-body div.ay-range.on {
+      date-picker .cal-body div.range.on {
         background: #beecff;
         border-radius: 0; }
-      date-picker .cal-body div.ay-range-first.on {
+      date-picker .cal-body div.range-first.on {
         background: #5dbae0;
         color: white;
         border-radius: 3px 0 0 3px; }
-      date-picker .cal-body div.ay-range-second.on {
+      date-picker .cal-body div.range-second.on {
         background: #5dbae0;
         color: white;
         border-radius: 0 3px 3px 0; }
+      date-picker .cal-body div.disabled {
+        background: #ddd;
+        color: #666;
+        cursor: default; }
+        date-picker .cal-body div.disabled.today {
+          background: #666;
+          color: white; }
+        date-picker .cal-body div.disabled.selected {
+          background: #9dc8da;
+          color: #666; }
+          date-picker .cal-body div.disabled.selected:hover {
+            background: #9dc8da;
+            color: #666; }
     date-picker .cal-body.year div, date-picker .cal-body.decade div {
       cursor: pointer;
       width: 25%;
