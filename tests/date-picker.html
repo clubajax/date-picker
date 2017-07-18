@@ -29,6 +29,10 @@
 			right: 20px;
 			bottom: 20px;
 		}
+		date-range-input,
+		date-range-inputs{
+			margin: 10px 0;
+		}
 	</style>
 </head>
 <body>
@@ -65,7 +69,7 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test.only('it should not allow selection before min of after max', function () {
+			test('it should not allow selection before min of after max', function () {
 				var node = dom('date-picker', {min:'07/05/2017', max:'07/19/2017', value:'07/01/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
@@ -90,9 +94,15 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test('it should load a date range input', function () {
-				window.keepPopupsOpen = 1;
+			test.only('it should load a date range input', function () {
+				//window.keepPopupsOpen = 1;
 				var node = dom('date-range-input', {label:'El Date Picker', value:'01/10/2017 - 02/14/2017'}, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+			test.only('it should load date range inputs', function () {
+				//window.keepPopupsOpen = 1;
+				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 		});

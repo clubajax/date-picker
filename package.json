@@ -4,6 +4,7 @@
   "description": "Calendar custom-element",
   "main": "index.js",
   "scripts": {
+		"start":"grunt dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -39,7 +40,7 @@
   },
   "dependencies": {
     "BaseComponent": "clubajax/BaseComponent",
-    "dom": "clubajax/dom#v2.0.0",
+    "dom": "clubajax/dom#v2.1.1",
     "on": "clubajax/on#v2.0.0",
 		"dates": "clubajax/dates#v1.4.0"
   }

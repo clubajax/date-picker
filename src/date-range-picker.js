@@ -22,7 +22,7 @@ class DateRangePicker extends BaseComponent {
 
 	onValue (value) {
 		// might need attributeChanged
-		this.strDate = dates.isDateType(value) ? value : '';
+		this.strDate = dates.isDate(value) ? value : '';
 		onDomReady(this, () => {
 			this.setValue(this.strDate, true);
 		});
@@ -39,9 +39,9 @@ class DateRangePicker extends BaseComponent {
 
 		} else if (typeof value === 'string') {
 			var dateStrings = split(value);
-			this.valueDate = dates.strToDate(value);
-			this.firstRange = dates.strToDate(dateStrings[0]);
-			this.secondRange = dates.strToDate(dateStrings[1]);
+			this.valueDate = dates.toDate(value);
+			this.firstRange = dates.toDate(dateStrings[0]);
+			this.secondRange = dates.toDate(dateStrings[1]);
 			this.setDisplay();
 			this.setRange(noEmit);
 		}

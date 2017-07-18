@@ -4,8 +4,10 @@ const dates = require('dates');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
-const props = ['label', 'name', 'placeholder', 'mask'];
+const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max'];
 const bools = [];
+
+const FLASH_TIME = 1000;
 
 class DateInput extends BaseComponent {
 
@@ -23,8 +25,7 @@ class DateInput extends BaseComponent {
 
 	attributeChanged (name, value) {
 		// need to manage value manually
-		console.log('attr', name, value);
-		if(name === 'value'){
+		if (name === 'value') {
 			this.value = value;
 		}
 	}
@@ -39,7 +40,26 @@ class DateInput extends BaseComponent {
 	get value () {
 		return this.strDate;
 	}
-	
+
+	onLabel (value) {
+		this.labelNode.innerHTML = value;
+	}
+
+	onMin (value) {
+		const d = dates.toDate(value);
+		this.minDate = d;
+		this.minInt = d.getTime();
+		this.picker.min = value;
+	}
+
+	onMax (value) {
+		const d = dates.toDate(value);
+		this.maxDate = d;
+		this.maxInt = d.getTime();
+		this.picker.max = value;
+	}
+
+
 	get templateString () {
 		return `
 <label>
@@ -56,10 +76,10 @@ class DateInput extends BaseComponent {
 	}
 
 	isValid (value) {
-		return dates.isDateType(value);
+		return dates.isDate(value);
 	}
 
-	setValue (value) {
+	setValue (value, silent) {
 		this.typedValue = value;
 		this.input.value = value;
 		const len = this.input.value.length === this.mask.length;
@@ -70,30 +90,34 @@ class DateInput extends BaseComponent {
 			valid = true;
 		}
 		dom.classList.toggle(this, 'invalid', !valid);
-		if(valid && len){
+		if (valid && len) {
 			this.strDate = value;
 			this.picker.value = value;
-			this.emit('change', {value: value});
+			if (!silent) {
+				this.emit('change', { value: value });
+			}
 		}
+		setTimeout(this.hide.bind(this), 300);
 	}
 
 	format (s) {
 		function sub (pos) {
 			let subStr = '';
-			for(let i = pos; i < mask.length; i++){
-				if(mask[i] === 'X'){
+			for (let i = pos; i < mask.length; i++) {
+				if (mask[i] === 'X') {
 					break;
 				}
 				subStr += mask[i];
 			}
 			return subStr;
 		}
+
 		s = s.replace(/\D/g, '');
 		const mask = this.mask;
 		let f = '';
 		const len = Math.min(s.length, this.maskLength);
-		for (let i = 0; i < len; i++){
-			if(mask[f.length] !== 'X'){
+		for (let i = 0; i < len; i++) {
+			if (mask[f.length] !== 'X') {
 				f += sub(f.length);
 			}
 			f += s[i];
@@ -111,23 +135,23 @@ class DateInput extends BaseComponent {
 			// TODO
 			// This might not be exactly right...
 			// have to allow for the slashes
-			if(end - beg) {
+			if (end - beg) {
 				e.target.selectionEnd = end - (end - beg - 1);
 			} else {
 				e.target.selectionEnd = end + amt;
 			}
 		}
 
-		if(!isNum(k)){
+		if (!isNum(k)) {
 			// handle paste, backspace
-			if(this.input.value !== this.typedValue) {
+			if (this.input.value !== this.typedValue) {
 				this.setValue(this.input.value);
 			}
 			setSelection(0);
 			stopEvent(e);
 			return;
 		}
-		if(str.length !== end || beg !== end){
+		if (str.length !== end || beg !== end) {
 			// handle selection or middle-string edit
 			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
 			this.setValue(this.format(temp));
@@ -140,8 +164,15 @@ class DateInput extends BaseComponent {
 		this.setValue(this.format(str + k));
 	}
 
+	flash () {
+		this.classList.add('warning');
+		setTimeout(() => {
+			this.classList.remove('warning');
+		}, FLASH_TIME)
+	}
+
 	show () {
-		if(this.showing){
+		if (this.showing) {
 			return;
 		}
 		this.showing = true;
@@ -150,17 +181,17 @@ class DateInput extends BaseComponent {
 		window.requestAnimationFrame(() => {
 			const win = dom.box(window);
 			const box = dom.box(this.picker);
-			if(box.x + box.w > win.h){
+			if (box.x + box.w > win.h) {
 				this.picker.classList.add('right-align');
 			}
-			if(box.y + box.h > win.h){
+			if (box.y + box.h > win.h) {
 				this.picker.classList.add('bottom-align');
 			}
 		});
 	}
 
 	hide () {
-		if(!this.showing || window.keepPopupsOpen){
+		if (!this.showing || window.keepPopupsOpen) {
 			return;
 		}
 		this.showing = false;
@@ -170,12 +201,10 @@ class DateInput extends BaseComponent {
 	domReady () {
 		this.mask = this.mask || defaultMask;
 		this.maskLength = this.mask.match(/X/g).join('').length;
-
-		this.labelNode.innerHTML = this.label || '';
 		this.input.setAttribute('type', 'text');
 		this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
 		this.picker.on('change', (e) => {
-			this.setValue(e.value);
+			this.setValue(e.value, true);
 		});
 		this.connectKeys();
 		this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
@@ -194,7 +223,7 @@ function handleOpen (input, picker, show, hide) {
 	let inputFocus = false;
 	let pickerFocus = false;
 	const docHandle = on(document, 'keyup', (e) => {
-		if(e.key === 'Escape'){
+		if (e.key === 'Escape') {
 			hide();
 		}
 	});
@@ -208,7 +237,7 @@ function handleOpen (input, picker, show, hide) {
 		on(input, 'blur', () => {
 			inputFocus = false;
 			setTimeout(() => {
-				if(!pickerFocus){
+				if (!pickerFocus) {
 					hide();
 					docHandle.pause();
 				}
@@ -222,7 +251,7 @@ function handleOpen (input, picker, show, hide) {
 		on(picker, 'blur', () => {
 			pickerFocus = false;
 			setTimeout(() => {
-				if(!inputFocus){
+				if (!inputFocus) {
 					hide();
 					docHandle.pause();
 				}
@@ -248,7 +277,7 @@ const control = {
 	'Tab': 1
 };
 function stopEvent (e) {
-	if(e.metaKey || control[e.key]){
+	if (e.metaKey || control[e.key]) {
 		return;
 	}
 	e.preventDefault();

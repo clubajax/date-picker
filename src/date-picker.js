@@ -40,7 +40,7 @@ class DatePicker extends BaseComponent {
 
 	set value (value) {
 		// might need attributeChanged
-		this.valueDate = dates.isDateType(value) ? dates.toDate(value) : today;
+		this.valueDate = dates.isDate(value) ? dates.toDate(value) : today;
 		this.current = this.valueDate;
 		onDomReady(this, () => {
 			this.render();
@@ -53,6 +53,20 @@ class DatePicker extends BaseComponent {
 			this.valueDate = dates.toDate(value);
 		}
 		return this.valueDate;
+	}
+
+	onMin (value) {
+		const d = dates.toDate(value);
+		this.minDate = d;
+		this.minInt = d.getTime();
+		this.render();
+	}
+
+	onMax (value) {
+		const d = dates.toDate(value);
+		this.maxDate = d;
+		this.maxInt = d.getTime();
+		this.render();
 	}
 
 	constructor () {
@@ -112,7 +126,6 @@ class DatePicker extends BaseComponent {
 	}
 
 	onClickDay (node) {
-		console.log('onClickDay');
 		const
 			day = +node.innerHTML,
 			isFuture = node.classList.contains('future'),
@@ -223,7 +236,6 @@ class DatePicker extends BaseComponent {
 		if (this['range-picker']) {
 			return;
 		}
-		console.log('DAY');
 		const now = this.querySelector('.selected');
 		const node = this.dayMap[this.current.getDate()];
 		if (now) {
@@ -367,15 +379,15 @@ class DatePicker extends BaseComponent {
 			this.classList.add('minimal');
 		}
 
-		if (this.min) {
-			this.minDate = dates.toDate(this.min);
-			this.minInt = dates.toDate(this.min).getTime();
-		}
-
-		if (this.max) {
-			this.maxDate = dates.toDate(this.max);
-			this.maxInt = dates.toDate(this.max).getTime();
-		}
+		// if (this.min) {
+		// 	this.minDate = dates.toDate(this.min);
+		// 	this.minInt = dates.toDate(this.min).getTime();
+		// }
+		//
+		// if (this.max) {
+		// 	this.maxDate = dates.toDate(this.max);
+		// 	this.maxInt = dates.toDate(this.max).getTime();
+		// }
 
 		this.current = copy(this.value);
 
@@ -407,12 +419,8 @@ class DatePicker extends BaseComponent {
 			dateToday = getSelectedDate(today, d),
 			dateSelected = getSelectedDate(this.valueDate, d),
 			dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum),
-			min = this.minInt,
-			max = this.maxInt,
-			m1, m2,
 			minmax;
 
-		console.log('render', dateObj);
 		this.monthNode.innerHTML = dates.getMonthName(d) + ' ' + d.getFullYear();
 
 		for (i = 0; i < 7; i++) {
@@ -420,14 +428,8 @@ class DatePicker extends BaseComponent {
 		}
 
 		for (i = 0; i < 42; i++) {
-			//minmax = min && min < intDate || max && max > intDate;
 
 			minmax = dates.isLess(dateObj, this.minDate) || dates.isGreater(dateObj, this.maxDate);
-
-			// console.log('');
-			// console.log(new Date(min));
-			// console.log(new Date(max));
-			// console.log(new Date(intDate));
 
 			tx = dateNum + 1 > 0 && dateNum + 1 <= daysInMonth ? dateNum + 1 : "&nbsp;";
 
