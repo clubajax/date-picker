@@ -325,7 +325,6 @@ window.onDomReady = function (node, callback) {
 }));
 },{"dom":7,"on":8}],2:[function(require,module,exports){
 const BaseComponent = require('BaseComponent');
-const dom = require('dom');
 
 function setBoolean (node, prop) {
 	Object.defineProperty(node, prop, {
@@ -357,7 +356,7 @@ function setProperty (node, prop) {
 		enumerable: true,
 		configurable: true,
 		get () {
-			return propValue !== undefined ? propValue : dom.normalize(this.getAttribute(prop));
+			return propValue !== undefined ? propValue : normalize(this.getAttribute(prop));
 		},
 		set (value) {
 			this.isSettingAttribute = true;
@@ -365,10 +364,10 @@ function setProperty (node, prop) {
 			const fn = this[onify(prop)];
 			if(fn){
 				onDomReady(this, () => {
-					value = fn.call(this, value) || value;
 					if(value !== undefined){
 						propValue = value;
 					}
+					value = fn.call(this, value) || value;
 				});
 			}
 			this.isSettingAttribute = false;
@@ -437,11 +436,33 @@ function boolNorm (value) {
 	if(value === ''){
 		return true;
 	}
-	return dom.normalize(value);
+	return normalize(value);
 }
 
 function propNorm (value) {
-	return dom.normalize(value);
+	return normalize(value);
+}
+
+function normalize (val){
+	if(typeof val === 'string') {
+		if(val === 'false'){
+			return false;
+		}
+		else if(val === 'null'){
+			return null;
+		}
+		else if(val === 'true'){
+			return true;
+		}
+		if (val.indexOf('/') > -1 || (val.match(/-/g) || []).length > 1) {
+			// type of date
+			return val;
+		}
+	}
+	if(!isNaN(parseFloat(val))){
+		return parseFloat(val);
+	}
+	return val;
 }
 
 BaseComponent.addPlugin({
@@ -472,24 +493,31 @@ BaseComponent.addPlugin({
 		node[name] = propNorm(value);
 	}
 });
-},{"BaseComponent":1,"dom":7}],3:[function(require,module,exports){
-const dom = require('dom');
+},{"BaseComponent":1}],3:[function(require,module,exports){
 const BaseComponent = require('BaseComponent');
 
 function assignRefs (node) {
-    dom.queryAll(node, '[ref]').forEach(function (child) {
+
+    [...node.querySelectorAll('[ref]')].forEach(function (child) {
         let name = child.getAttribute('ref');
+		child.removeAttribute('ref');
         node[name] = child;
     });
 }
 
 function assignEvents (node) {
     // <div on="click:onClick">
-    dom.queryAll(node, '[on]').forEach(function (child) {
-        let
+	[...node.querySelectorAll('[on]')].forEach(function (child, i, children) {
+		if(child === node){
+			return;
+		}
+		let
             keyValue = child.getAttribute('on'),
             event = keyValue.split(':')[0].trim(),
             method = keyValue.split(':')[1].trim();
+		// remove, so parent does not try to use it
+		child.removeAttribute('on');
+
         node.on(child, event, function (e) {
             node[method](e)
         })
@@ -504,13 +532,11 @@ BaseComponent.addPlugin({
         assignEvents(node);
     }
 });
-},{"BaseComponent":1,"dom":7}],4:[function(require,module,exports){
+},{"BaseComponent":1}],4:[function(require,module,exports){
 const BaseComponent  = require('BaseComponent');
-const dom = require('dom');
 
-var
-    lightNodes = {},
-    inserted = {};
+const lightNodes = {};
+const inserted = {};
 
 function insert (node) {
     if(inserted[node._uid] || !hasTemplate(node)){
@@ -529,11 +555,11 @@ function collectLightNodes(node){
 }
 
 function hasTemplate (node) {
-    return !!node.getTemplateNode();
+	return node.templateString || node.templateId;
 }
 
 function insertTemplateChain (node) {
-    var templates = node.getTemplateChain();
+    const templates = node.getTemplateChain();
     templates.reverse().forEach(function (template) {
         getContainer(node).appendChild(BaseComponent.clone(template));
     });
@@ -545,8 +571,7 @@ function insertTemplate (node) {
         insertTemplateChain(node);
         return;
     }
-    var
-        templateNode = node.getTemplateNode();
+    const templateNode = node.getTemplateNode();
 
     if(templateNode) {
         node.appendChild(BaseComponent.clone(templateNode));
@@ -555,7 +580,7 @@ function insertTemplate (node) {
 }
 
 function getContainer (node) {
-    var containers = node.querySelectorAll('[ref="container"]');
+    const containers = node.querySelectorAll('[ref="container"]');
     if(!containers || !containers.length){
         return node;
     }
@@ -563,15 +588,21 @@ function getContainer (node) {
 }
 
 function insertChildren (node) {
-    var i,
-        container = getContainer(node),
-        children = lightNodes[node._uid];
+    let i;
+	const container = getContainer(node);
+	const children = lightNodes[node._uid];
 
     if(container && children && children.length){
         for(i = 0; i < children.length; i++){
             container.appendChild(children[i]);
         }
     }
+}
+
+function toDom (html){
+	const node = document.createElement('div');
+	node.innerHTML = html;
+	return node.firstChild;
 }
 
 BaseComponent.prototype.getLightNodes = function () {
@@ -581,12 +612,12 @@ BaseComponent.prototype.getLightNodes = function () {
 BaseComponent.prototype.getTemplateNode = function () {
     // caching causes different classes to pull the same template - wat?
     //if(!this.templateNode) {
-        if (this.templateId) {
-            this.templateNode = dom.byId(this.templateId.replace('#',''));
-        }
-        else if (this.templateString) {
-            this.templateNode = dom.toDom('<template>' + this.templateString + '</template>');
-        }
+	if (this.templateId) {
+		this.templateNode = document.getElementById(this.templateId.replace('#',''));
+	}
+	else if (this.templateString) {
+		this.templateNode = toDom('<template>' + this.templateString + '</template>');
+	}
     //}
     return this.templateNode;
 };
@@ -622,7 +653,7 @@ BaseComponent.addPlugin({
         insert(node);
     }
 });
-},{"BaseComponent":1,"dom":7}],5:[function(require,module,exports){
+},{"BaseComponent":1}],5:[function(require,module,exports){
 var supportsV1 = 'customElements' in window;
 var supportsPromise = 'Promise' in window;
 var nativeShimBase64 = "ZnVuY3Rpb24gbmF0aXZlU2hpbSgpeygoKT0+eyd1c2Ugc3RyaWN0JztpZighd2luZG93LmN1c3RvbUVsZW1lbnRzKXJldHVybjtjb25zdCBhPXdpbmRvdy5IVE1MRWxlbWVudCxiPXdpbmRvdy5jdXN0b21FbGVtZW50cy5kZWZpbmUsYz13aW5kb3cuY3VzdG9tRWxlbWVudHMuZ2V0LGQ9bmV3IE1hcCxlPW5ldyBNYXA7bGV0IGY9ITEsZz0hMTt3aW5kb3cuSFRNTEVsZW1lbnQ9ZnVuY3Rpb24oKXtpZighZil7Y29uc3Qgaj1kLmdldCh0aGlzLmNvbnN0cnVjdG9yKSxrPWMuY2FsbCh3aW5kb3cuY3VzdG9tRWxlbWVudHMsaik7Zz0hMDtjb25zdCBsPW5ldyBrO3JldHVybiBsfWY9ITE7fSx3aW5kb3cuSFRNTEVsZW1lbnQucHJvdG90eXBlPWEucHJvdG90eXBlO09iamVjdC5kZWZpbmVQcm9wZXJ0eSh3aW5kb3csJ2N1c3RvbUVsZW1lbnRzJyx7dmFsdWU6d2luZG93LmN1c3RvbUVsZW1lbnRzLGNvbmZpZ3VyYWJsZTohMCx3cml0YWJsZTohMH0pLE9iamVjdC5kZWZpbmVQcm9wZXJ0eSh3aW5kb3cuY3VzdG9tRWxlbWVudHMsJ2RlZmluZScse3ZhbHVlOihqLGspPT57Y29uc3QgbD1rLnByb3RvdHlwZSxtPWNsYXNzIGV4dGVuZHMgYXtjb25zdHJ1Y3Rvcigpe3N1cGVyKCksT2JqZWN0LnNldFByb3RvdHlwZU9mKHRoaXMsbCksZ3x8KGY9ITAsay5jYWxsKHRoaXMpKSxnPSExO319LG49bS5wcm90b3R5cGU7bS5vYnNlcnZlZEF0dHJpYnV0ZXM9ay5vYnNlcnZlZEF0dHJpYnV0ZXMsbi5jb25uZWN0ZWRDYWxsYmFjaz1sLmNvbm5lY3RlZENhbGxiYWNrLG4uZGlzY29ubmVjdGVkQ2FsbGJhY2s9bC5kaXNjb25uZWN0ZWRDYWxsYmFjayxuLmF0dHJpYnV0ZUNoYW5nZWRDYWxsYmFjaz1sLmF0dHJpYnV0ZUNoYW5nZWRDYWxsYmFjayxuLmFkb3B0ZWRDYWxsYmFjaz1sLmFkb3B0ZWRDYWxsYmFjayxkLnNldChrLGopLGUuc2V0KGosayksYi5jYWxsKHdpbmRvdy5jdXN0b21FbGVtZW50cyxqLG0pO30sY29uZmlndXJhYmxlOiEwLHdyaXRhYmxlOiEwfSksT2JqZWN0LmRlZmluZVByb3BlcnR5KHdpbmRvdy5jdXN0b21FbGVtZW50cywnZ2V0Jyx7dmFsdWU6KGopPT5lLmdldChqKSxjb25maWd1cmFibGU6ITAsd3JpdGFibGU6ITB9KTt9KSgpO30=";
@@ -861,7 +892,7 @@ window.Promise = Promise;
 }
 
 },{}],6:[function(require,module,exports){
-/* UMD.define */ (function (root, factory) {
+(function (root, factory) {
     if (typeof customLoader === 'function'){ customLoader(factory, 'dates'); }
     else if (typeof define === 'function' && define.amd){ define([], factory); }
     else if(typeof exports === 'object'){ module.exports = factory(); }
@@ -870,9 +901,7 @@ window.Promise = Promise;
 }(this, function () {
 
     'use strict';
-    // dates.js
-    //  date helper lib
-    //
+
     var
         // tests that it is a date string, not a valid date. 88/88/8888 would be true
         dateRegExp = /^(\d{1,2})([\/-])(\d{1,2})([\/-])(\d{4})\b/,
@@ -968,7 +997,7 @@ window.Promise = Promise;
         return false;
     }
 
-    function isDateType(value) {
+    function isDate(value) {
         var parts, day, month, year, hours, minutes, seconds, ms;
         switch (typeof value) {
             case 'object':
@@ -1018,7 +1047,6 @@ window.Promise = Promise;
         // TODO: do we really want a 0-based index? or should it be a 1-based one?
         var index = monthDict[name];
         return typeof index === 'number' ? index : void 0;
-        // TODO: we return undefined for wrong month names --- is it right?
     }
 
     function getMonthName(date) {
@@ -1026,7 +1054,7 @@ window.Promise = Promise;
     }
 
     function getFirstSunday(date) {
-        // TODO: what does it return? a negative index related to the 1st of the month?
+        // returns a negative index related to the 1st of the month
         var d = new Date(date.getTime());
         d.setDate(1);
         return -d.getDay();
@@ -1043,20 +1071,19 @@ window.Promise = Promise;
         return month === 1 && isLeapYear(date) ? 29 : monthLengths[month];
     }
 
-    function strToDate(str) {
+    function toDate(str) {
         if (typeof str !== 'string') {
             return str;
         }
-        if (dates.timestamp.is(str)) {
+        if (isTimestamp(str)) {
             // 2000-02-29T00:00:00
-            return dates.timestamp.from(str);
+            return fromTimestamp(str);
         }
         // 11/20/2000
         var parts = dateRegExp.exec(str);
         if (parts && parts[2] === parts[4]) {
             return new Date(+parts[5], +parts[1] - 1, +parts[3]);
         }
-        // TODO: what to return for an invalid date? null?
         return new Date(-1); // invalid date
     }
 
@@ -1072,7 +1099,7 @@ window.Promise = Promise;
         });
     }
 
-    function formatDate(date, delimiterOrPattern) {
+    function format(date, delimiterOrPattern) {
         if (delimiterOrPattern && delimiterOrPattern.length > 1) {
             return formatDatePattern(date, delimiterOrPattern);
         }
@@ -1086,12 +1113,12 @@ window.Promise = Promise;
     }
 
     function dateToStr(date, delimiter) {
-        return formatDate(date, delimiter);
+        return format(date, delimiter);
     }
 
     function formatTime(date, usePeriod) {
         if (typeof date === 'string') {
-            date = strToDate(date);
+            date = toDate(date);
         }
 
         var
@@ -1111,7 +1138,7 @@ window.Promise = Promise;
 
         retval = hours + ':' + pad(minutes) + ':' + pad(seconds);
 
-        if (usePeriod == true) {
+        if (usePeriod) {
             retval = retval + ' ' + period;
         }
 
@@ -1120,7 +1147,7 @@ window.Promise = Promise;
 
     function period(date) {
         if (typeof date === 'string') {
-            date = strToDate(date);
+            date = toDate(date);
         }
 
         var hours = date.getHours();
@@ -1260,75 +1287,114 @@ window.Promise = Promise;
         }
 
         if (daysAgo < -1) {
-            return formatDate(date);
+            return format(date);
         }
 
-        return !noDaysOfWeek && daysAgo < daysOfWeek.length ? daysOfWeek[date.getDay()] : formatDate(date);
+        return !noDaysOfWeek && daysAgo < daysOfWeek.length ? daysOfWeek[date.getDay()] : format(date);
     }
 
+	function toTimestamp (date) {
+		return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' +
+			pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+	}
+
+	function fromTimestamp (str) {
+		// 2015-05-26T00:00:00
+
+		// strip timezone // 2015-05-26T00:00:00Z
+		str = str.split('Z')[0];
+
+		// ["2000-02-30T00:00:00", "2000", "02", "30", "00", "00", "00", index: 0, input: "2000-02-30T00:00:00"]
+		var parts = tsRegExp.exec(str);
+		// TODO: do we need a validation?
+		if (parts) {
+			// new Date(1995, 11, 17, 3, 24, 0);
+			return new Date(+parts[1], +parts[2] - 1, +parts[3], +parts[4], +parts[5], parseInt(parts[6], 10));
+		}
+		// TODO: what do we return for an invalid date? null?
+		return new Date(-1);
+	}
+
+	function isTimestamp (str) {
+		return typeof str === 'string' && tsRegExp.test(str);
+	}
+
     dates = {
-        months: {
-            full: months,
-            abbr: monthAbbr,
-            dict: monthDict
-        },
-        days: {
-            full: daysOfWeek,
-            abbr: days,
-            abbr3: days3,
-            dict: dayDict
-        },
-        length: length,
+    	// convertors
+		format: format,
+		formatTime: formatTime,
+		toDate: toDate,
+		isValid: isDate,
+		isDate: isDate,
+		isValidObject: isValidObject,
+		toISO: toISO,
+		toTimestamp: toTimestamp,
+		fromTimestamp: fromTimestamp,
+		isTimestamp: isTimestamp,
+		// math
         subtract: subtract,
         add: add,
-        addDays: addDays,
         diff: diff,
-        copy: copy,
-        clone: copy,
+		subtractDate: subtractDate,
         isLess: isLess,
         isGreater: isGreater,
-        toISO: toISO,
-        isValidObject: isValidObject,
-        isValid: isDateType,
-        isDateType: isDateType,
+		// special types
         isLeapYear: isLeapYear,
         getMonthIndex: getMonthIndex,
         getMonthName: getMonthName,
         getFirstSunday: getFirstSunday,
         getDaysInMonth: getDaysInMonth,
         getDaysInPrevMonth: getDaysInPrevMonth,
-        formatDate: formatDate,
-        formatTime: formatTime,
-        strToDate: strToDate,
-        subtractDate: subtractDate,
-        dateToStr: dateToStr,
+        // helpers
         period: period,
         natural: natural,
         getNaturalDay: getNaturalDay,
-        pad: pad,
+		// utils
+		copy: copy,
+		clone: copy,
+		length: length,
+		pad: pad,
+		// lists
+		months: {
+			full: months,
+			abbr: monthAbbr,
+			dict: monthDict
+		},
+		days: {
+			full: daysOfWeek,
+			abbr: days,
+			abbr3: days3,
+			dict: dayDict
+		},
+		// deprecated
+		dateToStr: function (date) {
+			console.warn('deprecated - Use format instead');
+			return format(date);
+		},
+		formatDate: function (date) {
+			console.warn('deprecated - Use format instead');
+			return format(date);
+		},
+		strToDate: function (str) {
+			console.warn('deprecated - Use toDate instead');
+			return toDate(str)
+		},
+		isDateType: function (item) {
+			console.warn('deprecated - Use isDate instead');
+			return isDate(item);
+		},
         timestamp: {
             to: function(date) {
-                return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' +
-                    pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+				console.warn('deprecated - Use toTimestamp instead');
+				return toTimestamp(date);
             },
             from: function(str) {
-                // 2015-05-26T00:00:00
-
-                // strip timezone // 2015-05-26T00:00:00Z
-                str = str.split('Z')[0];
-
-                // ["2000-02-30T00:00:00", "2000", "02", "30", "00", "00", "00", index: 0, input: "2000-02-30T00:00:00"]
-                var parts = tsRegExp.exec(str);
-                // TODO: do we need a validation?
-                if (parts) {
-                    // new Date(1995, 11, 17, 3, 24, 0);
-                    return new Date(+parts[1], +parts[2] - 1, +parts[3], +parts[4], +parts[5], parseInt(parts[6], 10));
-                }
-                // TODO: what do we return for an invalid date? null?
-                return new Date(-1);
+				console.warn('deprecated - Use fromTimestamp instead');
+				return fromTimestamp(str);
             },
             is: function(str) {
-                return tsRegExp.test(str);
+				console.warn('deprecated - Use isTimestamp instead');
+				return isTimestamp(str);
             }
         }
     };
@@ -1365,28 +1431,26 @@ window.Promise = Promise;
         destroyer = document.createElement('div');
 
     function uid (type){
-        if(!uids[type]){
-            uids[type] = [];
+		type = type || 'uid';
+        if(uids[type] === undefined){
+            uids[type] = 0;
         }
-        var id = type + '-' + (uids[type].length + 1);
-        uids[type].push(id);
+        var id = type + '-' + (uids[type] + 1);
+        uids[type]++;
         return id;
     }
 
     function isNode (item){
         // safer test for custom elements in FF (with wc shim)
-        return !!item && typeof item === 'object' && typeof item.innerHTML === 'string';
+	    // fragment is a special case
+        return !!item && typeof item === 'object' && (typeof item.innerHTML === 'string' || item.nodeName === '#document-fragment');
     }
 
-    function getNode (item){
-        if(typeof item === 'string'){
-            return document.getElementById(item);
-        }
-        return item;
-    }
-
-    function byId (id){
-        return getNode(id);
+    function byId (item){
+		if(typeof item === 'string'){
+			return document.getElementById(item);
+		}
+		return item;
     }
 
     function style (node, prop, value){
@@ -1477,7 +1541,7 @@ window.Promise = Promise;
         // returned object is immutable
         // add scroll positioning and convenience abbreviations
         var
-            dimensions = getNode(node).getBoundingClientRect();
+            dimensions = byId(node).getBoundingClientRect();
         return {
             top: dimensions.top,
             right: dimensions.right,
@@ -1605,7 +1669,7 @@ window.Promise = Promise;
 
         var node = document.createElement(nodeType);
 
-        parent = getNode(parent);
+        parent = byId(parent);
 
         addContent(node, options);
 
@@ -1707,6 +1771,7 @@ window.Promise = Promise;
     
     function normalize (val){
         if(typeof val === 'string') {
+        	val = val.trim();
 			if(val === 'false'){
 				return false;
 			}
@@ -1716,8 +1781,7 @@ window.Promise = Promise;
 			else if(val === 'true'){
 				return true;
 			}
-			if (val.indexOf('/') > -1 || (val.match(/-/g) || []).length > 1) {
-				// type of date
+			if (val.indexOf('/') > -1 || val.indexOf(' ') > -1 || val.indexOf('-') > 0) {
 				return val;
 			}
 		}
@@ -2157,8 +2221,10 @@ var dates = require('dates');
 
 var defaultPlaceholder = 'MM/DD/YYYY';
 var defaultMask = 'XX/XX/XXXX';
-var props = ['label', 'name', 'placeholder', 'mask'];
+var props = ['label', 'name', 'placeholder', 'mask', 'min', 'max'];
 var bools = [];
+
+var FLASH_TIME = 1000;
 
 var DateInput = function (_BaseComponent) {
 	_inherits(DateInput, _BaseComponent);
@@ -2167,10 +2233,30 @@ var DateInput = function (_BaseComponent) {
 		key: 'attributeChanged',
 		value: function attributeChanged(name, value) {
 			// need to manage value manually
-			console.log('attr', name, value);
 			if (name === 'value') {
 				this.value = value;
 			}
+		}
+	}, {
+		key: 'onLabel',
+		value: function onLabel(value) {
+			this.labelNode.innerHTML = value;
+		}
+	}, {
+		key: 'onMin',
+		value: function onMin(value) {
+			var d = dates.toDate(value);
+			this.minDate = d;
+			this.minInt = d.getTime();
+			this.picker.min = value;
+		}
+	}, {
+		key: 'onMax',
+		value: function onMax(value) {
+			var d = dates.toDate(value);
+			this.maxDate = d;
+			this.maxInt = d.getTime();
+			this.picker.max = value;
 		}
 	}, {
 		key: 'props',
@@ -2219,11 +2305,11 @@ var DateInput = function (_BaseComponent) {
 	_createClass(DateInput, [{
 		key: 'isValid',
 		value: function isValid(value) {
-			return dates.isDateType(value);
+			return dates.isDate(value);
 		}
 	}, {
 		key: 'setValue',
-		value: function setValue(value) {
+		value: function setValue(value, silent) {
 			this.typedValue = value;
 			this.input.value = value;
 			var len = this.input.value.length === this.mask.length;
@@ -2237,8 +2323,11 @@ var DateInput = function (_BaseComponent) {
 			if (valid && len) {
 				this.strDate = value;
 				this.picker.value = value;
-				this.emit('change', { value: value });
+				if (!silent) {
+					this.emit('change', { value: value });
+				}
 			}
+			setTimeout(this.hide.bind(this), 300);
 		}
 	}, {
 		key: 'format',
@@ -2253,6 +2342,7 @@ var DateInput = function (_BaseComponent) {
 				}
 				return subStr;
 			}
+
 			s = s.replace(/\D/g, '');
 			var mask = this.mask;
 			var f = '';
@@ -2306,9 +2396,19 @@ var DateInput = function (_BaseComponent) {
 			this.setValue(this.format(str + k));
 		}
 	}, {
+		key: 'flash',
+		value: function flash() {
+			var _this3 = this;
+
+			this.classList.add('warning');
+			setTimeout(function () {
+				_this3.classList.remove('warning');
+			}, FLASH_TIME);
+		}
+	}, {
 		key: 'show',
 		value: function show() {
-			var _this3 = this;
+			var _this4 = this;
 
 			if (this.showing) {
 				return;
@@ -2318,12 +2418,12 @@ var DateInput = function (_BaseComponent) {
 
 			window.requestAnimationFrame(function () {
 				var win = dom.box(window);
-				var box = dom.box(_this3.picker);
+				var box = dom.box(_this4.picker);
 				if (box.x + box.w > win.h) {
-					_this3.picker.classList.add('right-align');
+					_this4.picker.classList.add('right-align');
 				}
 				if (box.y + box.h > win.h) {
-					_this3.picker.classList.add('bottom-align');
+					_this4.picker.classList.add('bottom-align');
 				}
 			});
 		}
@@ -2339,16 +2439,14 @@ var DateInput = function (_BaseComponent) {
 	}, {
 		key: 'domReady',
 		value: function domReady() {
-			var _this4 = this;
+			var _this5 = this;
 
 			this.mask = this.mask || defaultMask;
 			this.maskLength = this.mask.match(/X/g).join('').length;
-
-			this.labelNode.innerHTML = this.label || '';
 			this.input.setAttribute('type', 'text');
 			this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
 			this.picker.on('change', function (e) {
-				_this4.setValue(e.value);
+				_this5.setValue(e.value, true);
 			});
 			this.connectKeys();
 			this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
@@ -2356,12 +2454,12 @@ var DateInput = function (_BaseComponent) {
 	}, {
 		key: 'connectKeys',
 		value: function connectKeys() {
-			var _this5 = this;
+			var _this6 = this;
 
 			this.on(this.input, 'keydown', stopEvent);
 			this.on(this.input, 'keypress', stopEvent);
 			this.on(this.input, 'keyup', function (e) {
-				_this5.onKey(e);
+				_this6.onKey(e);
 			});
 		}
 	}]);
@@ -2451,7 +2549,7 @@ require('BaseComponent/src/refs');
 var BaseComponent = require('BaseComponent');
 var dates = require('dates');
 
-var props = [];
+var props = ['min', 'max'];
 
 // range-left/range-right mean that this is one side of a date-range-picker
 var bools = ['range-picker', 'range-left', 'range-right'];
@@ -2460,6 +2558,22 @@ var DatePicker = function (_BaseComponent) {
 	_inherits(DatePicker, _BaseComponent);
 
 	_createClass(DatePicker, [{
+		key: 'onMin',
+		value: function onMin(value) {
+			var d = dates.toDate(value);
+			this.minDate = d;
+			this.minInt = d.getTime();
+			this.render();
+		}
+	}, {
+		key: 'onMax',
+		value: function onMax(value) {
+			var d = dates.toDate(value);
+			this.maxDate = d;
+			this.maxInt = d.getTime();
+			this.render();
+		}
+	}, {
 		key: 'props',
 		get: function get() {
 			return props;
@@ -2480,7 +2594,7 @@ var DatePicker = function (_BaseComponent) {
 			var _this2 = this;
 
 			// might need attributeChanged
-			this.valueDate = dates.isDateType(value) ? dates.strToDate(value) : today;
+			this.valueDate = dates.isDate(value) ? dates.toDate(value) : today;
 			this.current = this.valueDate;
 			onDomReady(this, function () {
 				_this2.render();
@@ -2489,7 +2603,7 @@ var DatePicker = function (_BaseComponent) {
 		get: function get() {
 			if (!this.valueDate) {
 				var value = this.getAttribute('value') || today;
-				this.valueDate = dates.strToDate(value);
+				this.valueDate = dates.toDate(value);
 			}
 			return this.valueDate;
 		}
@@ -2537,7 +2651,7 @@ var DatePicker = function (_BaseComponent) {
 	}, {
 		key: 'getFormattedValue',
 		value: function getFormattedValue() {
-			return this.valueDate === today ? '' : !!this.valueDate ? dates.dateToStr(this.valueDate) : '';
+			return this.valueDate === today ? '' : !!this.valueDate ? dates.format(this.valueDate) : '';
 		}
 	}, {
 		key: 'emitValue',
@@ -2573,7 +2687,12 @@ var DatePicker = function (_BaseComponent) {
 		value: function onClickDay(node) {
 			var day = +node.innerHTML,
 			    isFuture = node.classList.contains('future'),
-			    isPast = node.classList.contains('past');
+			    isPast = node.classList.contains('past'),
+			    isDisabled = node.classList.contains('disabled');
+
+			if (isDisabled) {
+				return;
+			}
 
 			this.current.setDate(day);
 			if (isFuture) {
@@ -2684,12 +2803,12 @@ var DatePicker = function (_BaseComponent) {
 			if (this['range-picker']) {
 				return;
 			}
-			var now = this.querySelector('.ay-selected');
+			var now = this.querySelector('.selected');
 			var node = this.dayMap[this.current.getDate()];
 			if (now) {
-				now.classList.remove('ay-selected');
+				now.classList.remove('selected');
 			}
-			node.classList.add('ay-selected');
+			node.classList.add('selected');
 		}
 	}, {
 		key: 'clearRange',
@@ -2768,15 +2887,15 @@ var DatePicker = function (_BaseComponent) {
 			var map = this.dayMap;
 			if (!beg || !end) {
 				Object.keys(map).forEach(function (key, i) {
-					map[key].classList.remove('ay-range');
+					map[key].classList.remove('range');
 				});
 			} else {
 				beg = beg.getTime();
 				Object.keys(map).forEach(function (key, i) {
 					if (inRange(map[key]._date, beg, end)) {
-						map[key].classList.add('ay-range');
+						map[key].classList.add('range');
 					} else {
-						map[key].classList.remove('ay-range');
+						map[key].classList.remove('range');
 					}
 				});
 			}
@@ -2800,23 +2919,23 @@ var DatePicker = function (_BaseComponent) {
 			this.clearEndPoints();
 			if (this.firstRange) {
 				if (this.firstRange.getMonth() === this.current.getMonth()) {
-					this.dayMap[this.firstRange.getDate()].classList.add('ay-range-first');
+					this.dayMap[this.firstRange.getDate()].classList.add('range-first');
 				}
 				if (this.secondRange && this.secondRange.getMonth() === this.current.getMonth()) {
-					this.dayMap[this.secondRange.getDate()].classList.add('ay-range-second');
+					this.dayMap[this.secondRange.getDate()].classList.add('range-second');
 				}
 			}
 		}
 	}, {
 		key: 'clearEndPoints',
 		value: function clearEndPoints() {
-			var first = this.querySelector('.ay-range-first'),
-			    second = this.querySelector('.ay-range-second');
+			var first = this.querySelector('.range-first'),
+			    second = this.querySelector('.range-second');
 			if (first) {
-				first.classList.remove('ay-range-first');
+				first.classList.remove('range-first');
 			}
 			if (second) {
-				second.classList.remove('ay-range-second');
+				second.classList.remove('range-second');
 			}
 		}
 	}, {
@@ -2835,6 +2954,16 @@ var DatePicker = function (_BaseComponent) {
 			if (this.isOwned) {
 				this.classList.add('minimal');
 			}
+
+			// if (this.min) {
+			// 	this.minDate = dates.toDate(this.min);
+			// 	this.minInt = dates.toDate(this.min).getTime();
+			// }
+			//
+			// if (this.max) {
+			// 	this.maxDate = dates.toDate(this.max);
+			// 	this.maxInt = dates.toDate(this.max).getTime();
+			// }
 
 			this.current = copy(this.value);
 
@@ -2861,15 +2990,19 @@ var DatePicker = function (_BaseComponent) {
 			    isThisMonth = void 0,
 			    day = void 0,
 			    css = void 0,
-			    today = new Date(),
+			    isSelected = void 0,
+			    isToday = void 0,
 			    isRange = this['range-picker'],
 			    d = this.current,
 			    incDate = copy(d),
+			    intDate = incDate.getTime(),
 			    daysInPrevMonth = dates.getDaysInPrevMonth(d),
 			    daysInMonth = dates.getDaysInMonth(d),
 			    dateNum = dates.getFirstSunday(d),
 			    dateToday = getSelectedDate(today, d),
-			    dateSelected = getSelectedDate(this.valueDate, d);
+			    dateSelected = getSelectedDate(this.valueDate, d),
+			    dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum),
+			    minmax = void 0;
 
 			this.monthNode.innerHTML = dates.getMonthName(d) + ' ' + d.getFullYear();
 
@@ -2878,19 +3011,27 @@ var DatePicker = function (_BaseComponent) {
 			}
 
 			for (i = 0; i < 42; i++) {
+
+				minmax = dates.isLess(dateObj, this.minDate) || dates.isGreater(dateObj, this.maxDate);
+
 				tx = dateNum + 1 > 0 && dateNum + 1 <= daysInMonth ? dateNum + 1 : "&nbsp;";
 
 				isThisMonth = false;
+				isSelected = false;
+				isToday = false;
+
 				if (dateNum + 1 > 0 && dateNum + 1 <= daysInMonth) {
 					// current month
 					tx = dateNum + 1;
 					isThisMonth = true;
 					css = 'day on';
 					if (dateToday === tx) {
+						isToday = true;
 						css += ' today';
 					}
 					if (dateSelected === tx && !isRange) {
-						css += ' ay-selected';
+						isSelected = true;
+						css += ' selected';
 					}
 				} else if (dateNum < 0) {
 					// previous month
@@ -2902,9 +3043,20 @@ var DatePicker = function (_BaseComponent) {
 					css = 'day off future';
 				}
 
+				if (minmax) {
+					css = 'day disabled';
+					if (isSelected) {
+						css += ' selected';
+					}
+					if (isToday) {
+						css += ' today';
+					}
+				}
+
 				day = dom("div", { innerHTML: tx, class: css }, node);
 
 				dateNum++;
+				dateObj.setDate(dateObj.getDate() + 1);
 				if (isThisMonth) {
 					// Keep a map of all the days
 					// use it for adding and removing selection/hover classes
@@ -2976,7 +3128,7 @@ var DatePicker = function (_BaseComponent) {
 	return DatePicker;
 }(BaseComponent);
 
-var today = new Date();
+var today = new Date(2017, 6, 3);
 
 function getSelectedDate(date, current) {
 	if (date.getMonth() === current.getMonth() && date.getFullYear() === current.getFullYear()) {
@@ -3064,7 +3216,7 @@ var DateRangeInput = function (_DateInput) {
 		key: 'isValid',
 		value: function isValid(value) {
 			var ds = value.split(/\s*-\s*/);
-			return dates.isDateType(ds[0]) && dates.isDateType(ds[1]);
+			return dates.isDate(ds[0]) && dates.isDate(ds[1]);
 		}
 	}]);
 
@@ -3075,7 +3227,100 @@ customElements.define('date-range-input', DateRangeInput);
 
 module.exports = DateRangeInput;
 
-},{"./date-input":9,"./date-range-picker":12,"dates":6,"dom":7}],12:[function(require,module,exports){
+},{"./date-input":9,"./date-range-picker":13,"dates":6,"dom":7}],12:[function(require,module,exports){
+'use strict';
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var BaseComponent = require('BaseComponent');
+require('./date-input');
+var dates = require('dates');
+var dom = require('dom');
+
+var props = ['left-label', 'right-label', 'name', 'placeholder'];
+var bools = ['range-expands'];
+
+var DateRangeInputs = function (_BaseComponent) {
+	_inherits(DateRangeInputs, _BaseComponent);
+
+	_createClass(DateRangeInputs, [{
+		key: 'props',
+		get: function get() {
+			return props;
+		}
+	}, {
+		key: 'bools',
+		get: function get() {
+			return bools;
+		}
+	}], [{
+		key: 'observedAttributes',
+		get: function get() {
+			return [].concat(props, bools, ['value']);
+		}
+	}]);
+
+	function DateRangeInputs() {
+		_classCallCheck(this, DateRangeInputs);
+
+		var _this = _possibleConstructorReturn(this, (DateRangeInputs.__proto__ || Object.getPrototypeOf(DateRangeInputs)).call(this));
+
+		_this.mask = 'XX/XX/XXXX';
+		return _this;
+	}
+
+	_createClass(DateRangeInputs, [{
+		key: 'isValid',
+		value: function isValid(value) {
+			var ds = value.split(/\s*-\s*/);
+			return dates.isDate(ds[0]) && dates.isDate(ds[1]);
+		}
+	}, {
+		key: 'domReady',
+		value: function domReady() {
+			var _this2 = this;
+
+			this.leftInput = dom('date-input', { label: this['left-label'] }, this);
+			this.rightInput = dom('date-input', { label: this['right-label'] }, this);
+
+			this.leftInput.on('change', function (e) {
+				//this.rightInput.min = e.value;
+				var changesDate = dates.toDate(_this2.rightInput.value) < dates.toDate(e.value);
+				if (!_this2.rightInput.value || changesDate) {
+					_this2.rightInput.value = e.value;
+					if (changesDate) {
+						_this2.rightInput.flash();
+					}
+				}
+			});
+
+			this.rightInput.on('change', function (e) {
+				//this.leftInput.max = e.value;
+				var changesDate = dates.toDate(_this2.leftInput.value) > dates.toDate(e.value);
+				if (!_this2.leftInput.value || changesDate) {
+					_this2.leftInput.value = e.value;
+					if (changesDate) {
+						_this2.leftInput.flash();
+					}
+				}
+			});
+		}
+	}]);
+
+	return DateRangeInputs;
+}(BaseComponent);
+
+customElements.define('date-range-inputs', DateRangeInputs);
+
+module.exports = DateRangeInputs;
+
+},{"./date-input":9,"BaseComponent":1,"dates":6,"dom":7}],13:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3103,7 +3348,7 @@ var DateRangePicker = function (_BaseComponent) {
 			var _this2 = this;
 
 			// might need attributeChanged
-			this.strDate = dates.isDateType(value) ? value : '';
+			this.strDate = dates.isDate(value) ? value : '';
 			onDomReady(this, function () {
 				_this2.setValue(_this2.strDate, true);
 			});
@@ -3139,9 +3384,9 @@ var DateRangePicker = function (_BaseComponent) {
 				this.clearRange();
 			} else if (typeof value === 'string') {
 				var dateStrings = split(value);
-				this.valueDate = dates.strToDate(value);
-				this.firstRange = dates.strToDate(dateStrings[0]);
-				this.secondRange = dates.strToDate(dateStrings[1]);
+				this.valueDate = dates.toDate(value);
+				this.firstRange = dates.toDate(dateStrings[0]);
+				this.secondRange = dates.toDate(dateStrings[1]);
 				this.setDisplay();
 				this.setRange(noEmit);
 			}
@@ -3352,7 +3597,7 @@ customElements.define('date-range-picker', DateRangePicker);
 
 module.exports = DateRangePicker;
 
-},{"./date-picker":10,"BaseComponent":1,"dates":6,"dom":7}],13:[function(require,module,exports){
+},{"./date-picker":10,"BaseComponent":1,"dates":6,"dom":7}],14:[function(require,module,exports){
 'use strict';
 
 require('./globals');
@@ -3360,8 +3605,9 @@ require('../../src/date-picker');
 require('../../src/date-input');
 require('../../src/date-range-picker');
 require('../../src/date-range-input');
+require('../../src/date-range-inputs');
 
-},{"../../src/date-input":9,"../../src/date-picker":10,"../../src/date-range-input":11,"../../src/date-range-picker":12,"./globals":14}],14:[function(require,module,exports){
+},{"../../src/date-input":9,"../../src/date-picker":10,"../../src/date-range-input":11,"../../src/date-range-inputs":12,"../../src/date-range-picker":13,"./globals":15}],15:[function(require,module,exports){
 'use strict';
 
 window['no-native-shim'] = false;
@@ -3369,5 +3615,5 @@ require('custom-elements-polyfill');
 window.on = require('on');
 window.dom = require('dom');
 
-},{"custom-elements-polyfill":5,"dom":7,"on":8}]},{},[13])(13)
+},{"custom-elements-polyfill":5,"dom":7,"on":8}]},{},[14])(14)
 });
