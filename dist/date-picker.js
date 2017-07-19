@@ -1002,10 +1002,11 @@ window.Promise = Promise;
         switch (typeof value) {
             case 'object':
                 return isValidObject(value);
-            case 'string':
+			case 'string':
                 // is it a date in US format?
+				// parts: ["12/12/2017", "12", "/", "12", "/", "2017"]
                 parts = dateRegExp.exec(value);
-                if (parts && parts[2] === parts[4]) {
+				if (parts && parts[2] === parts[4] && parts[5].length === 4) {
                     month = +parts[1];
                     day = +parts[3];
                     year = +parts[5];
@@ -2273,7 +2274,7 @@ var DateInput = function (_BaseComponent) {
 		set: function set(value) {
 			var _this2 = this;
 
-			this.strDate = this.isValid(value) ? value : '';
+			this.strDate = dates.isValid(value) ? value : '';
 			onDomReady(this, function () {
 				_this2.setValue(_this2.strDate);
 			});
@@ -2305,11 +2306,11 @@ var DateInput = function (_BaseComponent) {
 	_createClass(DateInput, [{
 		key: 'isValid',
 		value: function isValid(value) {
-			return dates.isDate(value);
+			return dates.isDate(this.input.value);
 		}
 	}, {
 		key: 'setValue',
-		value: function setValue(value, silent) {
+		value: function setValue(value, silent, noHide) {
 			this.typedValue = value;
 			this.input.value = value;
 			var len = this.input.value.length === this.mask.length;
@@ -2317,9 +2318,9 @@ var DateInput = function (_BaseComponent) {
 			if (len) {
 				valid = dates.isValid(value);
 			} else {
-				valid = true;
+				valid = false;
 			}
-			dom.classList.toggle(this, 'invalid', !valid);
+
 			if (valid && len) {
 				this.strDate = value;
 				this.picker.value = value;
@@ -2327,7 +2328,16 @@ var DateInput = function (_BaseComponent) {
 					this.emit('change', { value: value });
 				}
 			}
-			setTimeout(this.hide.bind(this), 300);
+
+			if (valid) {
+				this.classList.remove('invalid');
+			} else if (!silent) {
+				this.classList.add('invalid');
+			}
+
+			if (!silent && valid) {
+				setTimeout(this.hide.bind(this), 300);
+			}
 		}
 	}, {
 		key: 'format',
@@ -2363,6 +2373,19 @@ var DateInput = function (_BaseComponent) {
 			var end = e.target.selectionEnd;
 			var k = e.key;
 
+			if (k === 'Enter') {
+				this.hide();
+				this.emit('change', { value: this.value });
+			}
+
+			if (k === 'Escape') {
+				if (!this.isValid()) {
+					this.value = this.strDate;
+					this.hide();
+					this.input.blur();
+				}
+			}
+
 			function setSelection(amt) {
 				// TODO
 				// This might not be exactly right...
@@ -2377,7 +2400,7 @@ var DateInput = function (_BaseComponent) {
 			if (!isNum(k)) {
 				// handle paste, backspace
 				if (this.input.value !== this.typedValue) {
-					this.setValue(this.input.value);
+					this.setValue(this.input.value, true);
 				}
 				setSelection(0);
 				stopEvent(e);
@@ -2386,14 +2409,14 @@ var DateInput = function (_BaseComponent) {
 			if (str.length !== end || beg !== end) {
 				// handle selection or middle-string edit
 				var temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
-				this.setValue(this.format(temp));
+				this.setValue(this.format(temp), true);
 
 				setSelection(1);
 				stopEvent(e);
 				return;
 			}
 
-			this.setValue(this.format(str + k));
+			this.setValue(this.format(str + k), true);
 		}
 	}, {
 		key: 'flash',
@@ -2433,8 +2456,10 @@ var DateInput = function (_BaseComponent) {
 			if (!this.showing || window.keepPopupsOpen) {
 				return;
 			}
+
 			this.showing = false;
 			dom.classList.remove(this.picker, 'right-align bottom-align show');
+			dom.classList.toggle(this, 'invalid', !this.isValid());
 		}
 	}, {
 		key: 'domReady',
@@ -2586,7 +2611,7 @@ var DatePicker = function (_BaseComponent) {
 	}, {
 		key: 'templateString',
 		get: function get() {
-			return '\n<div class="calendar" ref="calNode">\n<div class="cal-header" ref="headerNode">\n\t<span class="cal-lft" ref="lftNode"></span>\n\t<span class="cal-month" ref="monthNode"></span>\n\t<span class="cal-rgt" ref="rgtNode"></span>\n</div>\n<div class="cal-container" ref="container"></div>\n<div class="cal-footer">\n\t<a href="javascript:void(0);" ref="footerLink"></a>\n</div>\n</div>';
+			return '\n<div class="calendar" ref="calNode">\n<div class="cal-header" ref="headerNode">\n\t<span class="cal-lft" ref="lftNode"></span>\n\t<span class="cal-month" ref="monthNode"></span>\n\t<span class="cal-rgt" ref="rgtNode"></span>\n</div>\n<div class="cal-container" ref="container"></div>\n<div class="cal-footer">\n\t<span ref="footerLink"></span>\n</div>\n</div>';
 		}
 	}, {
 		key: 'value',
@@ -3094,8 +3119,11 @@ var DatePicker = function (_BaseComponent) {
 			});
 
 			this.on(this.footerLink, 'click', function () {
+				_this3.focus();
 				_this3.current = new Date();
 				_this3.render();
+				_this3.valueDate = copy(_this3.current);
+				_this3.emitValue();
 			});
 
 			this.on(this.container, 'click', function (e) {
@@ -3128,7 +3156,7 @@ var DatePicker = function (_BaseComponent) {
 	return DatePicker;
 }(BaseComponent);
 
-var today = new Date(2017, 6, 3);
+var today = new Date();
 
 function getSelectedDate(date, current) {
 	if (date.getMonth() === current.getMonth() && date.getFullYear() === current.getFullYear()) {

@@ -31,7 +31,7 @@ class DateInput extends BaseComponent {
 	}
 
 	set value (value) {
-		this.strDate = this.isValid(value) ? value : '';
+		this.strDate = dates.isValid(value) ? value : '';
 		onDomReady(this, () => {
 			this.setValue(this.strDate);
 		});
@@ -76,10 +76,10 @@ class DateInput extends BaseComponent {
 	}
 
 	isValid (value) {
-		return dates.isDate(value);
+		return dates.isDate(this.input.value);
 	}
 
-	setValue (value, silent) {
+	setValue (value, silent, noHide) {
 		this.typedValue = value;
 		this.input.value = value;
 		const len = this.input.value.length === this.mask.length;
@@ -87,9 +87,9 @@ class DateInput extends BaseComponent {
 		if (len) {
 			valid = dates.isValid(value);
 		} else {
-			valid = true;
+			valid = false;
 		}
-		dom.classList.toggle(this, 'invalid', !valid);
+
 		if (valid && len) {
 			this.strDate = value;
 			this.picker.value = value;
@@ -97,7 +97,16 @@ class DateInput extends BaseComponent {
 				this.emit('change', { value: value });
 			}
 		}
-		setTimeout(this.hide.bind(this), 300);
+
+		if (valid) {
+			this.classList.remove('invalid')
+		} else if (!silent) {
+			this.classList.add('invalid')
+		}
+
+		if (!silent && valid) {
+			setTimeout(this.hide.bind(this), 300);
+		}
 	}
 
 	format (s) {
@@ -131,6 +140,19 @@ class DateInput extends BaseComponent {
 		const end = e.target.selectionEnd;
 		const k = e.key;
 
+		if(k === 'Enter'){
+			this.hide();
+			this.emit('change', { value: this.value });
+		}
+
+		if(k === 'Escape'){
+			if(!this.isValid()){
+				this.value = this.strDate;
+				this.hide();
+				this.input.blur();
+			}
+		}
+
 		function setSelection (amt) {
 			// TODO
 			// This might not be exactly right...
@@ -145,7 +167,7 @@ class DateInput extends BaseComponent {
 		if (!isNum(k)) {
 			// handle paste, backspace
 			if (this.input.value !== this.typedValue) {
-				this.setValue(this.input.value);
+				this.setValue(this.input.value, true);
 			}
 			setSelection(0);
 			stopEvent(e);
@@ -154,14 +176,14 @@ class DateInput extends BaseComponent {
 		if (str.length !== end || beg !== end) {
 			// handle selection or middle-string edit
 			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
-			this.setValue(this.format(temp));
+			this.setValue(this.format(temp), true);
 
 			setSelection(1);
 			stopEvent(e);
 			return;
 		}
 
-		this.setValue(this.format(str + k));
+		this.setValue(this.format(str + k), true);
 	}
 
 	flash () {
@@ -194,9 +216,10 @@ class DateInput extends BaseComponent {
 		if (!this.showing || window.keepPopupsOpen) {
 			return;
 		}
-		console.log('hide');
+
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
+		dom.classList.toggle(this, 'invalid', !this.isValid());
 	}
 
 	domReady () {

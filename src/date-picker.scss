@@ -193,6 +193,7 @@ date-picker{
 }
 
 date-input, date-range-input{
+    display: inline-block;
     position: relative;
     //outline: none;
     input{

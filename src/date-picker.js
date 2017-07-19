@@ -396,7 +396,6 @@ class DatePicker extends BaseComponent {
 	}
 
 	render () {
-		console.log('render');
 		// dateNum increments, starting with the first Sunday
 		// showing on the monthly calendar. This is usually the
 		// previous month, so dateNum will start as a negative number
@@ -507,12 +506,10 @@ class DatePicker extends BaseComponent {
 			this.onClickMonth(1);
 		});
 
-		console.log('this.footerLink', this.footerLink);
 		this.on(this.footerLink, 'click', () => {
-			console.log('link');
 			this.focus();
 			this.current = new Date();
-			//this.render();
+			this.render();
 			this.valueDate = copy(this.current);
 			this.emitValue();
 		});
