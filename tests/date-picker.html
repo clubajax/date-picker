@@ -56,8 +56,8 @@
 
 			// does node.value work?
 			//
-			test('it should load custom input of type `date`', function () {
-				var node = dom('date-input', {type:'date', label: 'Date', value:'' }, body);
+			test.only('it should load custom input of type `date`', function () {
+				var node = dom('date-input', {type:'date', label: 'Date', value:'12/12/2017' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {
 					console.log('change', e.value);
@@ -94,13 +94,13 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test.only('it should load a date range input', function () {
+			test('it should load a date range input', function () {
 				//window.keepPopupsOpen = 1;
 				var node = dom('date-range-input', {label:'El Date Picker', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test.only('it should load date range inputs', function () {
+			test('it should load date range inputs', function () {
 				//window.keepPopupsOpen = 1;
 				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);

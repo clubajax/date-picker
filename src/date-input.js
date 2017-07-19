@@ -194,6 +194,7 @@ class DateInput extends BaseComponent {
 		if (!this.showing || window.keepPopupsOpen) {
 			return;
 		}
+		console.log('hide');
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
 	}

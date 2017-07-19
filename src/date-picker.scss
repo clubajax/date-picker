@@ -173,7 +173,8 @@ date-picker{
     .cal-footer{
         text-align: center;
         padding: 5px;
-        a{
+        span{
+            cursor: pointer;
             color: $link;
             text-decoration: none;
             &:hover{

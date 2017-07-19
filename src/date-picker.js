@@ -33,7 +33,7 @@ class DatePicker extends BaseComponent {
 </div>
 <div class="cal-container" ref="container"></div>
 <div class="cal-footer">
-	<a href="javascript:void(0);" ref="footerLink"></a>
+	<span ref="footerLink"></span>
 </div>
 </div>`;
 	}
@@ -396,6 +396,7 @@ class DatePicker extends BaseComponent {
 	}
 
 	render () {
+		console.log('render');
 		// dateNum increments, starting with the first Sunday
 		// showing on the monthly calendar. This is usually the
 		// previous month, so dateNum will start as a negative number
@@ -506,9 +507,14 @@ class DatePicker extends BaseComponent {
 			this.onClickMonth(1);
 		});
 
+		console.log('this.footerLink', this.footerLink);
 		this.on(this.footerLink, 'click', () => {
+			console.log('link');
+			this.focus();
 			this.current = new Date();
-			this.render();
+			//this.render();
+			this.valueDate = copy(this.current);
+			this.emitValue();
 		});
 
 		this.on(this.container, 'click', (e) => {
@@ -541,7 +547,7 @@ class DatePicker extends BaseComponent {
 	}
 }
 
-const today = new Date(2017, 6, 3);
+const today = new Date();
 
 function getSelectedDate (date, current) {
 	if (date.getMonth() === current.getMonth() && date.getFullYear() === current.getFullYear()) {
