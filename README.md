@@ -45,6 +45,15 @@ Usage:
 <date-range-input value="11/20/2017 - 12/25/2017" label="Enter Range" name="range-field" />
 ```
 
+### date-range-inputs
+
+Two inputs that are linked to create one date range.
+
+Usage:
+```jsx harmony
+<date-range-inputs value="11/20/2017 - 12/25/2017" label="Enter Range" name="range-field" />
+```
+
 Both components will emit change events, upon completion of a valid date.
 
 ### Attributes

@@ -56,7 +56,7 @@
 
 			// does node.value work?
 			//
-			test.only('it should load custom input of type `date`', function () {
+			test('it should load custom input of type `date`', function () {
 				var node = dom('date-input', {type:'date', label: 'Date', value:'12/12/2017' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {
@@ -95,15 +95,36 @@
 			});
 
 			test('it should load a date range input', function () {
-				//window.keepPopupsOpen = 1;
 				var node = dom('date-range-input', {label:'El Date Picker', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test.only('it should load date range inputs', function () {
-				//window.keepPopupsOpen = 1;
+			test('it should load date range inputs', function (done) {
 				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
+
+				onDomReady(node, function () {
+					expect(node.leftInput.value).to.equal('01/10/2017');
+					expect(node.rightInput.value).to.equal('02/14/2017');
+
+					node.value = '02/10/2017 - 03/17/2017';
+					expect(node.leftInput.value).to.equal('02/10/2017');
+					expect(node.rightInput.value).to.equal('03/17/2017');
+					done();
+				});
+			});
+
+			test.only('it should load date range inputs with no value', function (done) {
+				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', required: true, placeholder: 'Date here'}, body);
+				expect(dom.isNode(node)).to.equal(true);
+
+				onDomReady(node, function () {
+					expect(node.value).to.equal(null);
+
+					node.value = '02/10/2017 - 03/17/2017';
+					expect(node.value).to.equal('02/10/2017 - 03/17/2017');
+					done();
+				});
 			});
 		});
 

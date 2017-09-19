@@ -3,13 +3,13 @@ require('./date-input');
 const dates = require('dates');
 const dom = require('@clubajax/dom');
 
-const props = ['left-label', 'right-label', 'name', 'placeholder'];
-const bools = ['range-expands'];
+const props = ['left-label', 'right-label', 'name', 'placeholder', 'value'];
+const bools = ['range-expands', 'required'];
 
 class DateRangeInputs extends BaseComponent {
 
 	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
+		return [...props, ...bools];
 	}
 
 	get props () {
@@ -20,9 +20,19 @@ class DateRangeInputs extends BaseComponent {
 		return bools;
 	}
 
+	onValue (value) {
+		if(!this.isValid(value)){
+			console.error('Invalid dates', value);
+			return;
+		}
+		const ds = value.split(/\s*-\s*/);
+		this.leftInput.value = ds[0];
+		this.rightInput.value = ds[1];
+	}
+
 	constructor () {
 		super();
-		this.mask = 'XX/XX/XXXX'
+		this.mask = 'XX/XX/XXXX';
 	}
 
 	isValid (value) {
@@ -31,11 +41,10 @@ class DateRangeInputs extends BaseComponent {
 	}
 
 	domReady () {
-		this.leftInput = dom('date-input', { label: this['left-label'] }, this);
-		this.rightInput = dom('date-input', { label: this['right-label'] }, this);
+		this.leftInput = dom('date-input', { label: this['left-label'], required: this.required, placeholder: this.placeholder }, this);
+		this.rightInput = dom('date-input', { label: this['right-label'], required: this.required, placeholder: this.placeholder }, this);
 
 		this.leftInput.on('change', (e) => {
-			//this.rightInput.min = e.value;
 			const changesDate = dates.toDate(this.rightInput.value) < dates.toDate(e.value);
 			if (!this.rightInput.value || changesDate){
 				this.rightInput.value = e.value;
@@ -46,7 +55,6 @@ class DateRangeInputs extends BaseComponent {
 		});
 
 		this.rightInput.on('change', (e) => {
-			//this.leftInput.max = e.value;
 			const changesDate = dates.toDate(this.leftInput.value) > dates.toDate(e.value);
 			if (!this.leftInput.value || changesDate){
 				this.leftInput.value = e.value;

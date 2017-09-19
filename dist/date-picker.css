@@ -135,6 +135,10 @@ date-input, date-range-input {
     border-radius: 2px;
     border: 1px solid #ccc;
     transition: background-color 300ms ease, border-color 300ms ease; }
+    date-input input::placeholder, date-range-input input::placeholder {
+      font-style: italic; }
+    date-input input:-ms-input-placeholder, date-range-input input:-ms-input-placeholder {
+      font-style: italic; }
   date-input label span, date-range-input label span {
     font-size: 12px;
     color: #999;

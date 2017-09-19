@@ -5,7 +5,7 @@ const dates = require('dates');
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
 const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max'];
-const bools = [];
+const bools = ['required'];
 
 const FLASH_TIME = 1000;
 
@@ -64,7 +64,7 @@ class DateInput extends BaseComponent {
 		return `
 <label>
 	<span ref="labelNode"></span>
-	<input ref="input" />
+	<input ref="input" class="empty" />
 	
 </label>
 <date-picker ref="picker" tabindex="0"></date-picker>`;
@@ -76,6 +76,9 @@ class DateInput extends BaseComponent {
 	}
 
 	isValid (value) {
+		if(!value && !this.required){
+			return true;
+		}
 		return dates.isDate(this.input.value);
 	}
 
@@ -101,6 +104,7 @@ class DateInput extends BaseComponent {
 		if (valid) {
 			this.classList.remove('invalid')
 		} else if (!silent) {
+			console.log('INVALID');
 			this.classList.add('invalid')
 		}
 

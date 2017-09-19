@@ -200,6 +200,12 @@ date-input, date-range-input{
         border-radius: 2px;
         border: 1px solid $brd;
         transition: background-color 300ms ease, border-color 300ms ease;
+        &::placeholder{
+            font-style: italic;
+        }
+        &:-ms-input-placeholder{
+            font-style: italic;
+        }
     }
     label{
         span{
