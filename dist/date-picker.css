@@ -132,6 +132,7 @@ date-input, date-range-input {
   display: inline-block;
   position: relative; }
   date-input input, date-range-input input {
+    border-radius: 2px;
     border: 1px solid #ccc;
     transition: background-color 300ms ease, border-color 300ms ease; }
   date-input label span, date-range-input label span {
@@ -195,8 +196,8 @@ date-range-inputs {
   flex-wrap: nowrap;
   flex-direction: row; }
   date-range-inputs date-input:first-child {
-    margin-right: 2px; }
+    margin-right: 5px; }
   date-range-inputs date-input:last-child {
-    margin-left: 2px; }
+    margin-left: 5px; }
 
 /*# sourceMappingURL=date-picker.css.map */

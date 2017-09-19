@@ -1,7 +1,7 @@
 require('./date-picker');
-const BaseComponent = require('BaseComponent');
+const BaseComponent = require('@clubajax/base-component');
 const dates = require('dates');
-const dom = require('dom');
+const dom = require('@clubajax/dom');
 
 const props = ['value'];
 const bools = ['range-expands'];

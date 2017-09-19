@@ -6,7 +6,7 @@ module.exports = function (grunt) {
     
     // collect dependencies from node_modules
     let nm = path.resolve(__dirname, 'node_modules'),
-        vendorAliases = ['dom', 'on', 'custom-elements-polyfill', 'BaseComponent'],
+        vendorAliases = ['@clubajax/dom', '@clubajax/on', '@clubajax/custom-elements-polyfill', '@clubajax/base-component'],
 		baseAliases = ['./src/date-picker'],
 		allAliases = vendorAliases.concat(baseAliases),
 		sourceMaps = true,

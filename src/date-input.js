@@ -1,5 +1,5 @@
 require('./date-picker');
-const BaseComponent = require('BaseComponent');
+const BaseComponent = require('@clubajax/base-component');
 const dates = require('dates');
 
 const defaultPlaceholder = 'MM/DD/YYYY';

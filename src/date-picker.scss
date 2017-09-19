@@ -197,6 +197,7 @@ date-input, date-range-input{
     position: relative;
     //outline: none;
     input{
+        border-radius: 2px;
         border: 1px solid $brd;
         transition: background-color 300ms ease, border-color 300ms ease;
     }
@@ -277,10 +278,10 @@ date-range-inputs{
     flex-direction: row;
     date-input{
         &:first-child{
-            margin-right: 2px;
+            margin-right: 5px;
         }
         &:last-child{
-            margin-left: 2px;
+            margin-left: 5px;
         }
     }
 }

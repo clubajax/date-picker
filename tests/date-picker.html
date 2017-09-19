@@ -100,7 +100,7 @@
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
-			test('it should load date range inputs', function () {
+			test.only('it should load date range inputs', function () {
 				//window.keepPopupsOpen = 1;
 				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);

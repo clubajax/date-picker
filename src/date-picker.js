@@ -1,7 +1,4 @@
-require('BaseComponent/src/properties');
-require('BaseComponent/src/template');
-require('BaseComponent/src/refs');
-const BaseComponent = require('BaseComponent');
+const BaseComponent = require('@clubajax/base-component');
 const dates = require('dates');
 
 const props = ['min', 'max'];

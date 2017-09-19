@@ -1,7 +1,7 @@
-const BaseComponent = require('BaseComponent');
+const BaseComponent = require('@clubajax/base-component');
 require('./date-input');
 const dates = require('dates');
-const dom = require('dom');
+const dom = require('@clubajax/dom');
 
 const props = ['left-label', 'right-label', 'name', 'placeholder'];
 const bools = ['range-expands'];
