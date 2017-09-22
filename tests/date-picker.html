@@ -118,6 +118,10 @@
 				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', required: true, placeholder: 'Date here'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 
+				node.on('change', function (e) {
+					console.log('CHANGE', e);
+				});
+
 				onDomReady(node, function () {
 					expect(node.value).to.equal(null);
 

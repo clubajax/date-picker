@@ -256,6 +256,17 @@ function handleOpen (input, picker, show, hide) {
 		}
 	});
 	docHandle.pause();
+	const changeHandle = on(picker, 'change', () => {
+		if (!inputFocus) {
+			setTimeout(() => {
+				hide();
+				docHandle.pause();
+				changeHandle.pause();
+			}, 100);
+		}
+	});
+	changeHandle.pause();
+
 	return on.makeMultiHandle([
 		on(input, 'focus', () => {
 			inputFocus = true;
@@ -275,6 +286,7 @@ function handleOpen (input, picker, show, hide) {
 			pickerFocus = true;
 			show();
 			docHandle.resume();
+			changeHandle.resume();
 		}),
 		on(picker, 'blur', () => {
 			pickerFocus = false;
@@ -282,10 +294,13 @@ function handleOpen (input, picker, show, hide) {
 				if (!inputFocus) {
 					hide();
 					docHandle.pause();
+					changeHandle.pause();
 				}
 			}, 100);
 
-		})
+		}),
+		changeHandle,
+		docHandle
 	]);
 }
 
