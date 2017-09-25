@@ -93,7 +93,7 @@ class DateInput extends BaseComponent {
 			valid = false;
 		}
 
-		if (valid && len) {
+		if (valid || !len) {
 			this.strDate = value;
 			this.picker.value = value;
 			if (!silent) {

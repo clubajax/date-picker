@@ -136,7 +136,12 @@
 
 			test.only('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
 				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'02/10/2017 - 02/14/2017'}, body);
+				var btn = dom('button', {html: 'clear'}, body);
 				expect(dom.isNode(node)).to.equal(true);
+
+				on(btn, 'click', function () {
+					node.clear();
+				});
 
 				node.on('change', function (e) {
 					console.log('\nEMIT');
@@ -153,10 +158,10 @@
 				});
 			});
 
-			test.only('it should open the other picker if range is (auto-set) the same (no initial value) - MANUAL TEST', function (done) {
+			test('it should open the other picker if range is (auto-set) the same (no initial value) - MANUAL TEST', function (done) {
 				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date'}, body);
-				expect(dom.isNode(node)).to.equal(true);
 
+				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {
 					console.log('\nEMIT');
 					console.log('change.value', node.value);

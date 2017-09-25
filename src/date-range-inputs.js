@@ -23,7 +23,7 @@ class DateRangeInputs extends BaseComponent {
 	}
 
 	set value (value) {
-		if(!this.isValid(value)){
+		if (!this.isValid(value)) {
 			console.error('Invalid dates', value);
 			return;
 		}
@@ -37,14 +37,14 @@ class DateRangeInputs extends BaseComponent {
 	}
 
 	get value () {
-		if(!this.leftInput.value || !this.rightInput.value){
+		if (!this.leftInput.value || !this.rightInput.value) {
 			return null;
 		}
 		return `${this.leftInput.value}${DELIMITER}${this.rightInput.value}`;
 	}
 
 	attributeChanged (prop, value) {
-		if(prop === 'value'){
+		if (prop === 'value') {
 			this.value = value;
 		}
 	}
@@ -63,8 +63,17 @@ class DateRangeInputs extends BaseComponent {
 	}
 
 	isValid (value) {
+		if (!value) {
+			return false;
+		}
 		const ds = value.split(/\s*-\s*/);
 		return dates.isDate(ds[0]) && dates.isDate(ds[1]);
+	}
+
+	clear () {
+		this.leftInput.setValue('', true, true);
+		this.rightInput.setValue('', true, true);
+		this.emit('change', { value: null });
 	}
 
 	emitEvent () {
@@ -78,14 +87,23 @@ class DateRangeInputs extends BaseComponent {
 	}
 
 	connected () {
-		this.leftInput = dom('date-input', { label: this['left-label'], required: this.required, placeholder: this.placeholder }, this);
-		this.rightInput = dom('date-input', { label: this['right-label'], required: this.required, placeholder: this.placeholder }, this);
+		this.leftInput = dom('date-input', {
+			label: this['left-label'],
+			required: this.required,
+			placeholder: this.placeholder
+		}, this);
+		this.rightInput = dom('date-input', {
+			label: this['right-label'],
+			required: this.required,
+			placeholder: this.placeholder
+		}, this);
 
 		this.leftInput.on('change', (e) => {
 			const changesDate = dates.toDate(this.rightInput.value) < dates.toDate(e.value);
-			console.log('set it');
-			if (!this.rightInput.value || changesDate){
-				this.rightInput.setValue(e.value, true, true);
+			if (!this.rightInput.value || changesDate) {
+				if (e.value) {
+					this.rightInput.setValue(e.value, true, true);
+				}
 				if (changesDate) {
 					this.rightInput.flash(true);
 				} else if (!this.isBeingSet) {
@@ -101,8 +119,10 @@ class DateRangeInputs extends BaseComponent {
 
 		this.rightInput.on('change', (e) => {
 			const changesDate = dates.toDate(this.leftInput.value) > dates.toDate(e.value);
-			if (!this.leftInput.value || changesDate){
-				this.leftInput.setValue(e.value, true, true);
+			if (!this.leftInput.value || changesDate) {
+				if (e.value) {
+					this.leftInput.setValue(e.value, true, true);
+				}
 				if (changesDate) {
 					this.leftInput.flash(true);
 				} else if (!this.isBeingSet) {
