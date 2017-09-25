@@ -82,7 +82,7 @@ class DateInput extends BaseComponent {
 		return dates.isDate(this.input.value);
 	}
 
-	setValue (value, silent, noHide) {
+	setValue (value, silent) {
 		this.typedValue = value;
 		this.input.value = value;
 		const len = this.input.value.length === this.mask.length;

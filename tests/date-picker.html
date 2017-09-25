@@ -136,11 +136,19 @@
 
 			test.only('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
 				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'02/10/2017 - 02/14/2017'}, body);
-				var btn = dom('button', {html: 'clear'}, body);
+				var b1 = dom('button', {html: 'clear'}, body);
+				var b2  = dom('button', {html: 'value.set'}, body);
+				var b3  = dom('button', {html: 'setValue'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 
-				on(btn, 'click', function () {
+				on(b1, 'click', function () {
 					node.clear();
+				});
+				on(b2, 'click', function () {
+					node.value = '02/10/2017 - 02/14/2017';
+				});
+				on(b3, 'click', function () {
+					node.setValue('02/10/2017 - 02/14/2017', true);
 				});
 
 				node.on('change', function (e) {

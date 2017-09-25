@@ -23,17 +23,7 @@ class DateRangeInputs extends BaseComponent {
 	}
 
 	set value (value) {
-		if (!this.isValid(value)) {
-			console.error('Invalid dates', value);
-			return;
-		}
-		onDomReady(this, () => {
-			const ds = value.split(/\s*-\s*/);
-			this.isBeingSet = true;
-			this.leftInput.value = ds[0];
-			this.rightInput.value = ds[1];
-			this.isBeingSet = false;
-		});
+		this.setValue(value);
 	}
 
 	get value () {
@@ -64,16 +54,32 @@ class DateRangeInputs extends BaseComponent {
 
 	isValid (value) {
 		if (!value) {
-			return false;
+			return true; // TODO: required
 		}
 		const ds = value.split(/\s*-\s*/);
 		return dates.isDate(ds[0]) && dates.isDate(ds[1]);
 	}
 
-	clear () {
-		this.leftInput.setValue('', true, true);
-		this.rightInput.setValue('', true, true);
-		this.emit('change', { value: null });
+	setValue (value, silent) {
+		if (!this.isValid(value)) {
+			console.error('Invalid dates', value);
+			return;
+		}
+		onDomReady(this, () => {
+			const ds = value ? value.split(/\s*-\s*/) : ['', ''];
+			this.isBeingSet = true;
+			this.leftInput.setValue(ds[0], silent);
+			this.rightInput.setValue(ds[1], silent);
+			this.isBeingSet = false;
+		});
+	}
+
+	clear (silent) {
+		this.leftInput.setValue('', true);
+		this.rightInput.setValue('', true);
+		if (!silent) {
+			this.emit('change', { value: null });
+		}
 	}
 
 	emitEvent () {
