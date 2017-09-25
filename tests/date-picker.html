@@ -116,14 +116,13 @@
 				});
 			});
 
-			test.only('it should load date range inputs with no value', function (done) {
+			test('it should load date range inputs with no value', function (done) {
 				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', required: true, placeholder: 'Date here'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 
 				node.on('change', function (e) {
-					console.log('CHANGE');
-					console.log('value', node.value);
-					console.log('target', e.target);
+					console.log('change.value', node.value);
+					console.log('change.target', e.target);
 				});
 
 				onDomReady(node, function () {
@@ -131,6 +130,25 @@
 
 					node.value = '02/10/2017 - 03/17/2017';
 					expect(node.value).to.equal('02/10/2017 - 03/17/2017');
+					done();
+				});
+			});
+
+			test.only('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
+				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'02/10/2017 - 02/14/2017'}, body);
+				expect(dom.isNode(node)).to.equal(true);
+
+				node.on('change', function (e) {
+					console.log('\nEMIT');
+					console.log('change.value', node.value);
+					console.log('change.target', e.target);
+				});
+
+				onDomReady(node, function () {
+
+					//node.leftInput.value = '02/15/2017';
+					//node.value = '02/10/2017 - 03/17/2017';
+					//expect(node.value).to.equal('02/10/2017 - 03/17/2017');
 					done();
 				});
 			});

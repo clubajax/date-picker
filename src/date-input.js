@@ -104,7 +104,6 @@ class DateInput extends BaseComponent {
 		if (valid) {
 			this.classList.remove('invalid')
 		} else if (!silent) {
-			console.log('INVALID');
 			this.classList.add('invalid')
 		}
 
@@ -190,11 +189,15 @@ class DateInput extends BaseComponent {
 		this.setValue(this.format(str + k), true);
 	}
 
-	flash () {
+	flash (addFocus) {
 		this.classList.add('warning');
 		setTimeout(() => {
 			this.classList.remove('warning');
-		}, FLASH_TIME)
+		}, FLASH_TIME);
+
+		if(addFocus){
+			this.focus();
+		}
 	}
 
 	show () {
@@ -220,10 +223,15 @@ class DateInput extends BaseComponent {
 		if (!this.showing || window.keepPopupsOpen) {
 			return;
 		}
-
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
 		dom.classList.toggle(this, 'invalid', !this.isValid());
+	}
+
+	focus () {
+		onDomReady(this, () => {
+			this.input.focus();
+		});
 	}
 
 	domReady () {

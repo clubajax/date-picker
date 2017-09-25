@@ -56,6 +56,7 @@ class DateRangeInputs extends BaseComponent {
 
 	constructor () {
 		super();
+		this.fireOwnDomready = true;
 		this.mask = 'XX/XX/XXXX';
 	}
 
@@ -74,37 +75,49 @@ class DateRangeInputs extends BaseComponent {
 		}, 100);
 	}
 
-	domReady () {
+	connected () {
 		this.leftInput = dom('date-input', { label: this['left-label'], required: this.required, placeholder: this.placeholder }, this);
 		this.rightInput = dom('date-input', { label: this['right-label'], required: this.required, placeholder: this.placeholder }, this);
 
 		this.leftInput.on('change', (e) => {
 			const changesDate = dates.toDate(this.rightInput.value) < dates.toDate(e.value);
 			if (!this.rightInput.value || changesDate){
-				this.rightInput.value = e.value;
+				this.rightInput.setValue(e.value, true, true);
 				if (changesDate) {
-					this.rightInput.flash();
+					this.rightInput.flash(true);
 				}
+			} else {
+				this.emitEvent();
 			}
 			e.stopPropagation();
 			e.preventDefault();
-			this.emitEvent();
 			return false;
 		});
 
 		this.rightInput.on('change', (e) => {
 			const changesDate = dates.toDate(this.leftInput.value) > dates.toDate(e.value);
 			if (!this.leftInput.value || changesDate){
-				this.leftInput.value = e.value;
+				this.leftInput.setValue(e.value, true, true);
 				if (changesDate) {
 					this.leftInput.flash();
 				}
+			} else {
+				this.emitEvent();
 			}
 			e.stopPropagation();
 			e.preventDefault();
-			this.emitEvent();
+
 			return false;
 		});
+
+		onDomReady([this.leftInput, this.rightInput], () => {
+			this.fire('domready');
+		});
+		this.connected = function () {};
+	}
+
+	domReady () {
+
 	}
 }
 
