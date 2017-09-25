@@ -104,6 +104,8 @@
 				expect(dom.isNode(node)).to.equal(true);
 
 				onDomReady(node, function () {
+					expect(node.value).to.equal('01/10/2017 - 02/14/2017');
+
 					expect(node.leftInput.value).to.equal('01/10/2017');
 					expect(node.rightInput.value).to.equal('02/14/2017');
 
@@ -119,7 +121,9 @@
 				expect(dom.isNode(node)).to.equal(true);
 
 				node.on('change', function (e) {
-					console.log('CHANGE', e);
+					console.log('CHANGE');
+					console.log('value', node.value);
+					console.log('target', e.target);
 				});
 
 				onDomReady(node, function () {

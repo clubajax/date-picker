@@ -3,13 +3,15 @@ require('./date-input');
 const dates = require('dates');
 const dom = require('@clubajax/dom');
 
-const props = ['left-label', 'right-label', 'name', 'placeholder', 'value'];
+const props = ['left-label', 'right-label', 'name', 'placeholder'];
 const bools = ['range-expands', 'required'];
+
+const DELIMITER = ' - ';
 
 class DateRangeInputs extends BaseComponent {
 
 	static get observedAttributes () {
-		return [...props, ...bools];
+		return [...props, ...bools, 'value'];
 	}
 
 	get props () {
@@ -20,14 +22,36 @@ class DateRangeInputs extends BaseComponent {
 		return bools;
 	}
 
-	onValue (value) {
+	set value (value) {
 		if(!this.isValid(value)){
 			console.error('Invalid dates', value);
 			return;
 		}
-		const ds = value.split(/\s*-\s*/);
-		this.leftInput.value = ds[0];
-		this.rightInput.value = ds[1];
+		onDomReady(this, () => {
+			const ds = value.split(/\s*-\s*/);
+			this.leftInput.value = ds[0];
+			this.rightInput.value = ds[1];
+		});
+	}
+
+	get value () {
+		if(!this.leftInput.value || !this.rightInput.value){
+			return null;
+		}
+		return `${this.leftInput.value}${DELIMITER}${this.rightInput.value}`;
+	}
+
+	attributeChanged (prop, value) {
+		if(prop === 'value'){
+			this.value = value;
+		}
+	}
+
+	get values () {
+		return {
+			start: this.leftInput.value,
+			end: this.leftInput.value
+		};
 	}
 
 	constructor () {
@@ -38,6 +62,16 @@ class DateRangeInputs extends BaseComponent {
 	isValid (value) {
 		const ds = value.split(/\s*-\s*/);
 		return dates.isDate(ds[0]) && dates.isDate(ds[1]);
+	}
+
+	emitEvent () {
+		clearTimeout(this.debounce);
+		this.debounce = setTimeout(() => {
+			const value = this.value;
+			if (this.isValid(value)) {
+				this.emit('change', { value });
+			}
+		}, 100);
 	}
 
 	domReady () {
@@ -52,6 +86,10 @@ class DateRangeInputs extends BaseComponent {
 					this.rightInput.flash();
 				}
 			}
+			e.stopPropagation();
+			e.preventDefault();
+			this.emitEvent();
+			return false;
 		});
 
 		this.rightInput.on('change', (e) => {
@@ -62,6 +100,10 @@ class DateRangeInputs extends BaseComponent {
 					this.leftInput.flash();
 				}
 			}
+			e.stopPropagation();
+			e.preventDefault();
+			this.emitEvent();
+			return false;
 		});
 	}
 }
