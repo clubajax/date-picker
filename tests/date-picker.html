@@ -152,6 +152,25 @@
 					done();
 				});
 			});
+
+			test.only('it should open the other picker if range is (auto-set) the same (no initial value) - MANUAL TEST', function (done) {
+				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date'}, body);
+				expect(dom.isNode(node)).to.equal(true);
+
+				node.on('change', function (e) {
+					console.log('\nEMIT');
+					console.log('change.value', node.value);
+					console.log('change.target', e.target);
+				});
+
+				onDomReady(node, function () {
+
+					//node.leftInput.value = '02/15/2017';
+					//node.value = '02/10/2017 - 03/17/2017';
+					//expect(node.value).to.equal('02/10/2017 - 03/17/2017');
+					done();
+				});
+			});
 		});
 
 	});

@@ -29,8 +29,10 @@ class DateRangeInputs extends BaseComponent {
 		}
 		onDomReady(this, () => {
 			const ds = value.split(/\s*-\s*/);
+			this.isBeingSet = true;
 			this.leftInput.value = ds[0];
 			this.rightInput.value = ds[1];
+			this.isBeingSet = false;
 		});
 	}
 
@@ -81,10 +83,13 @@ class DateRangeInputs extends BaseComponent {
 
 		this.leftInput.on('change', (e) => {
 			const changesDate = dates.toDate(this.rightInput.value) < dates.toDate(e.value);
+			console.log('set it');
 			if (!this.rightInput.value || changesDate){
 				this.rightInput.setValue(e.value, true, true);
 				if (changesDate) {
 					this.rightInput.flash(true);
+				} else if (!this.isBeingSet) {
+					this.rightInput.focus();
 				}
 			} else {
 				this.emitEvent();
@@ -99,7 +104,9 @@ class DateRangeInputs extends BaseComponent {
 			if (!this.leftInput.value || changesDate){
 				this.leftInput.setValue(e.value, true, true);
 				if (changesDate) {
-					this.leftInput.flash();
+					this.leftInput.flash(true);
+				} else if (!this.isBeingSet) {
+					this.leftInput.focus();
 				}
 			} else {
 				this.emitEvent();
