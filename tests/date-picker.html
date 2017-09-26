@@ -24,6 +24,9 @@
 			padding: 3px;
 			margin: 5px;
 		}
+		.spacing{
+			height: 1500px;
+		}
 		.BR{
 			position: absolute;
 			right: 20px;
@@ -40,6 +43,10 @@
 
 <div id="mocha"></div>
 
+<div class="xspacing"></div>
+<div id="tests"></div>
+<div class="spacing"></div>
+
 <script>
 	window.mocha.setup('tdd');
 
@@ -50,7 +57,7 @@
 			dom = window.dom,
 			on = window.on,
 			expect = chai.expect,
-			body = document.body;
+			body = dom.byId('tests');
 
 		suite('create / destroy', function () {
 

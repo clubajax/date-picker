@@ -213,7 +213,7 @@ class DateInput extends BaseComponent {
 			if (box.x + box.w > win.h) {
 				this.picker.classList.add('right-align');
 			}
-			if (box.y + box.h > win.h) {
+			if (box.top + box.h > win.h) {
 				this.picker.classList.add('bottom-align');
 			}
 		});
