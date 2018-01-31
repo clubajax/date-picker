@@ -1,6 +1,6 @@
 {
   "name": "date-picker",
-	"version": "0.9.2",
+	"version": "0.10.9",
   "description": "Calendar custom-element",
   "main": "dist/date-picker.js",
   "authors": [

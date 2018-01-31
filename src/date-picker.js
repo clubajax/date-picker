@@ -1,5 +1,6 @@
 const BaseComponent = require('@clubajax/base-component');
 const dates = require('dates');
+const dom = require('@clubajax/dom');
 
 const props = ['min', 'max'];
 
