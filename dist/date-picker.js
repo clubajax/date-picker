@@ -2,16 +2,17 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD
-        define(["on", "dom"], factory);
+        define(["@clubajax/on"], factory);
     } else if (typeof module === 'object' && module.exports) {
         // Node / CommonJS
-        module.exports = factory(require('on'), require('dom'));
+        module.exports = factory(require('@clubajax/on'));
     } else {
         // Browser globals (root is window)
-        root['BaseComponent'] = factory(root.on, root.dom);
+        root['BaseComponent'] = factory(root.on);
     }
-	}(this, function (on, dom) {
+	}(this, function (on) {
 "use strict";
+
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -29,7 +30,7 @@ var BaseComponent = function (_HTMLElement) {
 
 		var _this = _possibleConstructorReturn(this, (BaseComponent.__proto__ || Object.getPrototypeOf(BaseComponent)).call(this));
 
-		_this._uid = dom.uid(_this.localName);
+		_this._uid = uid(_this.localName);
 		privates[_this._uid] = { DOMSTATE: 'created' };
 		privates[_this._uid].handleList = [];
 		plugin('init', _this);
@@ -112,7 +113,7 @@ var BaseComponent = function (_HTMLElement) {
 			privates[this._uid].handleList.forEach(function (handle) {
 				handle.remove();
 			});
-			dom.destroy(this);
+			_destroy(this);
 		}
 	}, {
 		key: 'fire',
@@ -242,7 +243,7 @@ function onCheckDomReady() {
 
 	var count = 0,
 	    children = getChildCustomNodes(this),
-	    ourDomReady = onDomReady.bind(this);
+	    ourDomReady = onSelfDomReady.bind(this);
 
 	function addReady() {
 		count++;
@@ -271,7 +272,7 @@ function onCheckDomReady() {
 	}
 }
 
-function onDomReady() {
+function onSelfDomReady() {
 	privates[this._uid].DOMSTATE = 'domready';
 	// domReady should only ever fire once
 	privates[this._uid].domReadyFired = true;
@@ -284,7 +285,11 @@ function onDomReady() {
 		this.domReady = function () {};
 	}
 
-	this.fire('domready');
+	// allow component to fire this event
+	// domReady() will still be called
+	if (!this.fireOwnDomready) {
+		this.fire('domready');
+	}
 
 	plugin('postDomReady', this);
 }
@@ -307,41 +312,78 @@ function nextTick(cb) {
 	requestAnimationFrame(cb);
 }
 
-window.onDomReady = function (node, callback) {
-	function onReady() {
-		callback(node);
-		node.removeEventListener('domready', onReady);
+var uids = {};
+function uid() {
+	var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'uid';
+
+	if (uids[type] === undefined) {
+		uids[type] = 0;
+	}
+	var id = type + '-' + (uids[type] + 1);
+	uids[type]++;
+	return id;
+}
+
+var destroyer = document.createElement('div');
+function _destroy(node) {
+	if (node) {
+		destroyer.appendChild(node);
+		destroyer.innerHTML = '';
+	}
+}
+
+window.onDomReady = function (nodeOrNodes, callback) {
+	function handleDomReady(node, cb) {
+		function onReady() {
+			cb(node);
+			node.removeEventListener('domready', onReady);
+		}
+
+		if (node.DOMSTATE === 'domready') {
+			cb(node);
+		} else {
+			node.addEventListener('domready', onReady);
+		}
 	}
 
-	if (node.DOMSTATE === 'domready') {
-		callback(node);
-	} else {
-		node.addEventListener('domready', onReady);
+	if (!Array.isArray(nodeOrNodes)) {
+		handleDomReady(nodeOrNodes, callback);
+		return;
+	}
+
+	var count = 0;
+
+	function onArrayNodeReady() {
+		count++;
+		if (count === nodeOrNodes.length) {
+			callback(nodeOrNodes);
+		}
+	}
+
+	for (var i = 0; i < nodeOrNodes.length; i++) {
+		handleDomReady(nodeOrNodes[i], onArrayNodeReady);
 	}
 };
 
-	return BaseComponent;
+(function () {
+				
 
-}));
-},{"dom":7,"on":8}],2:[function(require,module,exports){
-const BaseComponent = require('BaseComponent');
-
-function setBoolean (node, prop) {
+function setBoolean(node, prop) {
 	Object.defineProperty(node, prop, {
 		enumerable: true,
 		configurable: true,
-		get () {
+		get: function get() {
 			return node.hasAttribute(prop);
 		},
-		set (value) {
+		set: function set(value) {
 			this.isSettingAttribute = true;
 			if (value) {
 				this.setAttribute(prop, '');
 			} else {
 				this.removeAttribute(prop);
 			}
-			const fn = this[onify(prop)];
-			if(fn){
+			var fn = this[onify(prop)];
+			if (fn) {
 				fn.call(this, value);
 			}
 
@@ -350,24 +392,26 @@ function setBoolean (node, prop) {
 	});
 }
 
-function setProperty (node, prop) {
-	let propValue;
+function setProperty(node, prop) {
+	var propValue = void 0;
 	Object.defineProperty(node, prop, {
 		enumerable: true,
 		configurable: true,
-		get () {
+		get: function get() {
 			return propValue !== undefined ? propValue : normalize(this.getAttribute(prop));
 		},
-		set (value) {
+		set: function set(value) {
+			var _this = this;
+
 			this.isSettingAttribute = true;
 			this.setAttribute(prop, value);
-			const fn = this[onify(prop)];
-			if(fn){
-				onDomReady(this, () => {
-					if(value !== undefined){
+			var fn = this[onify(prop)];
+			if (fn) {
+				onDomReady(this, function () {
+					if (value !== undefined) {
 						propValue = value;
 					}
-					value = fn.call(this, value) || value;
+					value = fn.call(_this, value) || value;
 				});
 			}
 			this.isSettingAttribute = false;
@@ -375,35 +419,34 @@ function setProperty (node, prop) {
 	});
 }
 
-function setObject (node, prop) {
+function setObject(node, prop) {
 	Object.defineProperty(node, prop, {
 		enumerable: true,
 		configurable: true,
-		get () {
+		get: function get() {
 			return this['__' + prop];
 		},
-		set (value) {
+		set: function set(value) {
 			this['__' + prop] = value;
 		}
 	});
 }
 
-function setProperties (node) {
-	let props = node.props || node.properties;
+function setProperties(node) {
+	var props = node.props || node.properties;
 	if (props) {
 		props.forEach(function (prop) {
 			if (prop === 'disabled') {
 				setBoolean(node, prop);
-			}
-			else {
+			} else {
 				setProperty(node, prop);
 			}
 		});
 	}
 }
 
-function setBooleans (node) {
-	let props = node.bools || node.booleans;
+function setBooleans(node) {
+	var props = node.bools || node.booleans;
 	if (props) {
 		props.forEach(function (prop) {
 			setBoolean(node, prop);
@@ -411,8 +454,8 @@ function setBooleans (node) {
 	}
 }
 
-function setObjects (node) {
-	let props = node.objects;
+function setObjects(node) {
+	var props = node.objects;
 	if (props) {
 		props.forEach(function (prop) {
 			setObject(node, prop);
@@ -420,46 +463,48 @@ function setObjects (node) {
 	}
 }
 
-function cap (name) {
-	return name.substring(0,1).toUpperCase() + name.substring(1);
+function cap(name) {
+	return name.substring(0, 1).toUpperCase() + name.substring(1);
 }
 
-function onify (name) {
-	return 'on' + name.split('-').map(word => cap(word)).join('');
+function onify(name) {
+	return 'on' + name.split('-').map(function (word) {
+		return cap(word);
+	}).join('');
 }
 
-function isBool (node, name) {
+function isBool(node, name) {
 	return (node.bools || node.booleans || []).indexOf(name) > -1;
 }
 
-function boolNorm (value) {
-	if(value === ''){
+function boolNorm(value) {
+	if (value === '') {
 		return true;
 	}
 	return normalize(value);
 }
 
-function propNorm (value) {
+function propNorm(value) {
 	return normalize(value);
 }
 
-function normalize (val){
-	if(typeof val === 'string') {
-		if(val === 'false'){
+function normalize(val) {
+	if (typeof val === 'string') {
+		val = val.trim();
+		if (val === 'false') {
 			return false;
-		}
-		else if(val === 'null'){
+		} else if (val === 'null') {
 			return null;
-		}
-		else if(val === 'true'){
+		} else if (val === 'true') {
 			return true;
 		}
-		if (val.indexOf('/') > -1 || (val.match(/-/g) || []).length > 1) {
-			// type of date
+		// finds strings that start with numbers, but are not numbers:
+		// '1team' '123 Street', '1-2-3', etc
+		if (('' + val).replace(/-?\d*\.?\d*/, '').length) {
 			return val;
 		}
 	}
-	if(!isNaN(parseFloat(val))){
+	if (!isNaN(parseFloat(val))) {
 		return parseFloat(val);
 	}
 	return val;
@@ -468,18 +513,18 @@ function normalize (val){
 BaseComponent.addPlugin({
 	name: 'properties',
 	order: 10,
-	init: function (node) {
+	init: function init(node) {
 		setProperties(node);
 		setBooleans(node);
 	},
-	preAttributeChanged: function (node, name, value) {
+	preAttributeChanged: function preAttributeChanged(node, name, value) {
 		if (node.isSettingAttribute) {
 			return false;
 		}
-		if(isBool(node, name)){
+		if (isBool(node, name)) {
 			value = boolNorm(value);
 			node[name] = !!value;
-			if(!value){
+			if (!value) {
 				node[name] = false;
 				node.isSettingAttribute = true;
 				node.removeAttribute(name);
@@ -492,54 +537,17 @@ BaseComponent.addPlugin({
 
 		node[name] = propNorm(value);
 	}
-});
-},{"BaseComponent":1}],3:[function(require,module,exports){
-const BaseComponent = require('BaseComponent');
+});			
+}());
 
-function assignRefs (node) {
+(function () {
+				
 
-    [...node.querySelectorAll('[ref]')].forEach(function (child) {
-        let name = child.getAttribute('ref');
-		child.removeAttribute('ref');
-        node[name] = child;
-    });
-}
+var lightNodes = {};
+var inserted = {};
 
-function assignEvents (node) {
-    // <div on="click:onClick">
-	[...node.querySelectorAll('[on]')].forEach(function (child, i, children) {
-		if(child === node){
-			return;
-		}
-		let
-            keyValue = child.getAttribute('on'),
-            event = keyValue.split(':')[0].trim(),
-            method = keyValue.split(':')[1].trim();
-		// remove, so parent does not try to use it
-		child.removeAttribute('on');
-
-        node.on(child, event, function (e) {
-            node[method](e)
-        })
-    });
-}
-
-BaseComponent.addPlugin({
-    name: 'refs',
-    order: 30,
-    preConnected: function (node) {
-        assignRefs(node);
-        assignEvents(node);
-    }
-});
-},{"BaseComponent":1}],4:[function(require,module,exports){
-const BaseComponent  = require('BaseComponent');
-
-const lightNodes = {};
-const inserted = {};
-
-function insert (node) {
-    if(inserted[node._uid] || !hasTemplate(node)){
+function insert(node) {
+    if (inserted[node._uid] || !hasTemplate(node)) {
         return;
     }
     collectLightNodes(node);
@@ -547,62 +555,62 @@ function insert (node) {
     inserted[node._uid] = true;
 }
 
-function collectLightNodes(node){
+function collectLightNodes(node) {
     lightNodes[node._uid] = lightNodes[node._uid] || [];
-    while(node.childNodes.length){
+    while (node.childNodes.length) {
         lightNodes[node._uid].push(node.removeChild(node.childNodes[0]));
     }
 }
 
-function hasTemplate (node) {
-	return node.templateString || node.templateId;
+function hasTemplate(node) {
+    return node.templateString || node.templateId;
 }
 
-function insertTemplateChain (node) {
-    const templates = node.getTemplateChain();
+function insertTemplateChain(node) {
+    var templates = node.getTemplateChain();
     templates.reverse().forEach(function (template) {
         getContainer(node).appendChild(BaseComponent.clone(template));
     });
     insertChildren(node);
 }
 
-function insertTemplate (node) {
-    if(node.nestedTemplate){
+function insertTemplate(node) {
+    if (node.nestedTemplate) {
         insertTemplateChain(node);
         return;
     }
-    const templateNode = node.getTemplateNode();
+    var templateNode = node.getTemplateNode();
 
-    if(templateNode) {
+    if (templateNode) {
         node.appendChild(BaseComponent.clone(templateNode));
     }
     insertChildren(node);
 }
 
-function getContainer (node) {
-    const containers = node.querySelectorAll('[ref="container"]');
-    if(!containers || !containers.length){
+function getContainer(node) {
+    var containers = node.querySelectorAll('[ref="container"]');
+    if (!containers || !containers.length) {
         return node;
     }
     return containers[containers.length - 1];
 }
 
-function insertChildren (node) {
-    let i;
-	const container = getContainer(node);
-	const children = lightNodes[node._uid];
+function insertChildren(node) {
+    var i = void 0;
+    var container = getContainer(node);
+    var children = lightNodes[node._uid];
 
-    if(container && children && children.length){
-        for(i = 0; i < children.length; i++){
+    if (container && children && children.length) {
+        for (i = 0; i < children.length; i++) {
             container.appendChild(children[i]);
         }
     }
 }
 
-function toDom (html){
-	const node = document.createElement('div');
-	node.innerHTML = html;
-	return node.firstChild;
+function toDom(html) {
+    var node = document.createElement('div');
+    node.innerHTML = html;
+    return node.firstChild;
 }
 
 BaseComponent.prototype.getLightNodes = function () {
@@ -612,31 +620,31 @@ BaseComponent.prototype.getLightNodes = function () {
 BaseComponent.prototype.getTemplateNode = function () {
     // caching causes different classes to pull the same template - wat?
     //if(!this.templateNode) {
-	if (this.templateId) {
-		this.templateNode = document.getElementById(this.templateId.replace('#',''));
-	}
-	else if (this.templateString) {
-		this.templateNode = toDom('<template>' + this.templateString + '</template>');
-	}
+    if (this.templateId) {
+        this.templateNode = document.getElementById(this.templateId.replace('#', ''));
+    } else if (this.templateString) {
+        this.templateNode = toDom('<template>' + this.templateString + '</template>');
+    }
     //}
     return this.templateNode;
 };
 
 BaseComponent.prototype.getTemplateChain = function () {
 
-    let
-        context = this,
+    var context = this,
         templates = [],
-        template;
+        template = void 0;
 
     // walk the prototype chain; Babel doesn't allow using
     // `super` since we are outside of the Class
-    while(context){
+    while (context) {
         context = Object.getPrototypeOf(context);
-        if(!context){ break; }
+        if (!context) {
+            break;
+        }
         // skip prototypes without a template
         // (else it will pull an inherited template and cause duplicates)
-        if(context.hasOwnProperty('templateString') || context.hasOwnProperty('templateId')) {
+        if (context.hasOwnProperty('templateString') || context.hasOwnProperty('templateId')) {
             template = context.getTemplateNode();
             if (template) {
                 templates.push(template);
@@ -649,28 +657,77 @@ BaseComponent.prototype.getTemplateChain = function () {
 BaseComponent.addPlugin({
     name: 'template',
     order: 20,
-    preConnected: function (node) {
+    preConnected: function preConnected(node) {
         insert(node);
     }
-});
-},{"BaseComponent":1}],5:[function(require,module,exports){
-var supportsV1 = 'customElements' in window;
-var supportsPromise = 'Promise' in window;
-var nativeShimBase64 = "ZnVuY3Rpb24gbmF0aXZlU2hpbSgpeygoKT0+eyd1c2Ugc3RyaWN0JztpZighd2luZG93LmN1c3RvbUVsZW1lbnRzKXJldHVybjtjb25zdCBhPXdpbmRvdy5IVE1MRWxlbWVudCxiPXdpbmRvdy5jdXN0b21FbGVtZW50cy5kZWZpbmUsYz13aW5kb3cuY3VzdG9tRWxlbWVudHMuZ2V0LGQ9bmV3IE1hcCxlPW5ldyBNYXA7bGV0IGY9ITEsZz0hMTt3aW5kb3cuSFRNTEVsZW1lbnQ9ZnVuY3Rpb24oKXtpZighZil7Y29uc3Qgaj1kLmdldCh0aGlzLmNvbnN0cnVjdG9yKSxrPWMuY2FsbCh3aW5kb3cuY3VzdG9tRWxlbWVudHMsaik7Zz0hMDtjb25zdCBsPW5ldyBrO3JldHVybiBsfWY9ITE7fSx3aW5kb3cuSFRNTEVsZW1lbnQucHJvdG90eXBlPWEucHJvdG90eXBlO09iamVjdC5kZWZpbmVQcm9wZXJ0eSh3aW5kb3csJ2N1c3RvbUVsZW1lbnRzJyx7dmFsdWU6d2luZG93LmN1c3RvbUVsZW1lbnRzLGNvbmZpZ3VyYWJsZTohMCx3cml0YWJsZTohMH0pLE9iamVjdC5kZWZpbmVQcm9wZXJ0eSh3aW5kb3cuY3VzdG9tRWxlbWVudHMsJ2RlZmluZScse3ZhbHVlOihqLGspPT57Y29uc3QgbD1rLnByb3RvdHlwZSxtPWNsYXNzIGV4dGVuZHMgYXtjb25zdHJ1Y3Rvcigpe3N1cGVyKCksT2JqZWN0LnNldFByb3RvdHlwZU9mKHRoaXMsbCksZ3x8KGY9ITAsay5jYWxsKHRoaXMpKSxnPSExO319LG49bS5wcm90b3R5cGU7bS5vYnNlcnZlZEF0dHJpYnV0ZXM9ay5vYnNlcnZlZEF0dHJpYnV0ZXMsbi5jb25uZWN0ZWRDYWxsYmFjaz1sLmNvbm5lY3RlZENhbGxiYWNrLG4uZGlzY29ubmVjdGVkQ2FsbGJhY2s9bC5kaXNjb25uZWN0ZWRDYWxsYmFjayxuLmF0dHJpYnV0ZUNoYW5nZWRDYWxsYmFjaz1sLmF0dHJpYnV0ZUNoYW5nZWRDYWxsYmFjayxuLmFkb3B0ZWRDYWxsYmFjaz1sLmFkb3B0ZWRDYWxsYmFjayxkLnNldChrLGopLGUuc2V0KGosayksYi5jYWxsKHdpbmRvdy5jdXN0b21FbGVtZW50cyxqLG0pO30sY29uZmlndXJhYmxlOiEwLHdyaXRhYmxlOiEwfSksT2JqZWN0LmRlZmluZVByb3BlcnR5KHdpbmRvdy5jdXN0b21FbGVtZW50cywnZ2V0Jyx7dmFsdWU6KGopPT5lLmdldChqKSxjb25maWd1cmFibGU6ITAsd3JpdGFibGU6ITB9KTt9KSgpO30=";
-if(supportsV1){
-	if(!window['no-native-shim']) {
-		eval(window.atob(nativeShimBase64));
-		nativeShim();
-	}
-}else{
-	customElements();
+});			
+}());
+
+(function () {
+				
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function assignRefs(node) {
+
+    [].concat(_toConsumableArray(node.querySelectorAll('[ref]'))).forEach(function (child) {
+        var name = child.getAttribute('ref');
+        child.removeAttribute('ref');
+        node[name] = child;
+    });
 }
-if (!supportsPromise) {
-	promisePolyfill();
+
+function assignEvents(node) {
+    // <div on="click:onClick">
+    [].concat(_toConsumableArray(node.querySelectorAll('[on]'))).forEach(function (child, i, children) {
+        if (child === node) {
+            return;
+        }
+        var keyValue = child.getAttribute('on'),
+            event = keyValue.split(':')[0].trim(),
+            method = keyValue.split(':')[1].trim();
+        // remove, so parent does not try to use it
+        child.removeAttribute('on');
+
+        node.on(child, event, function (e) {
+            node[method](e);
+        });
+    });
+}
+
+BaseComponent.addPlugin({
+    name: 'refs',
+    order: 30,
+    preConnected: function preConnected(node) {
+        assignRefs(node);
+        assignEvents(node);
+    }
+});			
+}());
+
+	return BaseComponent;
+
+}));
+},{"@clubajax/on":4}],2:[function(require,module,exports){
+(function () {
+if(window['force-no-ce-shim']){
+	return;
+}
+var supportsV1 = 'customElements' in window;
+var nativeShimBase64 = "ZnVuY3Rpb24gbmF0aXZlU2hpbSgpeygoKT0+eyd1c2Ugc3RyaWN0JztpZighd2luZG93LmN1c3RvbUVsZW1lbnRzKXJldHVybjtjb25zdCBhPXdpbmRvdy5IVE1MRWxlbWVudCxiPXdpbmRvdy5jdXN0b21FbGVtZW50cy5kZWZpbmUsYz13aW5kb3cuY3VzdG9tRWxlbWVudHMuZ2V0LGQ9bmV3IE1hcCxlPW5ldyBNYXA7bGV0IGY9ITEsZz0hMTt3aW5kb3cuSFRNTEVsZW1lbnQ9ZnVuY3Rpb24oKXtpZighZil7Y29uc3Qgaj1kLmdldCh0aGlzLmNvbnN0cnVjdG9yKSxrPWMuY2FsbCh3aW5kb3cuY3VzdG9tRWxlbWVudHMsaik7Zz0hMDtjb25zdCBsPW5ldyBrO3JldHVybiBsfWY9ITE7fSx3aW5kb3cuSFRNTEVsZW1lbnQucHJvdG90eXBlPWEucHJvdG90eXBlO09iamVjdC5kZWZpbmVQcm9wZXJ0eSh3aW5kb3csJ2N1c3RvbUVsZW1lbnRzJyx7dmFsdWU6d2luZG93LmN1c3RvbUVsZW1lbnRzLGNvbmZpZ3VyYWJsZTohMCx3cml0YWJsZTohMH0pLE9iamVjdC5kZWZpbmVQcm9wZXJ0eSh3aW5kb3cuY3VzdG9tRWxlbWVudHMsJ2RlZmluZScse3ZhbHVlOihqLGspPT57Y29uc3QgbD1rLnByb3RvdHlwZSxtPWNsYXNzIGV4dGVuZHMgYXtjb25zdHJ1Y3Rvcigpe3N1cGVyKCksT2JqZWN0LnNldFByb3RvdHlwZU9mKHRoaXMsbCksZ3x8KGY9ITAsay5jYWxsKHRoaXMpKSxnPSExO319LG49bS5wcm90b3R5cGU7bS5vYnNlcnZlZEF0dHJpYnV0ZXM9ay5vYnNlcnZlZEF0dHJpYnV0ZXMsbi5jb25uZWN0ZWRDYWxsYmFjaz1sLmNvbm5lY3RlZENhbGxiYWNrLG4uZGlzY29ubmVjdGVkQ2FsbGJhY2s9bC5kaXNjb25uZWN0ZWRDYWxsYmFjayxuLmF0dHJpYnV0ZUNoYW5nZWRDYWxsYmFjaz1sLmF0dHJpYnV0ZUNoYW5nZWRDYWxsYmFjayxuLmFkb3B0ZWRDYWxsYmFjaz1sLmFkb3B0ZWRDYWxsYmFjayxkLnNldChrLGopLGUuc2V0KGosayksYi5jYWxsKHdpbmRvdy5jdXN0b21FbGVtZW50cyxqLG0pO30sY29uZmlndXJhYmxlOiEwLHdyaXRhYmxlOiEwfSksT2JqZWN0LmRlZmluZVByb3BlcnR5KHdpbmRvdy5jdXN0b21FbGVtZW50cywnZ2V0Jyx7dmFsdWU6KGopPT5lLmdldChqKSxjb25maWd1cmFibGU6ITAsd3JpdGFibGU6ITB9KTt9KSgpO30=";
+
+if(supportsV1 && !window['force-ce-shim']){
+if(!window['no-native-shim']) {
+eval(window.atob(nativeShimBase64));
+nativeShim();
+}
+}else{
+customElements();
 }
 
 function customElements() {
 (function(){
+// @license Polymer Project Authors. http://polymer.github.io/LICENSE.txt
 'use strict';var g=new function(){};var aa=new Set("annotation-xml color-profile font-face font-face-src font-face-uri font-face-format font-face-name missing-glyph".split(" "));function k(b){var a=aa.has(b);b=/^[a-z][.0-9_a-z]*-[\-.0-9_a-z]*$/.test(b);return!a&&b}function l(b){var a=b.isConnected;if(void 0!==a)return a;for(;b&&!(b.__CE_isImportDocument||b instanceof Document);)b=b.parentNode||(window.ShadowRoot&&b instanceof ShadowRoot?b.host:void 0);return!(!b||!(b.__CE_isImportDocument||b instanceof Document))}
 function m(b,a){for(;a&&a!==b&&!a.nextSibling;)a=a.parentNode;return a&&a!==b?a.nextSibling:null}
 function n(b,a,e){e=e?e:new Set;for(var c=b;c;){if(c.nodeType===Node.ELEMENT_NODE){var d=c;a(d);var h=d.localName;if("link"===h&&"import"===d.getAttribute("rel")){c=d.import;if(c instanceof Node&&!e.has(c))for(e.add(c),c=c.firstChild;c;c=c.nextSibling)n(c,a,e);c=m(b,d);continue}else if("template"===h){c=m(b,d);continue}if(d=d.__CE_shadowRoot)for(d=d.firstChild;d;d=d.nextSibling)n(d,a,e)}c=c.firstChild?c.firstChild:m(b,c)}}function q(b,a,e){b[a]=e};function r(){this.a=new Map;this.f=new Map;this.c=[];this.b=!1}function ba(b,a,e){b.a.set(a,e);b.f.set(e.constructor,e)}function t(b,a){b.b=!0;b.c.push(a)}function v(b,a){b.b&&n(a,function(a){return w(b,a)})}function w(b,a){if(b.b&&!a.__CE_patched){a.__CE_patched=!0;for(var e=0;e<b.c.length;e++)b.c[e](a)}}function x(b,a){var e=[];n(a,function(b){return e.push(b)});for(a=0;a<e.length;a++){var c=e[a];1===c.__CE_state?b.connectedCallback(c):y(b,c)}}
@@ -699,199 +756,818 @@ pa(b,Element.prototype,{i:ha,append:ia});sa(b)};
 var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define||"function"!=typeof Z.get){var Y=new r;oa();qa();ra();ta();document.__CE_hasRegistry=!0;var ua=new E(Y);Object.defineProperty(window,"customElements",{configurable:!0,enumerable:!0,value:ua})};
 }).call(self);
 }
-// @license Polymer Project Authors. http://polymer.github.io/LICENSE.txt
+}());
+},{}],3:[function(require,module,exports){
+/* UMD.define */ (function (root, factory) {
+    if (typeof customLoader === 'function'){ customLoader(factory, 'dom'); }else if (typeof define === 'function' && define.amd) { define([], factory); } else if (typeof exports === 'object') { module.exports = factory(); } else { root.returnExports = factory(); window.dom = factory(); }
+}(this, function () {
 
+    var
+        isFloat = {
+            opacity: 1,
+            zIndex: 1,
+            'z-index': 1
+        },
+        isDimension = {
+            width:1,
+            height:1,
+            top:1,
+            left:1,
+            right:1,
+            bottom:1,
+            maxWidth:1,
+            'max-width':1,
+            minWidth:1,
+            'min-width':1,
+            maxHeight:1,
+            'max-height':1
+        },
+        uids = {},
+        destroyer = document.createElement('div');
 
-function promisePolyfill () {
-// https://github.com/taylorhakes/promise-polyfill/blob/master/promise.js
-var setTimeoutFunc = setTimeout;
-function noop() {}
-function bind(fn, thisArg) {
-return function () {
-fn.apply(thisArg, arguments);
-};
-}
-function Promise(fn) {
-if (typeof this !== 'object') throw new TypeError('Promises must be constructed via new');
-if (typeof fn !== 'function') throw new TypeError('not a function');
-this._state = 0;
-this._handled = false;
-this._value = undefined;
-this._deferreds = [];
+    function uid (type){
+		type = type || 'uid';
+        if(uids[type] === undefined){
+            uids[type] = 0;
+        }
+        var id = type + '-' + (uids[type] + 1);
+        uids[type]++;
+        return id;
+    }
 
-doResolve(fn, this);
-}
-function handle(self, deferred) {
-while (self._state === 3) {
-self = self._value;
-}
-if (self._state === 0) {
-self._deferreds.push(deferred);
-return;
-}
-self._handled = true;
-Promise._immediateFn(function () {
-var cb = self._state === 1 ? deferred.onFulfilled : deferred.onRejected;
-if (cb === null) {
-(self._state === 1 ? resolve : reject)(deferred.promise, self._value);
-return;
-}
-var ret;
-try {
-ret = cb(self._value);
-} catch (e) {
-reject(deferred.promise, e);
-return;
-}
-resolve(deferred.promise, ret);
-});
-}
-function resolve(self, newValue) {
-try {
-// Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
-if (newValue === self) throw new TypeError('A promise cannot be resolved with itself.');
-if (newValue && (typeof newValue === 'object' || typeof newValue === 'function')) {
-var then = newValue.then;
-if (newValue instanceof Promise) {
-self._state = 3;
-self._value = newValue;
-finale(self);
-return;
-} else if (typeof then === 'function') {
-doResolve(bind(then, newValue), self);
-return;
-}
-}
-self._state = 1;
-self._value = newValue;
-finale(self);
-} catch (e) {
-reject(self, e);
-}
-}
-function reject(self, newValue) {
-self._state = 2;
-self._value = newValue;
-finale(self);
-}
-function finale(self) {
-if (self._state === 2 && self._deferreds.length === 0) {
-Promise._immediateFn(function() {
-if (!self._handled) {
-Promise._unhandledRejectionFn(self._value);
-}
-});
-}
+    function isNode (item){
+        // safer test for custom elements in FF (with wc shim)
+	    // fragment is a special case
+        return !!item && typeof item === 'object' && (typeof item.innerHTML === 'string' || item.nodeName === '#document-fragment');
+    }
 
-for (var i = 0, len = self._deferreds.length; i < len; i++) {
-handle(self, self._deferreds[i]);
-}
-self._deferreds = null;
-}
-function Handler(onFulfilled, onRejected, promise) {
-this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
-this.onRejected = typeof onRejected === 'function' ? onRejected : null;
-this.promise = promise;
-}
-function doResolve(fn, self) {
-var done = false;
-try {
-fn(function (value) {
-if (done) return;
-done = true;
-resolve(self, value);
-}, function (reason) {
-if (done) return;
-done = true;
-reject(self, reason);
-});
-} catch (ex) {
-if (done) return;
-done = true;
-reject(self, ex);
-}
-}
-Promise.prototype['catch'] = function (onRejected) {
-return this.then(null, onRejected);
-};
-Promise.prototype.then = function (onFulfilled, onRejected) {
-var prom = new (this.constructor)(noop);
+    function byId (item){
+		if(typeof item === 'string'){
+			return document.getElementById(item);
+		}
+		return item;
+    }
 
-handle(this, new Handler(onFulfilled, onRejected, prom));
-return prom;
-};
-Promise.all = function (arr) {
-var args = Array.prototype.slice.call(arr);
-return new Promise(function (resolve, reject) {
-if (args.length === 0) return resolve([]);
-var remaining = args.length;
+    function style (node, prop, value){
+        var key, computed;
+        if(typeof prop === 'object'){
+            // object setter
+            for(key in prop){
+                if(prop.hasOwnProperty(key)){
+                    style(node, key, prop[key]);
+                }
+            }
+            return null;
+        }else if(value !== undefined){
+            // property setter
+            if(typeof value === 'number' && isDimension[prop]){
+                value += 'px';
+            }
+            node.style[prop] = value;
+        }
 
-function res(i, val) {
-try {
-if (val && (typeof val === 'object' || typeof val === 'function')) {
-var then = val.then;
-if (typeof then === 'function') {
-then.call(val, function (val) {
-res(i, val);
-}, reject);
-return;
-}
-}
-args[i] = val;
-if (--remaining === 0) {
-resolve(args);
-}
-} catch (ex) {
-reject(ex);
-}
-}
+        // getter, if a simple style
+        if(node.style[prop]){
+            if(isDimension[prop]){
+                return parseInt(node.style[prop], 10);
+            }
+            if(isFloat[prop]){
+                return parseFloat(node.style[prop]);
+            }
+            return node.style[prop];
+        }
 
-for (var i = 0; i < args.length; i++) {
-res(i, args[i]);
-}
-});
-};
-Promise.resolve = function (value) {
-if (value && typeof value === 'object' && value.constructor === Promise) {
-return value;
-}
+        // getter, computed
+        computed = getComputedStyle(node, prop);
+        if(computed[prop]){
+            if(/\d/.test(computed[prop])){
+                if(!isNaN(parseInt(computed[prop], 10))){
+                    return parseInt(computed[prop], 10);
+                }
+                return computed[prop];
+            }
+            return computed[prop];
+        }
+        return '';
+    }
 
-return new Promise(function (resolve) {
-resolve(value);
-});
-};
-Promise.reject = function (value) {
-return new Promise(function (resolve, reject) {
-reject(value);
-});
-};
-Promise.race = function (values) {
-return new Promise(function (resolve, reject) {
-for (var i = 0, len = values.length; i < len; i++) {
-values[i].then(resolve, reject);
-}
-});
-};
-Promise._immediateFn = (typeof setImmediate === 'function' && function (fn) { setImmediate(fn); }) ||
-function (fn) {
-setTimeoutFunc(fn, 0);
-};
-Promise._unhandledRejectionFn = function _unhandledRejectionFn(err) {
-if (typeof console !== 'undefined' && console) {
-console.warn('Possible Unhandled Promise Rejection:', err); // eslint-disable-line no-console
-}
-};
-Promise._setImmediateFn = function _setImmediateFn(fn) {
-Promise._immediateFn = fn;
-};
-Promise._setUnhandledRejectionFn = function _setUnhandledRejectionFn(fn) {
-Promise._unhandledRejectionFn = fn;
-};
-console.log('Promise polyfill');
-window.Promise = Promise;
-}
+    function attr (node, prop, value){
+        var key;
+        if(typeof prop === 'object'){
+            for(key in prop){
+                if(prop.hasOwnProperty(key)){
+                    attr(node, key, prop[key]);
+                }
+            }
+            return null;
+        }
+        else if(value !== undefined){
+            if(prop === 'text' || prop === 'html' || prop === 'innerHTML') {
+            	// ignore, handled during creation
+				return;
+			}
+			else if(prop === 'className' || prop === 'class') {
+				node.className = value;
+			}
+			else if(prop === 'style') {
+				style(node, value);
+			}
+			else if(prop === 'attr') {
+            	// back compat
+				attr(node, value);
+			}
+			else if(typeof value === 'object'){
+            	// object, like 'data'
+				node[prop] = value;
+            }
+            else{
+                node.setAttribute(prop, value);
+            }
+        }
 
-},{}],6:[function(require,module,exports){
+        return node.getAttribute(prop);
+    }
+
+    function box (node){
+        if(node === window){
+            node = document.documentElement;
+        }
+        // node dimensions
+        // returned object is immutable
+        // add scroll positioning and convenience abbreviations
+        var
+            dimensions = byId(node).getBoundingClientRect();
+        return {
+            top: dimensions.top,
+            right: dimensions.right,
+            bottom: dimensions.bottom,
+            left: dimensions.left,
+            height: dimensions.height,
+            h: dimensions.height,
+            width: dimensions.width,
+            w: dimensions.width,
+            scrollY: window.scrollY,
+            scrollX: window.scrollX,
+            x: dimensions.left + window.pageXOffset,
+            y: dimensions.top + window.pageYOffset
+        };
+    }
+
+    function query (node, selector){
+        if(!selector){
+            selector = node;
+            node = document;
+        }
+        return node.querySelector(selector);
+    }
+    
+    function queryAll (node, selector){
+        if(!selector){
+            selector = node;
+            node = document;
+        }
+        var nodes = node.querySelectorAll(selector);
+
+        if(!nodes.length){ return []; }
+
+        // convert to Array and return it
+        return Array.prototype.slice.call(nodes);
+    }
+
+    function toDom (html, options, parent){
+        var node = dom('div', {html: html});
+        parent = byId(parent || options);
+        if(parent){
+            while(node.firstChild){
+                parent.appendChild(node.firstChild);
+            }
+            return node.firstChild;
+        }
+        if(html.indexOf('<') !== 0){
+            return node;
+        }
+        return node.firstChild;
+    }
+
+    function fromDom (node) {
+        function getAttrs (node) {
+            var att, i, attrs = {};
+            for(i = 0; i < node.attributes.length; i++){
+                att = node.attributes[i];
+                attrs[att.localName] = normalize(att.value === '' ? true : att.value);
+            }
+            return attrs;
+        }
+        function getText (node) {
+            var i, t, text = '';
+            for(i = 0; i < node.childNodes.length; i++){
+                t = node.childNodes[i];
+                if(t.nodeType === 3 && t.textContent.trim()){
+                    text += t.textContent.trim();
+                }
+            }
+            return text;
+        }
+        var i, object = getAttrs(node);
+        object.text = getText(node);
+        object.children = [];
+        if(node.children.length){
+            for(i = 0; i < node.children.length; i++){
+                object.children.push(fromDom(node.children[i]));
+            }
+        }
+        return object;
+    }
+
+	function addChildren (node, children) {
+		if(Array.isArray(children)){
+			for(var i = 0; i < children.length; i++){
+				if(children[i]) {
+					if (typeof children[i] === 'string') {
+						node.appendChild(toDom(children[i]));
+					} else {
+						node.appendChild(children[i]);
+					}
+				}
+			}
+		}
+		else if (children) {
+			node.appendChild(children);
+		}
+	}
+
+    function addContent (node, options) {
+        var html;
+        if(options.html !== undefined || options.innerHTML !== undefined){
+            html = options.html || options.innerHTML || '';
+            if(typeof html === 'object'){
+                addChildren(node, html);
+            }else{
+            	// careful assuming textContent -
+				// misses some HTML, such as entities (&npsp;)
+                node.innerHTML = html;
+            }
+        }
+        if(options.text){
+            node.appendChild(document.createTextNode(options.text));
+        }
+        if(options.children){
+            addChildren(node, options.children);
+        }
+    }
+    
+    function dom (nodeType, options, parent, prepend){
+		options = options || {};
+
+		// if first argument is a string and starts with <, pass to toDom()
+        if(nodeType.indexOf('<') === 0){
+            return toDom(nodeType, options, parent);
+        }
+
+        var node = document.createElement(nodeType);
+
+        parent = byId(parent);
+
+        addContent(node, options);
+
+		attr(node, options);
+
+        if(parent && isNode(parent)){
+            if(prepend && parent.hasChildNodes()){
+                parent.insertBefore(node, parent.children[0]);
+            }else{
+                parent.appendChild(node);
+            }
+        }
+
+        return node;
+    }
+
+    function insertAfter (refNode, node) {
+        var sibling = refNode.nextElementSibling;
+        if(!sibling){
+            refNode.parentNode.appendChild(node);
+        }else{
+            refNode.parentNode.insertBefore(node, sibling);
+        }
+        return sibling;
+    }
+
+    function destroy (node){
+        // destroys a node completely
+        //
+        if(node) {
+            destroyer.appendChild(node);
+            destroyer.innerHTML = '';
+        }
+    }
+
+    function clean (node, dispose){
+        //	Removes all child nodes
+        //		dispose: destroy child nodes
+        if(dispose){
+            while(node.children.length){
+                destroy(node.children[0]);
+            }
+            return;
+        }
+        while(node.children.length){
+            node.removeChild(node.children[0]);
+        }
+    }
+
+    dom.classList = {
+    	// in addition to fixing IE11 toggle
+		// these methods also handle arrays
+        remove: function (node, names){
+            toArray(names).forEach(function(name){
+                node.classList.remove(name);
+            });
+        },
+        add: function (node, names){
+            toArray(names).forEach(function(name){
+                node.classList.add(name);
+            });
+        },
+        contains: function (node, names){
+            return toArray(names).every(function (name) {
+                return node.classList.contains(name);
+            });
+        },
+        toggle: function (node, names, value){
+            names = toArray(names);
+            if(typeof value === 'undefined') {
+                // use standard functionality, supported by IE
+                names.forEach(function (name) {
+                    node.classList.toggle(name, value);
+                });
+            }
+            // IE11 does not support the second parameter  
+            else if(value){
+                names.forEach(function (name) {
+                    node.classList.add(name);
+                });
+            }
+            else{
+                names.forEach(function (name) {
+                    node.classList.remove(name);
+                });
+            }
+        }
+    };
+
+    function toArray (names){
+        if(!names){
+            console.error('dom.classList should include a node and a className');
+            return [];
+        }
+        return names.split(' ').map(function (name) {
+            return name.trim();
+        });
+    }
+
+	function normalize(val) {
+		if (typeof val === 'string') {
+			val = val.trim();
+			if (val === 'false') {
+				return false;
+			} else if (val === 'null') {
+				return null;
+			} else if (val === 'true') {
+				return true;
+			}
+			// finds strings that start with numbers, but are not numbers:
+			// '1team' '123 Street', '1-2-3', etc
+			if (('' + val).replace(/-?\d*\.?\d*/, '').length) {
+				return val;
+			}
+		}
+		if (!isNaN(parseFloat(val))) {
+			return parseFloat(val);
+		}
+		return val;
+	}
+
+    dom.normalize = normalize;
+    dom.clean = clean;
+    dom.query = query;
+    dom.queryAll = queryAll;
+    dom.byId = byId;
+    dom.attr = attr;
+    dom.box = box;
+    dom.style = style;
+    dom.destroy = destroy;
+    dom.uid = uid;
+    dom.isNode = isNode;
+    dom.toDom = toDom;
+    dom.fromDom = fromDom;
+    dom.insertAfter = insertAfter;
+
+    return dom;
+}));
+
+},{}],4:[function(require,module,exports){
+(function (root, factory) {
+	if (typeof customLoader === 'function') {
+		customLoader(factory, 'on');
+	} else if (typeof define === 'function' && define.amd) {
+		define([], factory);
+	} else if (typeof exports === 'object') {
+		module.exports = factory();
+	} else {
+		root.returnExports = window.on = factory();
+	}
+}(this, function () {
+	'use strict';
+
+	// main function
+
+	function on (node, eventName, filter, handler) {
+		// normalize parameters
+		if (typeof node === 'string') {
+			node = getNodeById(node);
+		}
+
+		// prepare a callback
+		var callback = makeCallback(node, filter, handler);
+
+		// functional event
+		if (typeof eventName === 'function') {
+			return eventName(node, callback);
+		}
+
+		// special case: keydown/keyup with a list of expected keys
+		// TODO: consider replacing with an explicit event function:
+		// var h = on(node, onKeyEvent('keyup', /Enter,Esc/), callback);
+		var keyEvent = /^(keyup|keydown):(.+)$/.exec(eventName);
+		if (keyEvent) {
+			return onKeyEvent(keyEvent[1], new RegExp(keyEvent[2].split(',').join('|')))(node, callback);
+		}
+
+		// handle multiple event types, like: on(node, 'mouseup, mousedown', callback);
+		if (/,/.test(eventName)) {
+			return on.makeMultiHandle(eventName.split(',').map(function (name) {
+				return name.trim();
+			}).filter(function (name) {
+				return name;
+			}).map(function (name) {
+				return on(node, name, callback);
+			}));
+		}
+
+		// handle registered functional events
+		if (Object.prototype.hasOwnProperty.call(on.events, eventName)) {
+			return on.events[eventName](node, callback);
+		}
+
+		// special case: loading an image
+		if (eventName === 'load' && node.tagName.toLowerCase() === 'img') {
+			return onImageLoad(node, callback);
+		}
+
+		// special case: mousewheel
+		if (eventName === 'wheel') {
+			// pass through, but first curry callback to wheel events
+			callback = normalizeWheelEvent(callback);
+			if (!hasWheel) {
+				// old Firefox, old IE, Chrome
+				return on.makeMultiHandle([
+					on(node, 'DOMMouseScroll', callback),
+					on(node, 'mousewheel', callback)
+				]);
+			}
+		}
+
+		// special case: keyboard
+		if (/^key/.test(eventName)) {
+			callback = normalizeKeyEvent(callback);
+		}
+
+		// default case
+		return on.onDomEvent(node, eventName, callback);
+	}
+
+	// registered functional events
+	on.events = {
+		// handle click and Enter
+		button: function (node, callback) {
+			return on.makeMultiHandle([
+				on(node, 'click', callback),
+				on(node, 'keyup:Enter', callback)
+			]);
+		},
+
+		// custom - used for popups 'n stuff
+		clickoff: function (node, callback) {
+			// important note!
+			// starts paused
+			//
+			var bHandle = on(node.ownerDocument.documentElement, 'click', function (e) {
+				var target = e.target;
+				if (target.nodeType !== 1) {
+					target = target.parentNode;
+				}
+				if (target && !node.contains(target)) {
+					callback(e);
+				}
+			});
+
+			var handle = {
+				state: 'resumed',
+				resume: function () {
+					setTimeout(function () {
+						bHandle.resume();
+					}, 100);
+					this.state = 'resumed';
+				},
+				pause: function () {
+					bHandle.pause();
+					this.state = 'paused';
+				},
+				remove: function () {
+					bHandle.remove();
+					this.state = 'removed';
+				}
+			};
+			handle.pause();
+
+			return handle;
+		}
+	};
+
+	// internal event handlers
+
+	function onDomEvent (node, eventName, callback) {
+		node.addEventListener(eventName, callback, false);
+		return {
+			remove: function () {
+				node.removeEventListener(eventName, callback, false);
+				node = callback = null;
+				this.remove = this.pause = this.resume = function () {};
+			},
+			pause: function () {
+				node.removeEventListener(eventName, callback, false);
+			},
+			resume: function () {
+				node.addEventListener(eventName, callback, false);
+			}
+		};
+	}
+
+	function onImageLoad (node, callback) {
+		var handle = on.makeMultiHandle([
+			on.onDomEvent(node, 'load', onImageLoad),
+			on(node, 'error', callback)
+		]);
+
+		return handle;
+
+		function onImageLoad (e) {
+			var interval = setInterval(function () {
+				if (node.naturalWidth || node.naturalHeight) {
+					clearInterval(interval);
+					e.width  = e.naturalWidth  = node.naturalWidth;
+					e.height = e.naturalHeight = node.naturalHeight;
+					callback(e);
+				}
+			}, 100);
+			handle.remove();
+		}
+	}
+
+	function onKeyEvent (keyEventName, re) {
+		return function (node, callback) {
+			return on(node, keyEventName, function (e) {
+				if (re.test(e.key)) {
+					callback(e);
+				}
+			});
+		};
+	}
+
+	// internal utilities
+
+	var hasWheel = (function hasWheelTest () {
+		var
+			isIE = navigator.userAgent.indexOf('Trident') > -1,
+			div = document.createElement('div');
+		return "onwheel" in div || "wheel" in div ||
+			(isIE && document.implementation.hasFeature("Events.wheel", "3.0")); // IE feature detection
+	})();
+
+	var matches;
+	['matches', 'matchesSelector', 'webkit', 'moz', 'ms', 'o'].some(function (name) {
+		if (name.length < 7) { // prefix
+			name += 'MatchesSelector';
+		}
+		if (Element.prototype[name]) {
+			matches = name;
+			return true;
+		}
+		return false;
+	});
+
+	function closest (element, selector, parent) {
+		while (element) {
+			if (element[on.matches] && element[on.matches](selector)) {
+				return element;
+			}
+			if (element === parent) {
+				break;
+			}
+			element = element.parentElement;
+		}
+		return null;
+	}
+
+	var INVALID_PROPS = {
+		isTrusted: 1
+	};
+	function mix (object, value) {
+		if (!value) {
+			return object;
+		}
+		if (typeof value === 'object') {
+			for(var key in value){
+				if (!INVALID_PROPS[key]) {
+					object[key] = value[key];
+				}
+			}
+		} else {
+			object.value = value;
+		}
+		return object;
+	}
+
+	var ieKeys = {
+		//a: 'TEST',
+		Up: 'ArrowUp',
+		Down: 'ArrowDown',
+		Left: 'ArrowLeft',
+		Right: 'ArrowRight',
+		Esc: 'Escape',
+		Spacebar: ' ',
+		Win: 'Command'
+	};
+
+	function normalizeKeyEvent (callback) {
+		// IE uses old spec
+		return function (e) {
+			if (ieKeys[e.key]) {
+				var fakeEvent = mix({}, e);
+				fakeEvent.key = ieKeys[e.key];
+				callback(fakeEvent);
+			} else {
+				callback(e);
+			}
+		}
+	}
+
+	var
+		FACTOR = navigator.userAgent.indexOf('Windows') > -1 ? 10 : 0.1,
+		XLR8 = 0,
+		mouseWheelHandle;
+
+	function normalizeWheelEvent (callback) {
+		// normalizes all browsers' events to a standard:
+		// delta, wheelY, wheelX
+		// also adds acceleration and deceleration to make
+		// Mac and Windows behave similarly
+		return function (e) {
+			XLR8 += FACTOR;
+			var
+				deltaY = Math.max(-1, Math.min(1, (e.wheelDeltaY || e.deltaY))),
+				deltaX = Math.max(-10, Math.min(10, (e.wheelDeltaX || e.deltaX)));
+
+			deltaY = deltaY <= 0 ? deltaY - XLR8 : deltaY + XLR8;
+
+			e.delta  = deltaY;
+			e.wheelY = deltaY;
+			e.wheelX = deltaX;
+
+			clearTimeout(mouseWheelHandle);
+			mouseWheelHandle = setTimeout(function () {
+				XLR8 = 0;
+			}, 300);
+			callback(e);
+		};
+	}
+
+	function closestFilter (element, selector) {
+		return function (e) {
+			return on.closest(e.target, selector, element);
+		};
+	}
+
+	function makeMultiHandle (handles) {
+		return {
+			state: 'resumed',
+			remove: function () {
+				handles.forEach(function (h) {
+					// allow for a simple function in the list
+					if (h.remove) {
+						h.remove();
+					} else if (typeof h === 'function') {
+						h();
+					}
+				});
+				handles = [];
+				this.remove = this.pause = this.resume = function () {};
+				this.state = 'removed';
+			},
+			pause: function () {
+				handles.forEach(function (h) {
+					if (h.pause) {
+						h.pause();
+					}
+				});
+				this.state = 'paused';
+			},
+			resume: function () {
+				handles.forEach(function (h) {
+					if (h.resume) {
+						h.resume();
+					}
+				});
+				this.state = 'resumed';
+			}
+		};
+	}
+
+	function getNodeById (id) {
+		var node = document.getElementById(id);
+		if (!node) {
+			console.error('`on` Could not find:', id);
+		}
+		return node;
+	}
+
+	function makeCallback (node, filter, handler) {
+		if (filter && handler) {
+			if (typeof filter === 'string') {
+				filter = closestFilter(node, filter);
+			}
+			return function (e) {
+				var result = filter(e);
+				if (result) {
+					e.filteredTarget = result;
+					handler(e, result);
+				}
+			};
+		}
+		return filter || handler;
+	}
+
+	function getDoc (node) {
+		return node === document || node === window ? document : node.ownerDocument;
+	}
+
+	// public functions
+
+	on.once = function (node, eventName, filter, callback) {
+		var h;
+		if (filter && callback) {
+			h = on(node, eventName, filter, function () {
+				callback.apply(window, arguments);
+				h.remove();
+			});
+		} else {
+			h = on(node, eventName, function () {
+				filter.apply(window, arguments);
+				h.remove();
+			});
+		}
+		return h;
+	};
+
+	on.emit = function (node, eventName, value) {
+		node = typeof node === 'string' ? getNodeById(node) : node;
+		var event = getDoc(node).createEvent('HTMLEvents');
+		event.initEvent(eventName, true, true); // event type, bubbling, cancelable
+		return node.dispatchEvent(mix(event, value));
+	};
+
+	on.fire = function (node, eventName, eventDetail, bubbles) {
+		node = typeof node === 'string' ? getNodeById(node) : node;
+		var event = getDoc(node).createEvent('CustomEvent');
+		event.initCustomEvent(eventName, !!bubbles, true, eventDetail); // event type, bubbling, cancelable, value
+		return node.dispatchEvent(event);
+	};
+
+	// TODO: DEPRECATED
+	on.isAlphaNumeric = function (str) {
+		return /^[0-9a-z]$/i.test(str);
+	};
+
+	on.makeMultiHandle = makeMultiHandle;
+	on.onDomEvent = onDomEvent; // use directly to prevent possible definition loops
+	on.closest = closest;
+	on.matches = matches;
+
+	return on;
+}));
+
+},{}],5:[function(require,module,exports){
 (function (root, factory) {
     if (typeof customLoader === 'function'){ customLoader(factory, 'dates'); }
     else if (typeof define === 'function' && define.amd){ define([], factory); }
@@ -1403,809 +2079,7 @@ window.Promise = Promise;
     return dates;
 
 }));
-},{}],7:[function(require,module,exports){
-/* UMD.define */ (function (root, factory) {
-    if (typeof customLoader === 'function'){ customLoader(factory, 'dom'); }else if (typeof define === 'function' && define.amd) { define([], factory); } else if (typeof exports === 'object') { module.exports = factory(); } else { root.returnExports = factory(); window.dom = factory(); }
-}(this, function () {
-
-    var
-        isFloat = {
-            opacity: 1,
-            zIndex: 1,
-            'z-index': 1
-        },
-        isDimension = {
-            width:1,
-            height:1,
-            top:1,
-            left:1,
-            right:1,
-            bottom:1,
-            maxWidth:1,
-            'max-width':1,
-            minWidth:1,
-            'min-width':1,
-            maxHeight:1,
-            'max-height':1
-        },
-        uids = {},
-        destroyer = document.createElement('div');
-
-    function uid (type){
-		type = type || 'uid';
-        if(uids[type] === undefined){
-            uids[type] = 0;
-        }
-        var id = type + '-' + (uids[type] + 1);
-        uids[type]++;
-        return id;
-    }
-
-    function isNode (item){
-        // safer test for custom elements in FF (with wc shim)
-	    // fragment is a special case
-        return !!item && typeof item === 'object' && (typeof item.innerHTML === 'string' || item.nodeName === '#document-fragment');
-    }
-
-    function byId (item){
-		if(typeof item === 'string'){
-			return document.getElementById(item);
-		}
-		return item;
-    }
-
-    function style (node, prop, value){
-        var key, computed;
-        if(typeof prop === 'object'){
-            // object setter
-            for(key in prop){
-                if(prop.hasOwnProperty(key)){
-                    style(node, key, prop[key]);
-                }
-            }
-            return null;
-        }else if(value !== undefined){
-            // property setter
-            if(typeof value === 'number' && isDimension[prop]){
-                value += 'px';
-            }
-            node.style[prop] = value;
-        }
-
-        // getter, if a simple style
-        if(node.style[prop]){
-            if(isDimension[prop]){
-                return parseInt(node.style[prop], 10);
-            }
-            if(isFloat[prop]){
-                return parseFloat(node.style[prop]);
-            }
-            return node.style[prop];
-        }
-
-        // getter, computed
-        computed = getComputedStyle(node, prop);
-        if(computed[prop]){
-            if(/\d/.test(computed[prop])){
-                if(!isNaN(parseInt(computed[prop], 10))){
-                    return parseInt(computed[prop], 10);
-                }
-                return computed[prop];
-            }
-            return computed[prop];
-        }
-        return '';
-    }
-
-    function attr (node, prop, value){
-        var key;
-        if(typeof prop === 'object'){
-            for(key in prop){
-                if(prop.hasOwnProperty(key)){
-                    attr(node, key, prop[key]);
-                }
-            }
-            return null;
-        }
-        else if(value !== undefined){
-            if(prop === 'text' || prop === 'html' || prop === 'innerHTML') {
-            	// ignore, handled during creation
-				return;
-			}
-			else if(prop === 'className' || prop === 'class') {
-				node.className = value;
-			}
-			else if(prop === 'style') {
-				style(node, value);
-			}
-			else if(prop === 'attr') {
-            	// back compat
-				attr(node, value);
-			}
-			else if(typeof value === 'object'){
-            	// object, like 'data'
-				node[prop] = value;
-            }
-            else{
-                node.setAttribute(prop, value);
-            }
-        }
-
-        return node.getAttribute(prop);
-    }
-
-    function box (node){
-        if(node === window){
-            node = document.documentElement;
-        }
-        // node dimensions
-        // returned object is immutable
-        // add scroll positioning and convenience abbreviations
-        var
-            dimensions = byId(node).getBoundingClientRect();
-        return {
-            top: dimensions.top,
-            right: dimensions.right,
-            bottom: dimensions.bottom,
-            left: dimensions.left,
-            height: dimensions.height,
-            h: dimensions.height,
-            width: dimensions.width,
-            w: dimensions.width,
-            scrollY: window.scrollY,
-            scrollX: window.scrollX,
-            x: dimensions.left + window.pageXOffset,
-            y: dimensions.top + window.pageYOffset
-        };
-    }
-
-    function query (node, selector){
-        if(!selector){
-            selector = node;
-            node = document;
-        }
-        return node.querySelector(selector);
-    }
-    
-    function queryAll (node, selector){
-        if(!selector){
-            selector = node;
-            node = document;
-        }
-        var nodes = node.querySelectorAll(selector);
-
-        if(!nodes.length){ return []; }
-
-        // convert to Array and return it
-        return Array.prototype.slice.call(nodes);
-    }
-
-    function toDom (html, options, parent){
-        var node = dom('div', {html: html});
-        parent = byId(parent || options);
-        if(parent){
-            while(node.firstChild){
-                parent.appendChild(node.firstChild);
-            }
-            return node.firstChild;
-        }
-        if(html.indexOf('<') !== 0){
-            return node;
-        }
-        return node.firstChild;
-    }
-
-    function fromDom (node) {
-        function getAttrs (node) {
-            var att, i, attrs = {};
-            for(i = 0; i < node.attributes.length; i++){
-                att = node.attributes[i];
-                attrs[att.localName] = normalize(att.value === '' ? true : att.value);
-            }
-            return attrs;
-        }
-        function getText (node) {
-            var i, t, text = '';
-            for(i = 0; i < node.childNodes.length; i++){
-                t = node.childNodes[i];
-                if(t.nodeType === 3 && t.textContent.trim()){
-                    text += t.textContent.trim();
-                }
-            }
-            return text;
-        }
-        var i, object = getAttrs(node);
-        object.text = getText(node);
-        object.children = [];
-        if(node.children.length){
-            for(i = 0; i < node.children.length; i++){
-                object.children.push(fromDom(node.children[i]));
-            }
-        }
-        return object;
-    }
-
-    function addChildren (node, children) {
-        if(Array.isArray(children)){
-            for(var i = 0; i < children.length; i++){
-            	if(typeof children[i] === 'string'){
-					node.appendChild(toDom(children[i]));
-				}else {
-					node.appendChild(children[i]);
-				}
-            }
-        }
-        else{
-            node.appendChild(children);
-        }
-    }
-
-    function addContent (node, options) {
-        var html;
-        if(options.html !== undefined || options.innerHTML !== undefined){
-            html = options.html || options.innerHTML || '';
-            if(typeof html === 'object'){
-                addChildren(node, html);
-            }else{
-            	// careful assuming textContent -
-				// misses some HTML, such as entities (&npsp;)
-                node.innerHTML = html;
-            }
-        }
-        if(options.text){
-            node.appendChild(document.createTextNode(options.text));
-        }
-        if(options.children){
-            addChildren(node, options.children);
-        }
-    }
-    
-    function dom (nodeType, options, parent, prepend){
-		options = options || {};
-
-		// if first argument is a string and starts with <, pass to toDom()
-        if(nodeType.indexOf('<') === 0){
-            return toDom(nodeType, options, parent);
-        }
-
-        var node = document.createElement(nodeType);
-
-        parent = byId(parent);
-
-        addContent(node, options);
-
-		attr(node, options);
-
-        if(parent && isNode(parent)){
-            if(prepend && parent.hasChildNodes()){
-                parent.insertBefore(node, parent.children[0]);
-            }else{
-                parent.appendChild(node);
-            }
-        }
-
-        return node;
-    }
-
-    function insertAfter (refNode, node) {
-        var sibling = refNode.nextElementSibling;
-        if(!sibling){
-            refNode.parentNode.appendChild(node);
-        }else{
-            refNode.parentNode.insertBefore(node, sibling);
-        }
-        return sibling;
-    }
-
-    function destroy (node){
-        // destroys a node completely
-        //
-        if(node) {
-            destroyer.appendChild(node);
-            destroyer.innerHTML = '';
-        }
-    }
-
-    function clean (node, dispose){
-        //	Removes all child nodes
-        //		dispose: destroy child nodes
-        if(dispose){
-            while(node.children.length){
-                destroy(node.children[0]);
-            }
-            return;
-        }
-        while(node.children.length){
-            node.removeChild(node.children[0]);
-        }
-    }
-
-    dom.classList = {
-    	// in addition to fixing IE11 toggle
-		// these methods also handle arrays
-        remove: function (node, names){
-            toArray(names).forEach(function(name){
-                node.classList.remove(name);
-            });
-        },
-        add: function (node, names){
-            toArray(names).forEach(function(name){
-                node.classList.add(name);
-            });
-        },
-        contains: function (node, names){
-            return toArray(names).every(function (name) {
-                return node.classList.contains(name);
-            });
-        },
-        toggle: function (node, names, value){
-            names = toArray(names);
-            if(typeof value === 'undefined') {
-                // use standard functionality, supported by IE
-                names.forEach(function (name) {
-                    node.classList.toggle(name, value);
-                });
-            }
-            // IE11 does not support the second parameter  
-            else if(value){
-                names.forEach(function (name) {
-                    node.classList.add(name);
-                });
-            }
-            else{
-                names.forEach(function (name) {
-                    node.classList.remove(name);
-                });
-            }
-        }
-    };
-
-    function toArray (names){
-        if(!names){
-            console.error('dom.classList should include a node and a className');
-            return [];
-        }
-        return names.split(' ').map(function (name) {
-            return name.trim();
-        });
-    }
-    
-    function normalize (val){
-        if(typeof val === 'string') {
-        	val = val.trim();
-			if(val === 'false'){
-				return false;
-			}
-			else if(val === 'null'){
-				return null;
-			}
-			else if(val === 'true'){
-				return true;
-			}
-			if (val.indexOf('/') > -1 || val.indexOf(' ') > -1 || val.indexOf('-') > 0) {
-				return val;
-			}
-		}
-        if(!isNaN(parseFloat(val))){
-            return parseFloat(val);
-        }
-        return val;
-    }
-
-    dom.normalize = normalize;
-    dom.clean = clean;
-    dom.query = query;
-    dom.queryAll = queryAll;
-    dom.byId = byId;
-    dom.attr = attr;
-    dom.box = box;
-    dom.style = style;
-    dom.destroy = destroy;
-    dom.uid = uid;
-    dom.isNode = isNode;
-    dom.toDom = toDom;
-    dom.fromDom = fromDom;
-    dom.insertAfter = insertAfter;
-
-    return dom;
-}));
-
-},{}],8:[function(require,module,exports){
-(function (root, factory) {
-	if (typeof customLoader === 'function') {
-		customLoader(factory, 'on');
-	} else if (typeof define === 'function' && define.amd) {
-		define([], factory);
-	} else if (typeof exports === 'object') {
-		module.exports = factory();
-	} else {
-		root.returnExports = factory();
-		window.on = factory();
-	}
-}(this, function () {
-	'use strict';
-
-	function hasWheelTest () {
-		var
-			isIE = navigator.userAgent.indexOf('Trident') > -1,
-			div = document.createElement('div');
-		return "onwheel" in div || "wheel" in div ||
-			(isIE && document.implementation.hasFeature("Events.wheel", "3.0")); // IE feature detection
-	}
-
-	var
-		INVALID_PROPS,
-		matches,
-		hasWheel = hasWheelTest(),
-		isWin = navigator.userAgent.indexOf('Windows') > -1,
-		FACTOR = isWin ? 10 : 0.1,
-		XLR8 = 0,
-		mouseWheelHandle;
-
-
-	['matches', 'matchesSelector', 'webkit', 'moz', 'ms', 'o'].some(function (name) {
-		if (name.length < 7) { // prefix
-			name += 'MatchesSelector';
-		}
-		if (Element.prototype[name]) {
-			matches = name;
-			return true;
-		}
-		return false;
-	});
-
-	function closest (element, selector, parent) {
-		while (element) {
-			if (element[matches] && element[matches](selector)) {
-				return element;
-			}
-			if (element === parent) {
-				break;
-			}
-			element = element.parentElement;
-		}
-		return null;
-	}
-
-	function closestFilter (element, selector) {
-		return function (e) {
-			return closest(e.target, selector, element);
-		};
-	}
-
-	function makeMultiHandle (handles) {
-		return {
-			remove: function () {
-				handles.forEach(function (h) {
-					// allow for a simple function in the list
-					if (h.remove) {
-						h.remove();
-					} else if (typeof h === 'function') {
-						h();
-					}
-				});
-				handles = [];
-				this.remove = this.pause = this.resume = function () {};
-			},
-			pause: function () {
-				handles.forEach(function (h) {
-					if (h.pause) {
-						h.pause();
-					}
-				});
-			},
-			resume: function () {
-				handles.forEach(function (h) {
-					if (h.resume) {
-						h.resume();
-					}
-				});
-			}
-		};
-	}
-
-	function onClickoff (node, callback) {
-		// important note!
-		// starts paused
-		//
-		var
-			handle,
-			bHandle = on(document.body, 'click', function (event) {
-				var target = event.target;
-				if (target.nodeType !== 1) {
-					target = target.parentNode;
-				}
-				if (target && !node.contains(target)) {
-					callback(event);
-				}
-			});
-
-		handle = {
-			resume: function () {
-				setTimeout(function () {
-					bHandle.resume();
-				}, 100);
-			},
-			pause: function () {
-				bHandle.pause();
-			},
-			remove: function () {
-				bHandle.remove();
-			}
-		};
-
-		handle.pause();
-
-		return handle;
-	}
-
-	function onImageLoad (img, callback) {
-		function onImageLoad (e) {
-			var h = setInterval(function () {
-				if (img.naturalWidth) {
-					e.width = img.naturalWidth;
-					e.naturalWidth = img.naturalWidth;
-					e.height = img.naturalHeight;
-					e.naturalHeight = img.naturalHeight;
-					callback(e);
-					clearInterval(h);
-				}
-			}, 100);
-			img.removeEventListener('load', onImageLoad);
-			img.removeEventListener('error', callback);
-		}
-
-		img.addEventListener('load', onImageLoad);
-		img.addEventListener('error', callback);
-		return {
-			pause: function () {},
-			resume: function () {},
-			remove: function () {
-				img.removeEventListener('load', onImageLoad);
-				img.removeEventListener('error', callback);
-			}
-		}
-	}
-
-	function getNode (str) {
-		if (typeof str !== 'string') {
-			return str;
-		}
-		var node = document.getElementById(str);
-		if (!node) {
-			console.error('`on` Could not find:', str);
-		}
-		return node;
-	}
-
-	var ieKeys = {
-		//a: 'TEST',
-		Up: 'ArrowUp',
-		Down: 'ArrowDown',
-		Left: 'ArrowLeft',
-		Right: 'ArrowRight',
-		Esc: 'Escape',
-		Spacebar: ' ',
-		Win: 'Command'
-	};
-
-	function normalizeKeyEvent (callback) {
-		// IE uses old spec
-		return function (e) {
-			if (ieKeys[e.key]) {
-				var fakeEvent = mix({}, e);
-				fakeEvent.key = ieKeys[e.key];
-				callback(fakeEvent);
-			} else {
-				callback(e);
-			}
-		}
-	}
-
-	function normalizeWheelEvent (callback) {
-		// normalizes all browsers' events to a standard:
-		// delta, wheelY, wheelX
-		// also adds acceleration and deceleration to make
-		// Mac and Windows behave similarly
-		return function (e) {
-			XLR8 += FACTOR;
-			var
-				deltaY = Math.max(-1, Math.min(1, (e.wheelDeltaY || e.deltaY))),
-				deltaX = Math.max(-10, Math.min(10, (e.wheelDeltaX || e.deltaX)));
-
-			deltaY = deltaY <= 0 ? deltaY - XLR8 : deltaY + XLR8;
-
-			e.delta = deltaY;
-			e.wheelY = deltaY;
-			e.wheelX = deltaX;
-
-			clearTimeout(mouseWheelHandle);
-			mouseWheelHandle = setTimeout(function () {
-				XLR8 = 0;
-			}, 300);
-			callback(e);
-		};
-	}
-
-	function isMultiKey (eventName) {
-		return /,/.test(eventName) && !/click|mouse|resize|scroll/.test(eventName);
-	}
-
-	function keysToRegExp (eventName) {
-		return new RegExp(eventName.replace('keydown:', '').replace('keyup:', '').split(',').join('|'));
-	}
-
-	function on (node, eventName, filter, handler) {
-		var
-			callback,
-			handles,
-			handle,
-			keyRegExp;
-
-		if (isMultiKey(eventName)) {
-			keyRegExp = keysToRegExp(eventName);
-			callback = function (e) {
-				if (keyRegExp.test(e.key)) {
-					(handler || filter)(e);
-				}
-			};
-			eventName = /keydown/.test(eventName) ? 'keydown' : 'keyup';
-		}
-
-		if (/,/.test(eventName)) {
-			// handle multiple event types, like:
-			// on(node, 'mouseup, mousedown', callback);
-			//
-			handles = [];
-			eventName.split(',').forEach(function (eStr) {
-				handles.push(on(node, eStr.trim(), filter, handler));
-			});
-			return makeMultiHandle(handles);
-		}
-
-		if(eventName === 'button'){
-			// handle click and Enter
-			return makeMultiHandle([
-				on(node, 'click', filter, handle),
-				on(node, 'keyup:Enter', filter, handle)
-			]);
-		}
-
-		node = getNode(node);
-
-		if (filter && handler) {
-			if (typeof filter === 'string') {
-				filter = closestFilter(node, filter);
-			}
-			// else it is a custom function
-			callback = function (e) {
-				var result = filter(e);
-				if (result) {
-					e.filteredTarget = result;
-					handler(e, result);
-				}
-			};
-		} else if (!callback) {
-			callback = filter || handler;
-		}
-
-		if (eventName === 'clickoff') {
-			// custom - used for popups 'n stuff
-			return onClickoff(node, callback);
-		}
-
-		if (eventName === 'load' && node.localName === 'img') {
-			return onImageLoad(node, callback);
-		}
-
-		if (eventName === 'wheel') {
-			// mousewheel events, natch
-			if (hasWheel) {
-				// pass through, but first curry callback to wheel events
-				callback = normalizeWheelEvent(callback);
-			} else {
-				// old Firefox, old IE, Chrome
-				return makeMultiHandle([
-					on(node, 'DOMMouseScroll', normalizeWheelEvent(callback)),
-					on(node, 'mousewheel', normalizeWheelEvent(callback))
-				]);
-			}
-		}
-
-		if (/key/.test(eventName)) {
-			callback = normalizeKeyEvent(callback);
-		}
-
-		node.addEventListener(eventName, callback, false);
-
-		handle = {
-			remove: function () {
-				node.removeEventListener(eventName, callback, false);
-				node = callback = null;
-				this.remove = this.pause = this.resume = function () {};
-			},
-			pause: function () {
-				node.removeEventListener(eventName, callback, false);
-			},
-			resume: function () {
-				node.addEventListener(eventName, callback, false);
-			}
-		};
-
-		return handle;
-	}
-
-	on.once = function (node, eventName, filter, callback) {
-		var h;
-		if (filter && callback) {
-			h = on(node, eventName, filter, function () {
-				callback.apply(window, arguments);
-				h.remove();
-			});
-		} else {
-			h = on(node, eventName, function () {
-				filter.apply(window, arguments);
-				h.remove();
-			});
-		}
-		return h;
-	};
-
-	INVALID_PROPS = {
-		isTrusted: 1
-	};
-	function mix (object, value) {
-		if (!value) {
-			return object;
-		}
-		if (typeof value === 'object') {
-			for(var key in value){
-				if (!INVALID_PROPS[key] && typeof value[key] !== 'function') {
-					object[key] = value[key];
-				}
-			}
-		} else {
-			object.value = value;
-		}
-		return object;
-	}
-
-	on.emit = function (node, eventName, value) {
-		node = getNode(node);
-		var event = document.createEvent('HTMLEvents');
-		event.initEvent(eventName, true, true); // event type, bubbling, cancelable
-		return node.dispatchEvent(mix(event, value));
-	};
-
-	on.fire = function (node, eventName, eventDetail, bubbles) {
-		var event = document.createEvent('CustomEvent');
-		event.initCustomEvent(eventName, !!bubbles, true, eventDetail); // event type, bubbling, cancelable, value
-		return node.dispatchEvent(event);
-	};
-
-	on.isAlphaNumeric = function (str) {
-		if (str.length > 1) {
-			return false;
-		}
-		if (str === ' ') {
-			return false;
-		}
-		if (!isNaN(Number(str))) {
-			return true;
-		}
-		var code = str.toLowerCase().charCodeAt(0);
-		return code >= 97 && code <= 122;
-	};
-
-	on.makeMultiHandle = makeMultiHandle;
-	on.closest = closest;
-	on.matches = matches;
-
-	return on;
-
-}));
-
-},{}],9:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2217,13 +2091,15 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 require('./date-picker');
-var BaseComponent = require('BaseComponent');
+var BaseComponent = require('@clubajax/base-component');
+var dom = require('@clubajax/dom');
+var on = require('@clubajax/on');
 var dates = require('dates');
 
 var defaultPlaceholder = 'MM/DD/YYYY';
 var defaultMask = 'XX/XX/XXXX';
 var props = ['label', 'name', 'placeholder', 'mask', 'min', 'max'];
-var bools = [];
+var bools = ['required'];
 
 var FLASH_TIME = 1000;
 
@@ -2285,7 +2161,7 @@ var DateInput = function (_BaseComponent) {
 	}, {
 		key: 'templateString',
 		get: function get() {
-			return '\n<label>\n\t<span ref="labelNode"></span>\n\t<input ref="input" />\n\t\n</label>\n<date-picker ref="picker" tabindex="0"></date-picker>';
+			return '\n<label>\n\t<span ref="labelNode"></span>\n\t<input ref="input" class="empty" />\n\t\n</label>\n<date-picker ref="picker" tabindex="0"></date-picker>';
 		}
 	}], [{
 		key: 'observedAttributes',
@@ -2306,11 +2182,14 @@ var DateInput = function (_BaseComponent) {
 	_createClass(DateInput, [{
 		key: 'isValid',
 		value: function isValid(value) {
+			if (!value && !this.required) {
+				return true;
+			}
 			return dates.isDate(this.input.value);
 		}
 	}, {
 		key: 'setValue',
-		value: function setValue(value, silent, noHide) {
+		value: function setValue(value, silent) {
 			this.typedValue = value;
 			this.input.value = value;
 			var len = this.input.value.length === this.mask.length;
@@ -2321,7 +2200,7 @@ var DateInput = function (_BaseComponent) {
 				valid = false;
 			}
 
-			if (valid && len) {
+			if (valid || !len) {
 				this.strDate = value;
 				this.picker.value = value;
 				if (!silent) {
@@ -2420,13 +2299,17 @@ var DateInput = function (_BaseComponent) {
 		}
 	}, {
 		key: 'flash',
-		value: function flash() {
+		value: function flash(addFocus) {
 			var _this3 = this;
 
 			this.classList.add('warning');
 			setTimeout(function () {
 				_this3.classList.remove('warning');
 			}, FLASH_TIME);
+
+			if (addFocus) {
+				this.focus();
+			}
 		}
 	}, {
 		key: 'show',
@@ -2445,7 +2328,7 @@ var DateInput = function (_BaseComponent) {
 				if (box.x + box.w > win.h) {
 					_this4.picker.classList.add('right-align');
 				}
-				if (box.y + box.h > win.h) {
+				if (box.top + box.h > win.h) {
 					_this4.picker.classList.add('bottom-align');
 				}
 			});
@@ -2456,22 +2339,30 @@ var DateInput = function (_BaseComponent) {
 			if (!this.showing || window.keepPopupsOpen) {
 				return;
 			}
-
 			this.showing = false;
 			dom.classList.remove(this.picker, 'right-align bottom-align show');
 			dom.classList.toggle(this, 'invalid', !this.isValid());
 		}
 	}, {
+		key: 'focus',
+		value: function focus() {
+			var _this5 = this;
+
+			onDomReady(this, function () {
+				_this5.input.focus();
+			});
+		}
+	}, {
 		key: 'domReady',
 		value: function domReady() {
-			var _this5 = this;
+			var _this6 = this;
 
 			this.mask = this.mask || defaultMask;
 			this.maskLength = this.mask.match(/X/g).join('').length;
 			this.input.setAttribute('type', 'text');
 			this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
 			this.picker.on('change', function (e) {
-				_this5.setValue(e.value, true);
+				_this6.setValue(e.value, true);
 			});
 			this.connectKeys();
 			this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
@@ -2479,12 +2370,12 @@ var DateInput = function (_BaseComponent) {
 	}, {
 		key: 'connectKeys',
 		value: function connectKeys() {
-			var _this6 = this;
+			var _this7 = this;
 
 			this.on(this.input, 'keydown', stopEvent);
 			this.on(this.input, 'keypress', stopEvent);
 			this.on(this.input, 'keyup', function (e) {
-				_this6.onKey(e);
+				_this7.onKey(e);
 			});
 		}
 	}]);
@@ -2501,6 +2392,17 @@ function handleOpen(input, picker, show, hide) {
 		}
 	});
 	docHandle.pause();
+	var changeHandle = on(picker, 'change', function () {
+		if (!inputFocus) {
+			setTimeout(function () {
+				hide();
+				docHandle.pause();
+				changeHandle.pause();
+			}, 100);
+		}
+	});
+	changeHandle.pause();
+
 	return on.makeMultiHandle([on(input, 'focus', function () {
 		inputFocus = true;
 		show();
@@ -2517,15 +2419,17 @@ function handleOpen(input, picker, show, hide) {
 		pickerFocus = true;
 		show();
 		docHandle.resume();
+		changeHandle.resume();
 	}), on(picker, 'blur', function () {
 		pickerFocus = false;
 		setTimeout(function () {
 			if (!inputFocus) {
 				hide();
 				docHandle.pause();
+				changeHandle.pause();
 			}
 		}, 100);
-	})]);
+	}), changeHandle, docHandle]);
 }
 
 var numReg = /[0123456789]/;
@@ -2555,7 +2459,7 @@ customElements.define('date-input', DateInput);
 
 module.exports = DateInput;
 
-},{"./date-picker":10,"BaseComponent":1,"dates":6}],10:[function(require,module,exports){
+},{"./date-picker":7,"@clubajax/base-component":1,"@clubajax/dom":3,"@clubajax/on":4,"dates":5}],7:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -2568,11 +2472,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-require('BaseComponent/src/properties');
-require('BaseComponent/src/template');
-require('BaseComponent/src/refs');
-var BaseComponent = require('BaseComponent');
+var BaseComponent = require('@clubajax/base-component');
 var dates = require('dates');
+var dom = require('@clubajax/dom');
 
 var props = ['min', 'max'];
 
@@ -3187,7 +3089,7 @@ customElements.define('date-picker', DatePicker);
 
 module.exports = DatePicker;
 
-},{"BaseComponent":1,"BaseComponent/src/properties":2,"BaseComponent/src/refs":3,"BaseComponent/src/template":4,"dates":6}],11:[function(require,module,exports){
+},{"@clubajax/base-component":1,"@clubajax/dom":3,"dates":5}],8:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3201,7 +3103,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 require('./date-range-picker');
 var DateInput = require('./date-input');
 var dates = require('dates');
-var dom = require('dom');
 
 var props = ['label', 'name', 'placeholder'];
 var bools = ['range-expands'];
@@ -3255,7 +3156,7 @@ customElements.define('date-range-input', DateRangeInput);
 
 module.exports = DateRangeInput;
 
-},{"./date-input":9,"./date-range-picker":13,"dates":6,"dom":7}],12:[function(require,module,exports){
+},{"./date-input":6,"./date-range-picker":10,"dates":5}],9:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3266,18 +3167,27 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var BaseComponent = require('BaseComponent');
+var BaseComponent = require('@clubajax/base-component');
 require('./date-input');
 var dates = require('dates');
-var dom = require('dom');
+var dom = require('@clubajax/dom');
 
 var props = ['left-label', 'right-label', 'name', 'placeholder'];
-var bools = ['range-expands'];
+var bools = ['range-expands', 'required'];
+
+var DELIMITER = ' - ';
 
 var DateRangeInputs = function (_BaseComponent) {
 	_inherits(DateRangeInputs, _BaseComponent);
 
 	_createClass(DateRangeInputs, [{
+		key: 'attributeChanged',
+		value: function attributeChanged(prop, value) {
+			if (prop === 'value') {
+				this.value = value;
+			}
+		}
+	}, {
 		key: 'props',
 		get: function get() {
 			return props;
@@ -3286,6 +3196,25 @@ var DateRangeInputs = function (_BaseComponent) {
 		key: 'bools',
 		get: function get() {
 			return bools;
+		}
+	}, {
+		key: 'value',
+		set: function set(value) {
+			this.setValue(value);
+		},
+		get: function get() {
+			if (!this.leftInput.value || !this.rightInput.value) {
+				return null;
+			}
+			return '' + this.leftInput.value + DELIMITER + this.rightInput.value;
+		}
+	}, {
+		key: 'values',
+		get: function get() {
+			return {
+				start: this.leftInput.value,
+				end: this.leftInput.value
+			};
 		}
 	}], [{
 		key: 'observedAttributes',
@@ -3299,6 +3228,7 @@ var DateRangeInputs = function (_BaseComponent) {
 
 		var _this = _possibleConstructorReturn(this, (DateRangeInputs.__proto__ || Object.getPrototypeOf(DateRangeInputs)).call(this));
 
+		_this.fireOwnDomready = true;
 		_this.mask = 'XX/XX/XXXX';
 		return _this;
 	}
@@ -3306,39 +3236,114 @@ var DateRangeInputs = function (_BaseComponent) {
 	_createClass(DateRangeInputs, [{
 		key: 'isValid',
 		value: function isValid(value) {
+			if (!value) {
+				return true; // TODO: required
+			}
 			var ds = value.split(/\s*-\s*/);
 			return dates.isDate(ds[0]) && dates.isDate(ds[1]);
 		}
 	}, {
-		key: 'domReady',
-		value: function domReady() {
+		key: 'setValue',
+		value: function setValue(value, silent) {
 			var _this2 = this;
 
-			this.leftInput = dom('date-input', { label: this['left-label'] }, this);
-			this.rightInput = dom('date-input', { label: this['right-label'] }, this);
+			if (!this.isValid(value)) {
+				console.error('Invalid dates', value);
+				return;
+			}
+			onDomReady(this, function () {
+				var ds = value ? value.split(/\s*-\s*/) : ['', ''];
+				_this2.isBeingSet = true;
+				_this2.leftInput.setValue(ds[0], silent);
+				_this2.rightInput.setValue(ds[1], silent);
+				_this2.isBeingSet = false;
+			});
+		}
+	}, {
+		key: 'clear',
+		value: function clear(silent) {
+			this.leftInput.setValue('', true);
+			this.rightInput.setValue('', true);
+			if (!silent) {
+				this.emit('change', { value: null });
+			}
+		}
+	}, {
+		key: 'emitEvent',
+		value: function emitEvent() {
+			var _this3 = this;
+
+			clearTimeout(this.debounce);
+			this.debounce = setTimeout(function () {
+				var value = _this3.value;
+				if (_this3.isValid(value)) {
+					_this3.emit('change', { value: value });
+				}
+			}, 100);
+		}
+	}, {
+		key: 'connected',
+		value: function connected() {
+			var _this4 = this;
+
+			this.leftInput = dom('date-input', {
+				label: this['left-label'],
+				required: this.required,
+				placeholder: this.placeholder
+			}, this);
+			this.rightInput = dom('date-input', {
+				label: this['right-label'],
+				required: this.required,
+				placeholder: this.placeholder
+			}, this);
 
 			this.leftInput.on('change', function (e) {
-				//this.rightInput.min = e.value;
-				var changesDate = dates.toDate(_this2.rightInput.value) < dates.toDate(e.value);
-				if (!_this2.rightInput.value || changesDate) {
-					_this2.rightInput.value = e.value;
-					if (changesDate) {
-						_this2.rightInput.flash();
+				var changesDate = dates.toDate(_this4.rightInput.value) < dates.toDate(e.value);
+				if (!_this4.rightInput.value || changesDate) {
+					if (e.value) {
+						_this4.rightInput.setValue(e.value, true, true);
 					}
+					if (changesDate) {
+						_this4.rightInput.flash(true);
+					} else if (!_this4.isBeingSet) {
+						_this4.rightInput.focus();
+					}
+				} else {
+					_this4.emitEvent();
 				}
+				e.stopPropagation();
+				e.preventDefault();
+				return false;
 			});
 
 			this.rightInput.on('change', function (e) {
-				//this.leftInput.max = e.value;
-				var changesDate = dates.toDate(_this2.leftInput.value) > dates.toDate(e.value);
-				if (!_this2.leftInput.value || changesDate) {
-					_this2.leftInput.value = e.value;
-					if (changesDate) {
-						_this2.leftInput.flash();
+				var changesDate = dates.toDate(_this4.leftInput.value) > dates.toDate(e.value);
+				if (!_this4.leftInput.value || changesDate) {
+					if (e.value) {
+						_this4.leftInput.setValue(e.value, true, true);
 					}
+					if (changesDate) {
+						_this4.leftInput.flash(true);
+					} else if (!_this4.isBeingSet) {
+						_this4.leftInput.focus();
+					}
+				} else {
+					_this4.emitEvent();
 				}
+				e.stopPropagation();
+				e.preventDefault();
+
+				return false;
 			});
+
+			onDomReady([this.leftInput, this.rightInput], function () {
+				_this4.fire('domready');
+			});
+			this.connected = function () {};
 		}
+	}, {
+		key: 'domReady',
+		value: function domReady() {}
 	}]);
 
 	return DateRangeInputs;
@@ -3348,7 +3353,7 @@ customElements.define('date-range-inputs', DateRangeInputs);
 
 module.exports = DateRangeInputs;
 
-},{"./date-input":9,"BaseComponent":1,"dates":6,"dom":7}],13:[function(require,module,exports){
+},{"./date-input":6,"@clubajax/base-component":1,"@clubajax/dom":3,"dates":5}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3360,9 +3365,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 require('./date-picker');
-var BaseComponent = require('BaseComponent');
+var BaseComponent = require('@clubajax/base-component');
 var dates = require('dates');
-var dom = require('dom');
+var dom = require('@clubajax/dom');
 
 var props = ['value'];
 var bools = ['range-expands'];
@@ -3625,7 +3630,7 @@ customElements.define('date-range-picker', DateRangePicker);
 
 module.exports = DateRangePicker;
 
-},{"./date-picker":10,"BaseComponent":1,"dates":6,"dom":7}],14:[function(require,module,exports){
+},{"./date-picker":7,"@clubajax/base-component":1,"@clubajax/dom":3,"dates":5}],11:[function(require,module,exports){
 'use strict';
 
 require('./globals');
@@ -3635,13 +3640,13 @@ require('../../src/date-range-picker');
 require('../../src/date-range-input');
 require('../../src/date-range-inputs');
 
-},{"../../src/date-input":9,"../../src/date-picker":10,"../../src/date-range-input":11,"../../src/date-range-inputs":12,"../../src/date-range-picker":13,"./globals":15}],15:[function(require,module,exports){
+},{"../../src/date-input":6,"../../src/date-picker":7,"../../src/date-range-input":8,"../../src/date-range-inputs":9,"../../src/date-range-picker":10,"./globals":12}],12:[function(require,module,exports){
 'use strict';
 
 window['no-native-shim'] = false;
-require('custom-elements-polyfill');
-window.on = require('on');
-window.dom = require('dom');
+require('@clubajax/custom-elements-polyfill');
+window.on = require('@clubajax/on');
+window.dom = require('@clubajax/dom');
 
-},{"custom-elements-polyfill":5,"dom":7,"on":8}]},{},[14])(14)
+},{"@clubajax/custom-elements-polyfill":2,"@clubajax/dom":3,"@clubajax/on":4}]},{},[11])(11)
 });
