@@ -6,14 +6,18 @@ module.exports = function (grunt) {
     
     // collect dependencies from node_modules
     let nm = path.resolve(__dirname, 'node_modules'),
-        vendorAliases = ['@clubajax/dom', '@clubajax/on', '@clubajax/custom-elements-polyfill', '@clubajax/base-component'],
+        vendorAliases = ['@clubajax/custom-elements-polyfill', '@clubajax/dom', '@clubajax/on', '@clubajax/base-component'],
 		baseAliases = ['./src/date-picker'],
 		allAliases = vendorAliases.concat(baseAliases),
-		sourceMaps = true,
+		sourceMaps = 1,
         watch = false,
         watchPort = 35750,
-        babelTransform = [['babelify', { presets: ['latest'] }]],
-        devBabel = true;
+		devBabel = 1,
+		babelTransform = devBabel ? [[
+			'babelify', {
+			global: true,
+    		presets: ['@babel/preset-env']
+    	}]] : [];
     
     grunt.initConfig({
         
@@ -35,7 +39,7 @@ module.exports = function (grunt) {
                     }),
                     // not consuming any modules
                     external: null,
-					transform: devBabel ? babelTransform : [],
+					transform: babelTransform,
                     browserifyOptions: {
                         debug: sourceMaps
                     }
@@ -59,7 +63,7 @@ module.exports = function (grunt) {
                     // transform not using babel in dev-mode.
                     // if developing in IE or using very new features,
                     // change devBabel to `true`
-                    transform: devBabel ? babelTransform : [],
+                    transform: babelTransform,
                     postBundleCB: function (err, src, next) {
                         console.timeEnd('build');
                         next(err, src);
@@ -133,8 +137,12 @@ module.exports = function (grunt) {
 			css: {
 				files: 'tests/dist/date-picker.css'
 			},
+			html: {
+				files: ['tests/*.html'],
+				tasks: []
+			},
             scripts: {
-                files: ['tests/src/*.js', 'src/*.js', 'tests/*.html'],
+                files: ['tests/src/*.js', 'src/*.js'],
                 tasks: ['build-dev']
             },
             options: {

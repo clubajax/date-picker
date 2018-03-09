@@ -52,65 +52,83 @@
 
 	suite('DatePicker', function () {
 		this.timeout(3000);
-		var suite = window.suite,
+		const suite = window.suite,
 			test = window.test,
 			dom = window.dom,
 			on = window.on,
 			expect = chai.expect,
 			body = dom.byId('tests');
 
+		function ready (node, cb) {
+			onDomReady(node, function () {
+				setTimeout(cb, 30);
+			});
+		}
+
 		suite('create / destroy', function () {
 
-			// does node.value work?
-			//
+			test.only('it should submit in a form', function (done) {
+				const form = dom('form', {}, body);
+				dom('input', {type: 'text', value: 'Mike', name: 'name'}, form);
+				const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
+				const btn = dom('button', {html: 'Submit'}, form);
+				on.once(form, 'submit', function (e) {
+					console.log('SUBMIT', e.target.value);
+					// e.preventDefault();
+					// return false;
+				});
+				ready(node, function () {
+					btn.focus();
+					on.emit(btn, 'click');
+					expect(dom.isNode(node)).to.equal(true);
+					done();
+				});
+
+			});
+
 			test('it should load custom input of type `date`', function () {
-				var node = dom('date-input', {type:'date', label: 'Date', value:'12/12/2017' }, body);
+				const node = dom('date-input', {type:'date', label: 'Date', value:'12/12/2017' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {
 					console.log('change', e.value);
 				});
 			});
 
-			test('it should load a date picker', function () {
-				var node = dom('date-picker', {}, body);
-				expect(dom.isNode(node)).to.equal(true);
-			});
-
 			test('it should not allow selection before min of after max', function () {
-				var node = dom('date-picker', {min:'07/05/2017', max:'07/19/2017', value:'07/01/2017'}, body);
+				const node = dom('date-picker', {min:'07/05/2017', max:'07/19/2017', value:'07/01/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
 			test('it should load a range calendar', function () {
-				var node = dom('date-picker', { 'range-picker': true }, body);
+				const node = dom('date-picker', { 'range-picker': true }, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
 			test('it should load a date range picker', function () {
-				var node = dom('date-range-picker', {}, body);
+				const node = dom('date-range-picker', {}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
 			test('it should open to the top left', function () {
-				var node = dom('date-input', { class:'BR' }, body);
+				const node = dom('date-input', { class:'BR' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
 			test('it should load a date input', function () {
-				var node = dom('date-input', { value: '12/22/2000', label: 'El Date Input'}, body);
+				const node = dom('date-input', { value: '12/22/2000', label: 'El Date Input'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
 			test('it should load a date range input', function () {
-				var node = dom('date-range-input', {label:'El Date Picker', value:'01/10/2017 - 02/14/2017'}, body);
+				const node = dom('date-range-input', {label:'El Date Picker', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
 			test('it should load date range inputs', function (done) {
-				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'01/10/2017 - 02/14/2017'}, body);
+				const node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'01/10/2017 - 02/14/2017'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 
-				onDomReady(node, function () {
+				ready(node, function () {
 					expect(node.value).to.equal('01/10/2017 - 02/14/2017');
 
 					expect(node.leftInput.value).to.equal('01/10/2017');
@@ -124,7 +142,7 @@
 			});
 
 			test('it should load date range inputs with no value', function (done) {
-				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', required: true, placeholder: 'Date here'}, body);
+				const node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', required: true, placeholder: 'Date here'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 
 				node.on('change', function (e) {
@@ -132,7 +150,7 @@
 					console.log('change.target', e.target);
 				});
 
-				onDomReady(node, function () {
+				ready(node, function () {
 					expect(node.value).to.equal(null);
 
 					node.value = '02/10/2017 - 03/17/2017';
@@ -141,11 +159,11 @@
 				});
 			});
 
-			test.only('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
-				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'02/10/2017 - 02/14/2017'}, body);
-				var b1 = dom('button', {html: 'clear'}, body);
-				var b2  = dom('button', {html: 'value.set'}, body);
-				var b3  = dom('button', {html: 'setValue'}, body);
+			test('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
+				const node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'02/10/2017 - 02/14/2017'}, body);
+				const b1 = dom('button', {html: 'clear'}, body);
+				const b2  = dom('button', {html: 'value.set'}, body);
+				const b3  = dom('button', {html: 'setValue'}, body);
 				expect(dom.isNode(node)).to.equal(true);
 
 				on(b1, 'click', function () {
@@ -174,7 +192,7 @@
 			});
 
 			test('it should open the other picker if range is (auto-set) the same (no initial value) - MANUAL TEST', function (done) {
-				var node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date'}, body);
+				const node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date'}, body);
 
 				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {

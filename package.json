@@ -1,6 +1,6 @@
 {
   "name": "@clubajax/date-picker",
-  "version": "0.10.11",
+  "version": "0.11.0",
   "description": "Calendar custom-element",
   "main": "index.js",
   "scripts": {
@@ -26,22 +26,23 @@
   },
   "homepage": "https://github.com/clubajax/date-picker#readme",
   "devDependencies": {
+    "@babel/core": "^7.0.0-beta.40",
+    "@babel/preset-env": "^7.0.0-beta.40",
     "@clubajax/custom-elements-polyfill": "^0.8.3",
-    "babel-preset-latest": "^6.16.0",
-    "babelify": "^7.3.0",
-    "chai": "^4.0.2",
+		"babelify": "github:ylemkimon/babelify",
+		"chai": "^4.0.2",
     "grunt": "^1.0.1",
-    "grunt-browserify": "^5.0.0",
+    "grunt-browserify": "^5.2.0",
     "grunt-concurrent": "^2.3.1",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-http-server": "^2.0.0",
-    "grunt-sass": "^2.0.0",
+    "grunt-sass": "^2.1.0",
     "mocha": "^3.4.2",
     "serve-index": "^1.8.0"
   },
   "dependencies": {
-    "@clubajax/base-component": "^1.6.7",
-    "@clubajax/dom": "^2.1.6",
+    "@clubajax/base-component": "2.0.0",
+    "@clubajax/dom": "^2.6.1",
     "@clubajax/on": "^2.1.6",
     "dates": "github:clubajax/dates#v1.4.0"
   },

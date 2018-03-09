@@ -2,6 +2,9 @@ const BaseComponent = require('@clubajax/base-component');
 const dates = require('dates');
 const dom = require('@clubajax/dom');
 
+// TODO:
+// https://axesslab.com/accessible-datepickers/
+
 const props = ['min', 'max'];
 
 // range-left/range-right mean that this is one side of a date-range-picker

@@ -241,6 +241,12 @@ class DateInput extends BaseComponent {
 		this.maskLength = this.mask.match(/X/g).join('').length;
 		this.input.setAttribute('type', 'text');
 		this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
+		if (this.name) {
+			this.input.setAttribute('name', this.name);
+		}
+		if (this.label) {
+			this.labelNode.innerHTML = this.label;
+		}
 		this.picker.on('change', (e) => {
 			this.setValue(e.value, true);
 		});
