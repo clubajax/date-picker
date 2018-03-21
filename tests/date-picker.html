@@ -12,28 +12,33 @@
 	<script src="//localhost:35750/livereload.js"></script>
 
 	<style>
-		html, body{
+		html, body {
 			height: 100%;
 		}
+
 		body {
 			padding: 20px;
 			font-family: sans-serif;
 		}
+
 		section {
 			border: 1px solid #ccc;
 			padding: 3px;
 			margin: 5px;
 		}
-		.spacing{
+
+		.spacing {
 			height: 1500px;
 		}
-		.BR{
+
+		.BR {
 			position: absolute;
 			right: 20px;
 			bottom: 20px;
 		}
+
 		date-range-input,
-		date-range-inputs{
+		date-range-inputs {
 			margin: 10px 0;
 		}
 	</style>
@@ -65,149 +70,193 @@
 			});
 		}
 
-		suite('create / destroy', function () {
+		test('it should round', function () {
+			// round up
+			expect(util.round(1, 15)).to.equal(15);
+			expect(util.round(9, 15)).to.equal(15);
+			expect(util.round(11, 15)).to.equal(15);
+			expect(util.round(21, 15)).to.equal(30);
+			expect(util.round(4, 10)).to.equal(10);
+			expect(util.round(11, 10)).to.equal(20);
+			// round down
+			expect(util.round(1, 15, true)).to.equal(0);
+			expect(util.round(9, 15, true)).to.equal(0);
+			expect(util.round(11, 15, true)).to.equal(0);
+			expect(util.round(21, 15, true)).to.equal(15);
+			expect(util.round(4, 10, true)).to.equal(0);
+			expect(util.round(11, 10, true)).to.equal(10);
+		});
 
-			test.only('it should submit in a form', function (done) {
-				const form = dom('form', {}, body);
-				dom('input', {type: 'text', value: 'Mike', name: 'name'}, form);
-				const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
-				const btn = dom('button', {html: 'Submit'}, form);
-				on.once(form, 'submit', function (e) {
-					console.log('SUBMIT', e.target.value);
-					// e.preventDefault();
-					// return false;
-				});
-				ready(node, function () {
-					btn.focus();
-					on.emit(btn, 'click');
-					expect(dom.isNode(node)).to.equal(true);
-					done();
-				});
+		test('it should increment minutes', function () {
+			// no rounding
+			expect(util.incMinutes('00:00', 1)).to.equal('00:01');
+			expect(util.incMinutes('00:30', -1)).to.equal('00:29');
+			expect(util.incMinutes('00:00', -1)).to.equal('00:45');
+			expect(util.incMinutes('00:59', 1)).to.equal('00:00');
 
+			// even rounding
+			expect(util.incMinutes('00:00', 1, 15)).to.equal('00:15');
+			expect(util.incMinutes('00:30', -1, 15)).to.equal('00:15');
+			expect(util.incMinutes('00:45', 1, 15)).to.equal('00:00');
+			expect(util.incMinutes('00:00', -1, 15)).to.equal('00:45');
+
+			// odd rounding
+			expect(util.incMinutes('00:05', 1, 15)).to.equal('00:15');
+			expect(util.incMinutes('00:14', 1, 15)).to.equal('00:15');
+			expect(util.incMinutes('00:16', 1, 15)).to.equal('00:30');
+			expect(util.incMinutes('00:29', 1, 15)).to.equal('00:30');
+			expect(util.incMinutes('00:47', 1, 15)).to.equal('00:00');
+
+		});
+
+		test.only('it should load a time input', function () {
+			const node = dom('time-input', { label: 'Time', xvalue: '12:34am', step: 15 }, body);
+			expect(dom.isNode(node)).to.equal(true);
+			node.on('change', function (e) {
+				console.log('change', e.value);
+			});
+		});
+
+		test('it should submit in a form', function (done) {
+			const form = dom('form', {}, body);
+			dom('input', { type: 'text', value: 'Mike', name: 'name' }, form);
+			const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
+			const btn = dom('button', { html: 'Submit' }, form);
+			on.once(form, 'submit', function (e) {
+				console.log('SUBMIT', e.target.value);
+				// e.preventDefault();
+				// return false;
+			});
+			ready(node, function () {
+				btn.focus();
+				on.emit(btn, 'click');
+				expect(dom.isNode(node)).to.equal(true);
+				done();
 			});
 
-			test('it should load custom input of type `date`', function () {
-				const node = dom('date-input', {type:'date', label: 'Date', value:'12/12/2017' }, body);
-				expect(dom.isNode(node)).to.equal(true);
-				node.on('change', function (e) {
-					console.log('change', e.value);
-				});
+		});
+
+		test.only('it should load custom input of type `date`', function () {
+			const node = dom('date-input', { type: 'date', label: 'Date', xvalue: '12/12/2017' }, body);
+			expect(dom.isNode(node)).to.equal(true);
+			node.on('change', function (e) {
+				console.log('change', e.value);
+			});
+		});
+
+		test('it should not allow selection before min of after max', function () {
+			const node = dom('date-picker', { min: '07/05/2017', max: '07/19/2017', value: '07/01/2017' }, body);
+			expect(dom.isNode(node)).to.equal(true);
+		});
+
+		test('it should load a range calendar', function () {
+			const node = dom('date-picker', { 'range-picker': true }, body);
+			expect(dom.isNode(node)).to.equal(true);
+		});
+
+		test('it should load a date range picker', function () {
+			const node = dom('date-range-picker', {}, body);
+			expect(dom.isNode(node)).to.equal(true);
+		});
+
+		test('it should open to the top left', function () {
+			const node = dom('date-input', { class: 'BR' }, body);
+			expect(dom.isNode(node)).to.equal(true);
+		});
+
+		test('it should load a date input', function () {
+			const node = dom('date-input', { value: '12/22/2000', label: 'El Date Input' }, body);
+			expect(dom.isNode(node)).to.equal(true);
+		});
+
+		test('it should load a date range input', function () {
+			const node = dom('date-range-input', { label: 'El Date Picker', value: '01/10/2017 - 02/14/2017' }, body);
+			expect(dom.isNode(node)).to.equal(true);
+		});
+
+		test('it should load date range inputs', function (done) {
+			const node = dom('date-range-inputs', { 'left-label': 'Start Date', 'right-label': 'End Date', value: '01/10/2017 - 02/14/2017' }, body);
+			expect(dom.isNode(node)).to.equal(true);
+
+			ready(node, function () {
+				expect(node.value).to.equal('01/10/2017 - 02/14/2017');
+
+				expect(node.leftInput.value).to.equal('01/10/2017');
+				expect(node.rightInput.value).to.equal('02/14/2017');
+
+				node.value = '02/10/2017 - 03/17/2017';
+				expect(node.leftInput.value).to.equal('02/10/2017');
+				expect(node.rightInput.value).to.equal('03/17/2017');
+				done();
+			});
+		});
+
+		test('it should load date range inputs with no value', function (done) {
+			const node = dom('date-range-inputs', { 'left-label': 'Start Date', 'right-label': 'End Date', required: true, placeholder: 'Date here' }, body);
+			expect(dom.isNode(node)).to.equal(true);
+
+			node.on('change', function (e) {
+				console.log('change.value', node.value);
+				console.log('change.target', e.target);
 			});
 
-			test('it should not allow selection before min of after max', function () {
-				const node = dom('date-picker', {min:'07/05/2017', max:'07/19/2017', value:'07/01/2017'}, body);
-				expect(dom.isNode(node)).to.equal(true);
+			ready(node, function () {
+				expect(node.value).to.equal(null);
+
+				node.value = '02/10/2017 - 03/17/2017';
+				expect(node.value).to.equal('02/10/2017 - 03/17/2017');
+				done();
+			});
+		});
+
+		test('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
+			const node = dom('date-range-inputs', { 'left-label': 'Start Date', 'right-label': 'End Date', value: '02/10/2017 - 02/14/2017' }, body);
+			const b1 = dom('button', { html: 'clear' }, body);
+			const b2 = dom('button', { html: 'value.set' }, body);
+			const b3 = dom('button', { html: 'setValue' }, body);
+			expect(dom.isNode(node)).to.equal(true);
+
+			on(b1, 'click', function () {
+				node.clear();
+			});
+			on(b2, 'click', function () {
+				node.value = '02/10/2017 - 02/14/2017';
+			});
+			on(b3, 'click', function () {
+				node.setValue('02/10/2017 - 02/14/2017', true);
 			});
 
-			test('it should load a range calendar', function () {
-				const node = dom('date-picker', { 'range-picker': true }, body);
-				expect(dom.isNode(node)).to.equal(true);
+			node.on('change', function (e) {
+				console.log('\nEMIT');
+				console.log('change.value', node.value);
+				console.log('change.target', e.target);
 			});
 
-			test('it should load a date range picker', function () {
-				const node = dom('date-range-picker', {}, body);
-				expect(dom.isNode(node)).to.equal(true);
+			onDomReady(node, function () {
+
+				//node.leftInput.value = '02/15/2017';
+				//node.value = '02/10/2017 - 03/17/2017';
+				//expect(node.value).to.equal('02/10/2017 - 03/17/2017');
+				done();
+			});
+		});
+
+		test('it should open the other picker if range is (auto-set) the same (no initial value) - MANUAL TEST', function (done) {
+			const node = dom('date-range-inputs', { 'left-label': 'Start Date', 'right-label': 'End Date' }, body);
+
+			expect(dom.isNode(node)).to.equal(true);
+			node.on('change', function (e) {
+				console.log('\nEMIT');
+				console.log('change.value', node.value);
+				console.log('change.target', e.target);
 			});
 
-			test('it should open to the top left', function () {
-				const node = dom('date-input', { class:'BR' }, body);
-				expect(dom.isNode(node)).to.equal(true);
-			});
+			onDomReady(node, function () {
 
-			test('it should load a date input', function () {
-				const node = dom('date-input', { value: '12/22/2000', label: 'El Date Input'}, body);
-				expect(dom.isNode(node)).to.equal(true);
-			});
-
-			test('it should load a date range input', function () {
-				const node = dom('date-range-input', {label:'El Date Picker', value:'01/10/2017 - 02/14/2017'}, body);
-				expect(dom.isNode(node)).to.equal(true);
-			});
-
-			test('it should load date range inputs', function (done) {
-				const node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'01/10/2017 - 02/14/2017'}, body);
-				expect(dom.isNode(node)).to.equal(true);
-
-				ready(node, function () {
-					expect(node.value).to.equal('01/10/2017 - 02/14/2017');
-
-					expect(node.leftInput.value).to.equal('01/10/2017');
-					expect(node.rightInput.value).to.equal('02/14/2017');
-
-					node.value = '02/10/2017 - 03/17/2017';
-					expect(node.leftInput.value).to.equal('02/10/2017');
-					expect(node.rightInput.value).to.equal('03/17/2017');
-					done();
-				});
-			});
-
-			test('it should load date range inputs with no value', function (done) {
-				const node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', required: true, placeholder: 'Date here'}, body);
-				expect(dom.isNode(node)).to.equal(true);
-
-				node.on('change', function (e) {
-					console.log('change.value', node.value);
-					console.log('change.target', e.target);
-				});
-
-				ready(node, function () {
-					expect(node.value).to.equal(null);
-
-					node.value = '02/10/2017 - 03/17/2017';
-					expect(node.value).to.equal('02/10/2017 - 03/17/2017');
-					done();
-				});
-			});
-
-			test('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
-				const node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date', value:'02/10/2017 - 02/14/2017'}, body);
-				const b1 = dom('button', {html: 'clear'}, body);
-				const b2  = dom('button', {html: 'value.set'}, body);
-				const b3  = dom('button', {html: 'setValue'}, body);
-				expect(dom.isNode(node)).to.equal(true);
-
-				on(b1, 'click', function () {
-					node.clear();
-				});
-				on(b2, 'click', function () {
-					node.value = '02/10/2017 - 02/14/2017';
-				});
-				on(b3, 'click', function () {
-					node.setValue('02/10/2017 - 02/14/2017', true);
-				});
-
-				node.on('change', function (e) {
-					console.log('\nEMIT');
-					console.log('change.value', node.value);
-					console.log('change.target', e.target);
-				});
-
-				onDomReady(node, function () {
-
-					//node.leftInput.value = '02/15/2017';
-					//node.value = '02/10/2017 - 03/17/2017';
-					//expect(node.value).to.equal('02/10/2017 - 03/17/2017');
-					done();
-				});
-			});
-
-			test('it should open the other picker if range is (auto-set) the same (no initial value) - MANUAL TEST', function (done) {
-				const node = dom('date-range-inputs', {'left-label':'Start Date', 'right-label':'End Date'}, body);
-
-				expect(dom.isNode(node)).to.equal(true);
-				node.on('change', function (e) {
-					console.log('\nEMIT');
-					console.log('change.value', node.value);
-					console.log('change.target', e.target);
-				});
-
-				onDomReady(node, function () {
-
-					//node.leftInput.value = '02/15/2017';
-					//node.value = '02/10/2017 - 03/17/2017';
-					//expect(node.value).to.equal('02/10/2017 - 03/17/2017');
-					done();
-				});
+				//node.leftInput.value = '02/15/2017';
+				//node.value = '02/10/2017 - 03/17/2017';
+				//expect(node.value).to.equal('02/10/2017 - 03/17/2017');
+				done();
 			});
 		});
 
