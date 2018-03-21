@@ -59,7 +59,6 @@ class TimeInput extends BaseComponent {
 <label>
 	<span ref="labelNode"></span>
 	<input ref="input" class="empty" />
-	<span ref="ampmNode">PM</span>
 </label>`;
 	}
 
@@ -71,7 +70,7 @@ class TimeInput extends BaseComponent {
 		if(!value && !this.required){
 			return true;
 		}
-		return isValid(this.input.value);
+		return util.timeIsValid(this.input.value);
 	}
 
 	setValue (value, silent, ampm) {
@@ -87,7 +86,7 @@ class TimeInput extends BaseComponent {
 		const len = this.input.value.length === this.mask.length;
 		let valid;
 		if (len) {
-			valid = isValid(value);
+			valid = util.isValid(value);
 		} else {
 			valid = false;
 		}
@@ -173,6 +172,7 @@ class TimeInput extends BaseComponent {
 		const k = e.key;
 
 		if(k === 'Enter'){
+			this.setValidity();
 			this.emit('change', { value: this.value });
 		}
 
@@ -196,7 +196,6 @@ class TimeInput extends BaseComponent {
 			return;
 		}
 
-
 		if (!isNum(k)) {
 			// TODO handle paste, backspace
 			if (isArrowKey[k]) {
@@ -208,10 +207,9 @@ class TimeInput extends BaseComponent {
 				} else {
 					this.setValue(this.input.value, true, this.isAM ? 'pm' : 'am');
 				}
+			}
 
-			} else if (isControl(e)) {
-				console.log('CTRL');
-			} else if (/[ap]/.test(k)) {
+			if (/[ap]/.test(k)) {
 				console.log('am/m...');
 				this.setValue(this.input.value, true, k === 'a' ? 'am' : 'pm');
 			}  else if (this.input.value !== this.typedValue) {
@@ -244,6 +242,15 @@ class TimeInput extends BaseComponent {
 		});
 	}
 
+	setValidity () {
+		console.log('setValidity');
+		if (this.isValid(this.input.value)) {
+			this.classList.remove('invalid');
+		} else {
+			this.classList.add('invalid');
+		}
+	}
+
 	domReady () {
 		this.mask = this.mask || defaultMask;
 		this.maskLength = this.mask.match(/X/g).join('').length;
@@ -264,13 +271,11 @@ class TimeInput extends BaseComponent {
 		this.on(this.input, 'keyup', (e) => {
 			this.onKey(e);
 		});
+		this.on(this.input, 'blur', this.setValidity.bind(this));
 	}
 }
 
-function isValid (str) {
 
-	return true;
-}
 
 const numReg = /[0-9]/;
 function isNum (k) {

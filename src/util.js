@@ -40,7 +40,38 @@ function pad (num) {
 	return '' + num;
 }
 
+function timeIsValid (value) {
+	// 12:34 am
+	if (value.length < 8) {
+		return false;
+	}
+	const hr = getHours(value);
+	const mn = getMinutes(value);
+	if (isNaN(hr) || isNaN(mn)) {
+		return false;
+	}
+	if (!/[ap]m/i.test(value)) {
+		return false;
+	}
+	if (hr < 0 || hr > 12) {
+		return false;
+	}
+	if (mn < 0 || mn > 59) {
+		return false;
+	}
+	return true;
+}
+
+function getHours (value) {
+	return parseInt(value.substring(0, 2));
+}
+
+function getMinutes (value) {
+	return parseInt(value.substring(3, 5));
+}
+
 module.exports = {
+	timeIsValid,
 	incMinutes,
 	incHours,
 	round,
