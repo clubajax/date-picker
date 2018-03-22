@@ -6,10 +6,9 @@ const util = require('./util');
 
 const defaultPlaceholder = 'HH:MM am/pm';
 const defaultMask = 'XX:XX';
-const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max'];
+const props = ['label', 'name', 'placeholder', 'mask', 'event-name', 'min', 'max'];
 const bools = ['required'];
-
-const FLASH_TIME = 1000;
+const EVENT_NAME = 'change';
 
 class TimeInput extends BaseComponent {
 	static get observedAttributes () {
@@ -42,6 +41,10 @@ class TimeInput extends BaseComponent {
 		return this.strDate;
 	}
 
+	get valid () {
+		return this.isValid();
+	}
+
 	onLabel (value) {
 		this.labelNode.innerHTML = value;
 	}
@@ -64,13 +67,14 @@ class TimeInput extends BaseComponent {
 
 	constructor () {
 		super();
+		this.typedValue = '';
 	}
 
-	isValid (value) {
+	isValid (value = this.input.value) {
 		if(!value && !this.required){
 			return true;
 		}
-		return util.timeIsValid(this.input.value);
+		return util.timeIsValid(value);
 	}
 
 	setValue (value, silent, ampm) {
@@ -80,7 +84,6 @@ class TimeInput extends BaseComponent {
 		}
 		value = this.format(value);
 
-		console.log('setValue', value);
 		this.typedValue = value;
 		this.input.value = value;
 		const len = this.input.value.length === this.mask.length;
@@ -94,7 +97,7 @@ class TimeInput extends BaseComponent {
 		if (valid || !len) {
 			this.strDate = value;
 			if (!silent) {
-				this.emit('change', { value: value });
+				this.emitEvent();
 			}
 		}
 
@@ -103,37 +106,6 @@ class TimeInput extends BaseComponent {
 		} else if (!silent) {
 			this.classList.add('invalid')
 		}
-	}
-
-	xformat (s) {
-		function sub (pos) {
-			let subStr = '';
-			for (let i = pos; i < mask.length; i++) {
-				if (mask[i] === 'X') {
-					break;
-				}
-				subStr += mask[i];
-			}
-			return subStr;
-		}
-
-		s = s.replace(/\D/g, '').substring(0,4);
-
-		console.log('fmt', s);
-
-		const mask = this.mask;
-		let f = '';
-		const len = Math.max(s.length, mask.length);
-		for (let i = 0; i < len; i++) {
-			if (mask[f.length] !== 'X') {
-				f += sub(f.length);
-			}
-			f += s[i];
-		}
-
-		return this.setAMPM(f);
-
-		// const defaultMask = 'XX:XX pm';
 	}
 
 	format (s) {
@@ -166,6 +138,11 @@ class TimeInput extends BaseComponent {
 	}
 
 	onKey (e) {
+
+
+		// FIXME: this.typedValue undefined?????
+
+
 		let str = this.typedValue || '';
 		const beg = e.target.selectionStart;
 		const end = e.target.selectionEnd;
@@ -173,14 +150,18 @@ class TimeInput extends BaseComponent {
 
 		if(k === 'Enter'){
 			this.setValidity();
-			this.emit('change', { value: this.value });
+			this.emitEvent();
+			stopEvent(e);
+			return;
 		}
 
 		if(k === 'Escape'){
 			if(!this.isValid()){
 				this.value = this.strDate;
-				this.input.blur();
 			}
+			this.input.blur();
+			stopEvent(e);
+			return;
 		}
 
 		function setSelection (amt) {
@@ -210,10 +191,9 @@ class TimeInput extends BaseComponent {
 			}
 
 			if (/[ap]/.test(k)) {
-				console.log('am/m...');
 				this.setValue(this.input.value, true, k === 'a' ? 'am' : 'pm');
 			}  else if (this.input.value !== this.typedValue) {
-				console.log('do WUT?');
+				console.log('do WUT?', k);
 				this.setValue(this.input.value, true);
 			}
 			setSelection(0);
@@ -222,7 +202,6 @@ class TimeInput extends BaseComponent {
 		}
 
 		if (str.length !== end || beg !== end) {
-			console.log('middle', beg);
 			// handle selection or middle-string edit
 			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
 			this.setValue(temp, true);
@@ -237,13 +216,20 @@ class TimeInput extends BaseComponent {
 	}
 
 	focus () {
-		onDomReady(this, () => {
+		this.onDomReady(() => {
 			this.input.focus();
 		});
 	}
 
+	blur () {
+		this.onDomReady(() => {
+			this.input.blur();
+			this.setValidity();
+			this.emitEvent();
+		})
+	}
+
 	setValidity () {
-		console.log('setValidity');
 		if (this.isValid(this.input.value)) {
 			this.classList.remove('invalid');
 		} else {
@@ -262,7 +248,18 @@ class TimeInput extends BaseComponent {
 		if (this.label) {
 			this.labelNode.innerHTML = this.label;
 		}
+		this.eventName = this['event-name'] || EVENT_NAME;
+		this.emitType = this.eventName === EVENT_NAME ? 'emit' : 'fire';
 		this.connectKeys();
+	}
+
+	emitEvent () {
+		const value = this.value;
+		if (value === this.lastValue || !this.isValid(value)) {
+			return;
+		}
+		this.lastValue = value;
+		this[this.emitType](this.eventName, { value }, true);
 	}
 
 	connectKeys () {
@@ -271,7 +268,9 @@ class TimeInput extends BaseComponent {
 		this.on(this.input, 'keyup', (e) => {
 			this.onKey(e);
 		});
-		this.on(this.input, 'blur', this.setValidity.bind(this));
+		this.on(this.input, 'blur', () => {
+			this.blur();
+		});
 	}
 }
 
