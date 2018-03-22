@@ -2,12 +2,13 @@ require('./date-picker');
 const BaseComponent = require('@clubajax/base-component');
 const dom = require('@clubajax/dom');
 const on = require('@clubajax/on');
-const dates = require('dates');
+const dates = require('@clubajax/dates');
+const util = require('./util');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
-const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max'];
-const bools = ['required'];
+const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time'];
+const bools = ['required', 'time'];
 
 const FLASH_TIME = 1000;
 
@@ -67,9 +68,7 @@ class DateInput extends BaseComponent {
 <label>
 	<span ref="labelNode"></span>
 	<input ref="input" class="empty" />
-	
-</label>
-<date-picker ref="picker" tabindex="0"></date-picker>`;
+</label>`;
 	}
 
 	constructor () {
@@ -169,13 +168,13 @@ class DateInput extends BaseComponent {
 			}
 		}
 
-		if (!isNum(k)) {
+		if (!util.isNum(k)) {
 			// handle paste, backspace
 			if (this.input.value !== this.typedValue) {
 				this.setValue(this.input.value, true);
 			}
 			setSelection(0);
-			stopEvent(e);
+			util.stopEvent(e);
 			return;
 		}
 		if (str.length !== end || beg !== end) {
@@ -184,7 +183,7 @@ class DateInput extends BaseComponent {
 			this.setValue(this.format(temp), true);
 
 			setSelection(1);
-			stopEvent(e);
+			util.stopEvent(e);
 			return;
 		}
 
@@ -237,6 +236,7 @@ class DateInput extends BaseComponent {
 	}
 
 	domReady () {
+		this.time = this.time || this.hasTime;
 		this.mask = this.mask || defaultMask;
 		this.maskLength = this.mask.match(/X/g).join('').length;
 		this.input.setAttribute('type', 'text');
@@ -247,7 +247,10 @@ class DateInput extends BaseComponent {
 		if (this.label) {
 			this.labelNode.innerHTML = this.label;
 		}
+
+		this.picker = dom('date-picker', { time: this.time }, this);
 		this.picker.on('change', (e) => {
+			console.log('CHANGE');
 			this.setValue(e.value, true);
 		});
 		this.connectKeys();
@@ -255,8 +258,8 @@ class DateInput extends BaseComponent {
 	}
 
 	connectKeys () {
-		this.on(this.input, 'keydown', stopEvent);
-		this.on(this.input, 'keypress', stopEvent);
+		this.on(this.input, 'keydown', util.stopEvent);
+		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
 			this.onKey(e);
 		});
@@ -318,29 +321,6 @@ function handleOpen (input, picker, show, hide) {
 		changeHandle,
 		docHandle
 	]);
-}
-
-const numReg = /[0123456789]/;
-function isNum (k) {
-	return numReg.test(k);
-}
-
-const control = {
-	'Enter': 1,
-	'Backspace': 1,
-	'Delete': 1,
-	'ArrowLeft': 1,
-	'ArrowRight': 1,
-	'Escape': 1,
-	'Command': 1,
-	'Tab': 1
-};
-function stopEvent (e) {
-	if (e.metaKey || control[e.key]) {
-		return;
-	}
-	e.preventDefault();
-	e.stopImmediatePropagation();
 }
 
 customElements.define('date-input', DateInput);

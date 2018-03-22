@@ -1,7 +1,7 @@
 const BaseComponent = require('@clubajax/base-component');
 const dom = require('@clubajax/dom');
 const on = require('@clubajax/on');
-const dates = require('dates');
+const dates = require('@clubajax/dates');
 const util = require('./util');
 
 const defaultPlaceholder = 'HH:MM am/pm';
@@ -101,11 +101,7 @@ class TimeInput extends BaseComponent {
 			}
 		}
 
-		if (valid) {
-			this.classList.remove('invalid')
-		} else if (!silent) {
-			this.classList.add('invalid')
-		}
+		this.setValidity();
 	}
 
 	format (s) {
@@ -138,11 +134,6 @@ class TimeInput extends BaseComponent {
 	}
 
 	onKey (e) {
-
-
-		// FIXME: this.typedValue undefined?????
-
-
 		let str = this.typedValue || '';
 		const beg = e.target.selectionStart;
 		const end = e.target.selectionEnd;
@@ -151,7 +142,7 @@ class TimeInput extends BaseComponent {
 		if(k === 'Enter'){
 			this.setValidity();
 			this.emitEvent();
-			stopEvent(e);
+			util.stopEvent(e);
 			return;
 		}
 
@@ -160,7 +151,7 @@ class TimeInput extends BaseComponent {
 				this.value = this.strDate;
 			}
 			this.input.blur();
-			stopEvent(e);
+			util.stopEvent(e);
 			return;
 		}
 
@@ -172,14 +163,14 @@ class TimeInput extends BaseComponent {
 			}
 		}
 
-		if (isControl(e)) {
-			stopEvent(e);
+		if (util.isControl(e)) {
+			util.stopEvent(e);
 			return;
 		}
 
-		if (!isNum(k)) {
+		if (!util.isNum(k)) {
 			// TODO handle paste, backspace
-			if (isArrowKey[k]) {
+			if (util.isArrowKey[k]) {
 				const inc = k === 'ArrowUp' ? 1 : -1;
 				if (end <= 2) {
 					this.setValue(util.incHours(this.input.value, inc), true);
@@ -197,7 +188,7 @@ class TimeInput extends BaseComponent {
 				this.setValue(this.input.value, true);
 			}
 			setSelection(0);
-			stopEvent(e);
+			util.stopEvent(e);
 			return;
 		}
 
@@ -208,7 +199,7 @@ class TimeInput extends BaseComponent {
 
 			// "2" means typed right before colon
 			setSelection(beg === 2 ? 2 : 1);
-			stopEvent(e);
+			util.stopEvent(e);
 			return;
 		}
 
@@ -263,8 +254,8 @@ class TimeInput extends BaseComponent {
 	}
 
 	connectKeys () {
-		this.on(this.input, 'keydown', stopEvent);
-		this.on(this.input, 'keypress', stopEvent);
+		this.on(this.input, 'keydown', util.stopEvent);
+		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
 			this.onKey(e);
 		});
@@ -272,50 +263,6 @@ class TimeInput extends BaseComponent {
 			this.blur();
 		});
 	}
-}
-
-
-
-const numReg = /[0-9]/;
-function isNum (k) {
-	return numReg.test(k);
-}
-
-const isArrowKey = {
-	'ArrowUp': 1,
-	'ArrowDown': 1
-};
-
-function isControl (e) {
-	// console.log('e', e);
-	return control[e.key];
-}
-const control = {
-	'Shift': 1,
-	'Enter': 1,
-	'Backspace': 1,
-	'Delete': 1,
-	'ArrowLeft': 1,
-	'ArrowRight': 1,
-	'Escape': 1,
-	'Command': 1,
-	'Tab': 1,
-	'Meta': 1,
-	'Alt': 1
-};
-function stopEvent (e) {
-	if (e.metaKey || control[e.key]) {
-		return;
-	}
-	e.preventDefault();
-	e.stopImmediatePropagation();
-}
-
-function pad (num) {
-	if (num < 10) {
-		return '0' + num;
-	}
-	return '' + num;
 }
 
 customElements.define('time-input', TimeInput);

@@ -192,7 +192,24 @@ date-picker{
     }
 }
 
-time-input, date-input, date-range-input{
+date-picker[time] {
+    .cal-footer{
+        span{
+            display: inline-block;
+            cursor: default;
+            color: #333;
+            &:hover{
+                text-decoration: none;
+            }
+        }
+        input {
+            display: inline-block;
+            padding: 2px 6px;
+        }
+    }
+}
+
+date-time-input, time-input, date-input, date-range-input{
     display: inline-block;
     position: relative;
     //outline: none;
@@ -261,7 +278,7 @@ time-input, date-input, date-range-input{
 
 time-input {
     input{
-        width: 140px;
+        width: 55px;
     }
 }
 

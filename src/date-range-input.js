@@ -1,6 +1,6 @@
 require('./date-range-picker');
 const DateInput = require('./date-input');
-const dates = require('dates');
+const dates = require('@clubajax/dates');
 
 const props = ['label', 'name', 'placeholder'];
 const bools = ['range-expands'];

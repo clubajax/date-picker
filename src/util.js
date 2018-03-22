@@ -62,6 +62,51 @@ function timeIsValid (value) {
 	return true;
 }
 
+function addTimeToDate (time, date) {
+	if (!timeIsValid(time)) {
+		console.warn('time is not valid', time);
+		return date;
+	}
+	let hr = getHours(time);
+	const mn = getMinutes(time);
+	const isPM = /pm/i.test(time);
+	if (isPM && hr !== 12) {
+		hr += 12;
+	}
+	console.log('hr/mn', hr, mn);
+	date.setHours(hr);
+	date.setMinutes(mn);
+	return date;
+}
+
+const numReg = /[0123456789]/;
+function isNum (k) {
+	return numReg.test(k);
+}
+
+const control = {
+	'Shift': 1,
+	'Enter': 1,
+	'Backspace': 1,
+	'Delete': 1,
+	'ArrowLeft': 1,
+	'ArrowRight': 1,
+	'Escape': 1,
+	'Command': 1,
+	'Tab': 1,
+	'Meta': 1,
+	'Alt': 1
+};
+
+const isArrowKey = {
+	'ArrowUp': 1,
+	'ArrowDown': 1
+};
+
+function isControl (e) {
+	return control[e.key];
+}
+
 function getHours (value) {
 	return parseInt(value.substring(0, 2));
 }
@@ -70,10 +115,24 @@ function getMinutes (value) {
 	return parseInt(value.substring(3, 5));
 }
 
+function stopEvent (e) {
+	if (e.metaKey || control[e.key]) {
+		return;
+	}
+	e.preventDefault();
+	e.stopImmediatePropagation();
+}
+
 module.exports = {
+	addTimeToDate,
 	timeIsValid,
 	incMinutes,
 	incHours,
 	round,
-	pad
+	pad,
+	isNum,
+	control,
+	isArrowKey,
+	isControl,
+	stopEvent
 };

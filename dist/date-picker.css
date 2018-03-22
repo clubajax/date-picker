@@ -128,31 +128,43 @@ date-picker {
   date-picker.minimal .cal-footer {
     display: none; }
 
-time-input, date-input, date-range-input {
+date-picker[time] .cal-footer span {
+  display: inline-block;
+  cursor: default;
+  color: #333; }
+  date-picker[time] .cal-footer span:hover {
+    text-decoration: none; }
+
+date-picker[time] .cal-footer input {
+  display: inline-block;
+  padding: 2px 6px; }
+
+date-time-input, time-input, date-input, date-range-input {
   display: inline-block;
   position: relative; }
-  time-input input, date-input input, date-range-input input {
+  date-time-input input, time-input input, date-input input, date-range-input input {
     border-radius: 2px;
     border: 1px solid #ccc;
     transition: background-color 300ms ease, border-color 300ms ease; }
-    time-input input::placeholder, date-input input::placeholder, date-range-input input::placeholder {
+    date-time-input input::placeholder, time-input input::placeholder, date-input input::placeholder, date-range-input input::placeholder {
       font-style: italic; }
-    time-input input:-ms-input-placeholder, date-input input:-ms-input-placeholder, date-range-input input:-ms-input-placeholder {
+    date-time-input input:-ms-input-placeholder, time-input input:-ms-input-placeholder, date-input input:-ms-input-placeholder, date-range-input input:-ms-input-placeholder {
       font-style: italic; }
-  time-input label span, date-input label span, date-range-input label span {
+  date-time-input label span, time-input label span, date-input label span, date-range-input label span {
     font-size: 12px;
     color: #999;
     display: block;
     margin-bottom: 3px; }
-  time-input label input, date-input label input, date-range-input label input {
+  date-time-input label input, time-input label input, date-input label input, date-range-input label input {
     padding: 5px; }
-  time-input.invalid input, date-input.invalid input, date-range-input.invalid input {
+  date-time-input.invalid input, time-input.invalid input, date-input.invalid input, date-range-input.invalid input {
     border-color: red;
     outline-color: red; }
-  time-input.warning input, date-input.warning input, date-range-input.warning input {
+  date-time-input.warning input, time-input.warning input, date-input.warning input, date-range-input.warning input {
     border-color: #be4304;
     background-color: #fffdd5; }
-  time-input date-picker,
+  date-time-input date-picker,
+  date-time-input date-range-picker, time-input date-picker,
   time-input date-range-picker, date-input date-picker,
   date-input date-range-picker, date-range-input date-picker,
   date-range-input date-range-picker {
@@ -161,32 +173,35 @@ time-input, date-input, date-range-input {
     top: 110%;
     left: 0;
     z-index: 1; }
-    time-input date-picker.bottom-align,
+    date-time-input date-picker.bottom-align,
+    date-time-input date-range-picker.bottom-align, time-input date-picker.bottom-align,
     time-input date-range-picker.bottom-align, date-input date-picker.bottom-align,
     date-input date-range-picker.bottom-align, date-range-input date-picker.bottom-align,
     date-range-input date-range-picker.bottom-align {
       top: auto;
       bottom: 110%; }
-    time-input date-picker.right-align,
+    date-time-input date-picker.right-align,
+    date-time-input date-range-picker.right-align, time-input date-picker.right-align,
     time-input date-range-picker.right-align, date-input date-picker.right-align,
     date-input date-range-picker.right-align, date-range-input date-picker.right-align,
     date-range-input date-range-picker.right-align {
       left: auto;
       right: 0; }
-    time-input date-picker.show,
+    date-time-input date-picker.show,
+    date-time-input date-range-picker.show, time-input date-picker.show,
     time-input date-range-picker.show, date-input date-picker.show,
     date-input date-range-picker.show, date-range-input date-picker.show,
     date-range-input date-range-picker.show {
       display: inline-block; }
-  time-input date-range-picker, date-input date-range-picker, date-range-input date-range-picker {
+  date-time-input date-range-picker, time-input date-range-picker, date-input date-range-picker, date-range-input date-range-picker {
     width: 412px; }
-    time-input date-range-picker date-picker, date-input date-range-picker date-picker, date-range-input date-range-picker date-picker {
+    date-time-input date-range-picker date-picker, time-input date-range-picker date-picker, date-input date-range-picker date-picker, date-range-input date-range-picker date-picker {
       position: relative;
       top: auto;
       left: auto; }
 
 time-input input {
-  width: 140px; }
+  width: 55px; }
 
 date-range-input input {
   width: 50px; }

@@ -80,6 +80,23 @@
 			on.emit(node.input, 'keyup', { key: value });
 		}
 
+		function clear (node) {
+			node.input.value = '';
+		}
+
+		function setSelection (node, beg, end) {
+			end = end === undefined ? beg : end;
+			node.selectionStart = beg;
+			node.selectionEnd = end + 1;
+		}
+
+		function arrow (node, selection, inc) {
+			const dir = inc < 0 ? -1 : 1;
+			inc = Math.abs(inc);
+			setSelection(node, selection);
+
+		}
+
 		suite('utils', function () {
 			test('it should round', function () {
 				// round up
@@ -122,8 +139,11 @@
 		});
 
 		suite('time picker', function () {
-			test.only('it should load a time input', function () {
-				const node = dom('time-input', { label: 'Time', xvalue: '12:34am', step: 15 }, body);
+
+			// TODO: handle min/max
+
+			test('it should handle valid and invalid from blank', function (done) {
+				const node = dom('time-input', { label: 'Time', step: 15 }, body);
 				ready(node, function () {
 					let emitted;
 					const events = [];
@@ -144,11 +164,88 @@
 					expect(node.valid).to.equal(true);
 					expect(emitted).to.equal('1');
 					expect(node.value).to.equal('12:34 pm');
+					done();
+				});
+			});
+
+			test('it should handle valid and invalid from value', function (done) {
+				const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
+				ready(node, function () {
+					let emitted = '';
+					const events = [];
+					node.on('change', function (e) {
+						console.log('change', e.value);
+						events.push(1);
+						emitted = events.join(',')
+					});
+					expect(node.valid).to.equal(true);
+					expect(emitted).to.equal('');
+					expect(node.value).to.equal('12:34 pm');
+					node.focus();
+					clear(node);
+					node.blur();
+					expect(node.valid).to.equal(false);
+					done();
+				});
+			});
+
+			test.skip('it should handle valid and invalid from value', function () {
+				const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
+				ready(node, function () {
+					let emitted = '';
+					const events = [];
+					node.on('change', function (e) {
+						console.log('change', e.value);
+						events.push(1);
+						emitted = events.join(',')
+					});
+
+					node.focus();
+					setTimeout(() => {
+						arrow(node, 2, 2);
+						console.log(' - ', node.selectionStart, node.selectionEnd);
+					}, 130)
+
+
+				});
+			});
+		});
+
+		suite('date time picker', function () {
+			test('it should add a time to the picker', function () {
+				const node = dom('date-time-input', { value: '12/12/2017 02:20 am' }, body);
+				ready(node, function () {
+					let emitted;
+					const events = [];
+					node.on('change', function (e) {
+						console.log('change', e);
+						events.push(1);
+						emitted = events.join(',');
+					});
+
 				});
 			});
 		});
 
 		suite('date picker', function () {
+
+			test('it should add a time to the picker', function () {
+				const node = dom('date-picker', { time: true, value: '12/12/2017 02:20 am' }, body);
+				ready(node, function () {
+					let emitted;
+					const events = [];
+					node.on('change', function (e) {
+						console.log('change', e);
+						events.push(1);
+						emitted = events.join(',');
+					});
+
+					node.timeInput.focus();
+					clear(node.timeInput);
+					node.timeInput.blur();
+				});
+			});
+
 
 			test('it should submit in a form', function (done) {
 				const form = dom('form', {}, body);

@@ -448,6 +448,10 @@
     grunt "^1.0.1"
     uglify "^0.1.5"
 
+"@clubajax/dates@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@clubajax/dates/-/dates-2.0.0.tgz#76f97ba65caab8e09138711700eb6b99ee48e3ec"
+
 "@clubajax/dom@^2.6.1":
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/@clubajax/dom/-/dom-2.7.0.tgz#036ba2268e00ef2c65ad77042bbae4493365c56c"
@@ -1374,10 +1378,6 @@ dateformat@~1.0.12:
   dependencies:
     get-stdin "^4.0.1"
     meow "^3.3.0"
-
-"dates@github:clubajax/dates#v1.4.0":
-  version "1.4.0"
-  resolved "https://codeload.github.com/clubajax/dates/tar.gz/c21288c2664b1af34ff0fec40fd37eef8475850e"
 
 debug@2.6.8:
   version "2.6.8"

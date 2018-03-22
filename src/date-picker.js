@@ -1,6 +1,8 @@
 const BaseComponent = require('@clubajax/base-component');
-const dates = require('dates');
+const dates = require('@clubajax/dates');
 const dom = require('@clubajax/dom');
+const util = require('./util');
+require('./time-input');
 
 // TODO:
 // https://axesslab.com/accessible-datepickers/
@@ -8,7 +10,7 @@ const dom = require('@clubajax/dom');
 const props = ['min', 'max'];
 
 // range-left/range-right mean that this is one side of a date-range-picker
-const bools = ['range-picker', 'range-left', 'range-right'];
+const bools = ['range-picker', 'range-left', 'range-right', 'time'];
 
 class DatePicker extends BaseComponent {
 
@@ -33,14 +35,14 @@ class DatePicker extends BaseComponent {
 	<span class="cal-rgt" ref="rgtNode"></span>
 </div>
 <div class="cal-container" ref="container"></div>
-<div class="cal-footer">
+<div class="cal-footer" ref="calFooter">
 	<span ref="footerLink"></span>
 </div>
 </div>`;
 	}
 
 	set value (value) {
-		// might need attributeChanged
+		console.log('set.value', this.time, value);
 		this.valueDate = dates.isDate(value) ? dates.toDate(value) : today;
 		this.current = this.valueDate;
 		onDomReady(this, () => {
@@ -51,6 +53,7 @@ class DatePicker extends BaseComponent {
 	get value () {
 		if (!this.valueDate) {
 			const value = this.getAttribute('value') || today;
+			console.log('get.value', value);
 			this.valueDate = dates.toDate(value);
 		}
 		return this.valueDate;
@@ -96,13 +99,25 @@ class DatePicker extends BaseComponent {
 	}
 
 	getFormattedValue () {
-		return this.valueDate === today ? '' : !!this.valueDate ? dates.format(this.valueDate) : '';
+		let str = this.valueDate === today ? '' : !!this.valueDate ? dates.format(this.valueDate) : '';
+		if (this.time) {
+			str += ` ${this.timeInput.value}`;
+		}
+		return str;
 	}
 
-	emitValue () {
+	emitEvent () {
+		const date = this.valueDate;
+		if (this.time) {
+			if (!this.timeInput.valid) {
+				this.timeInput.setValidity();
+				return;
+			}
+			util.addTimeToDate(this.timeInput.value, date);
+		}
 		const event = {
 			value: this.getFormattedValue(),
-			date: this.valueDate
+			date
 		};
 		if (this['range-picker']) {
 			event.first = this.firstRange;
@@ -147,7 +162,7 @@ class DatePicker extends BaseComponent {
 
 		this.valueDate = copy(this.current);
 
-		this.emitValue();
+		this.emitEvent();
 
 		if (this['range-picker']) {
 			this.clickSelectRange();
@@ -380,18 +395,9 @@ class DatePicker extends BaseComponent {
 			this.classList.add('minimal');
 		}
 
-		// if (this.min) {
-		// 	this.minDate = dates.toDate(this.min);
-		// 	this.minInt = dates.toDate(this.min).getTime();
-		// }
-		//
-		// if (this.max) {
-		// 	this.maxDate = dates.toDate(this.max);
-		// 	this.maxInt = dates.toDate(this.max).getTime();
-		// }
-
 		this.current = copy(this.value);
 
+		console.log('this.current', this.current);
 		this.connect();
 		this.render();
 	}
@@ -494,8 +500,16 @@ class DatePicker extends BaseComponent {
 	}
 
 	setFooter () {
-		const d = new Date();
-		this.footerLink.innerHTML = dates.days.full[d.getDay()] + ' ' + dates.months.full[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+		if (this.timeInput) {
+			return;
+		}
+		if (this.time) {
+			this.timeInput = dom('time-input', { label: 'Time:', required: true, value: '12:34 pm', 'event-name': 'time-change' }, this.calFooter);
+			this.timeInput.on('time-change', this.emitEvent.bind(this));
+		} else {
+			const d = new Date();
+			this.footerLink.innerHTML = dates.days.full[d.getDay()] + ' ' + dates.months.full[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+		}
 	}
 
 	connect () {
@@ -512,7 +526,7 @@ class DatePicker extends BaseComponent {
 			this.current = new Date();
 			this.render();
 			this.valueDate = copy(this.current);
-			this.emitValue();
+			this.emitEvent();
 		});
 
 		this.on(this.container, 'click', (e) => {
