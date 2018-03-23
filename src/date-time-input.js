@@ -39,7 +39,7 @@ class DateTimeInput extends DateInput {
 	}
 
 	formatTime (s) {
-		s = s.replace(/\D/g, '');
+		s = s.replace(/(?!X)\D/g, '');
 		s = s.substring(0, 4);
 		if (s.length >= 2) {
 			s = s.split('');
@@ -110,7 +110,13 @@ class DateTimeInput extends DateInput {
 			if (this.input.value !== this.typedValue) {
 				this.setValue(this.input.value, true);
 			}
-			setSelection(0);
+
+			if (/[ap]/.test(k)) {
+				this.setAMPM(this.input.value, k === 'a' ? 'am' : 'pm');
+				this.setValue(this.input.value, true);
+			}
+
+			setSelection(beg);
 			util.stopEvent(e);
 			return;
 		}
@@ -126,11 +132,8 @@ class DateTimeInput extends DateInput {
 				console.log('after', temp);
 			}
 
-
 			const value = this.setValue(temp, true);
-
 			const nextChar = value.charAt(beg + 1);
-			console.log('nextChar', nextChar);
 
 			setSelection(/[\s\/:]/.test(nextChar) ? beg + 2 : beg + 1);
 			util.stopEvent(e);
