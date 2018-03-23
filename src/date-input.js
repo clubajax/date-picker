@@ -76,25 +76,13 @@ class DateInput extends BaseComponent {
 		this.showing = false;
 	}
 
-	isValid (value) {
-		if(!value && !this.required){
-			return true;
-		}
-		return dates.isDate(this.input.value);
-	}
-
 	setValue (value, silent) {
+		value = this.format(value);
 		this.typedValue = value;
 		this.input.value = value;
 		const len = this.input.value.length === this.mask.length;
-		let valid;
-		if (len) {
-			valid = dates.isValid(value);
-		} else {
-			valid = false;
-		}
-
-		if (valid || !len) {
+		const valid = this.validate();
+		if (valid) {
 			this.strDate = value;
 			this.picker.value = value;
 			if (!silent) {
@@ -102,15 +90,25 @@ class DateInput extends BaseComponent {
 			}
 		}
 
-		if (valid) {
-			this.classList.remove('invalid')
-		} else if (!silent) {
-			this.classList.add('invalid')
-		}
-
 		if (!silent && valid) {
 			setTimeout(this.hide.bind(this), 300);
 		}
+	}
+
+	isValid (value = this.input.value) {
+		if(!value && !this.required){
+			return true;
+		}
+		return dates.isValid(this.input.value);
+	}
+
+	validate () {
+		if (this.isValid(this.input.value)) {
+			this.classList.remove('invalid');
+			return true;
+		}
+		this.classList.add('invalid');
+		return false;
 	}
 
 	format (s) {
@@ -180,14 +178,14 @@ class DateInput extends BaseComponent {
 		if (str.length !== end || beg !== end) {
 			// handle selection or middle-string edit
 			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
-			this.setValue(this.format(temp), true);
+			this.setValue(temp, true);
 
 			setSelection(1);
 			util.stopEvent(e);
 			return;
 		}
 
-		this.setValue(this.format(str + k), true);
+		this.setValue(str + k, true);
 	}
 
 	flash (addFocus) {
@@ -247,14 +245,15 @@ class DateInput extends BaseComponent {
 		if (this.label) {
 			this.labelNode.innerHTML = this.label;
 		}
+		this.connectKeys();
 
 		this.picker = dom('date-picker', { time: this.time }, this);
-		this.picker.on('change', (e) => {
-			console.log('CHANGE');
-			this.setValue(e.value, true);
+		this.picker.onDomReady(() => {
+			this.picker.on('change', (e) => {
+				this.setValue(e.value, true);
+			});
+			this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
 		});
-		this.connectKeys();
-		this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
 	}
 
 	connectKeys () {
@@ -269,6 +268,8 @@ class DateInput extends BaseComponent {
 function handleOpen (input, picker, show, hide) {
 	let inputFocus = false;
 	let pickerFocus = false;
+	let timeFocus = false;
+
 	const docHandle = on(document, 'keyup', (e) => {
 		if (e.key === 'Escape') {
 			hide();
@@ -286,7 +287,17 @@ function handleOpen (input, picker, show, hide) {
 	});
 	changeHandle.pause();
 
+	const timeHandles = picker.timeInput ? [
+		on(picker.timeInput.input, 'focus', () => {
+			timeFocus = true;
+		}),
+		on(picker.timeInput.input, 'blur', () => {
+			timeFocus = false;
+		})
+	] : [];
+
 	return on.makeMultiHandle([
+		...timeHandles,
 		on(input, 'focus', () => {
 			inputFocus = true;
 			show();
@@ -295,7 +306,7 @@ function handleOpen (input, picker, show, hide) {
 		on(input, 'blur', () => {
 			inputFocus = false;
 			setTimeout(() => {
-				if (!pickerFocus) {
+				if (!pickerFocus && !timeFocus) {
 					hide();
 					docHandle.pause();
 				}
@@ -310,7 +321,7 @@ function handleOpen (input, picker, show, hide) {
 		on(picker, 'blur', () => {
 			pickerFocus = false;
 			setTimeout(() => {
-				if (!inputFocus) {
+				if (!inputFocus && !timeFocus) {
 					hide();
 					docHandle.pause();
 					changeHandle.pause();

@@ -73,7 +73,6 @@ function addTimeToDate (time, date) {
 	if (isPM && hr !== 12) {
 		hr += 12;
 	}
-	console.log('hr/mn', hr, mn);
 	date.setHours(hr);
 	date.setMinutes(mn);
 	return date;

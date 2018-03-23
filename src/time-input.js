@@ -70,13 +70,6 @@ class TimeInput extends BaseComponent {
 		this.typedValue = '';
 	}
 
-	isValid (value = this.input.value) {
-		if(!value && !this.required){
-			return true;
-		}
-		return util.timeIsValid(value);
-	}
-
 	setValue (value, silent, ampm) {
 
 		if (ampm) {
@@ -86,22 +79,30 @@ class TimeInput extends BaseComponent {
 
 		this.typedValue = value;
 		this.input.value = value;
-		const len = this.input.value.length === this.mask.length;
-		let valid;
-		if (len) {
-			valid = util.isValid(value);
-		} else {
-			valid = false;
-		}
+		const valid = this.validate();
 
-		if (valid || !len) {
+		if (valid) {
 			this.strDate = value;
 			if (!silent) {
 				this.emitEvent();
 			}
 		}
+	}
 
-		this.setValidity();
+	isValid (value = this.input.value) {
+		if (!value && !this.required) {
+			return true;
+		}
+		return util.timeIsValid(value);
+	}
+
+	validate () {
+		if (this.isValid()) {
+			this.classList.remove('invalid');
+			return true;
+		}
+		this.classList.add('invalid');
+		return false;
 	}
 
 	format (s) {
@@ -139,15 +140,15 @@ class TimeInput extends BaseComponent {
 		const end = e.target.selectionEnd;
 		const k = e.key;
 
-		if(k === 'Enter'){
-			this.setValidity();
+		if (k === 'Enter') {
+			this.validate();
 			this.emitEvent();
 			util.stopEvent(e);
 			return;
 		}
 
-		if(k === 'Escape'){
-			if(!this.isValid()){
+		if (k === 'Escape') {
+			if (!this.isValid()) {
 				this.value = this.strDate;
 			}
 			this.input.blur();
@@ -183,7 +184,7 @@ class TimeInput extends BaseComponent {
 
 			if (/[ap]/.test(k)) {
 				this.setValue(this.input.value, true, k === 'a' ? 'am' : 'pm');
-			}  else if (this.input.value !== this.typedValue) {
+			} else if (this.input.value !== this.typedValue) {
 				console.log('do WUT?', k);
 				this.setValue(this.input.value, true);
 			}
@@ -215,17 +216,9 @@ class TimeInput extends BaseComponent {
 	blur () {
 		this.onDomReady(() => {
 			this.input.blur();
-			this.setValidity();
+			this.validate();
 			this.emitEvent();
 		})
-	}
-
-	setValidity () {
-		if (this.isValid(this.input.value)) {
-			this.classList.remove('invalid');
-		} else {
-			this.classList.add('invalid');
-		}
 	}
 
 	domReady () {

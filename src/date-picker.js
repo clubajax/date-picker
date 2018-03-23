@@ -42,7 +42,6 @@ class DatePicker extends BaseComponent {
 	}
 
 	set value (value) {
-		console.log('set.value', this.time, value);
 		this.valueDate = dates.isDate(value) ? dates.toDate(value) : today;
 		this.current = this.valueDate;
 		onDomReady(this, () => {
@@ -53,7 +52,6 @@ class DatePicker extends BaseComponent {
 	get value () {
 		if (!this.valueDate) {
 			const value = this.getAttribute('value') || today;
-			console.log('get.value', value);
 			this.valueDate = dates.toDate(value);
 		}
 		return this.valueDate;
@@ -397,7 +395,6 @@ class DatePicker extends BaseComponent {
 
 		this.current = copy(this.value);
 
-		console.log('this.current', this.current);
 		this.connect();
 		this.render();
 	}

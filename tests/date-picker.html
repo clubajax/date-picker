@@ -212,8 +212,8 @@
 		});
 
 		suite('date time picker', function () {
-			test('it should add a time to the picker', function () {
-				const node = dom('date-time-input', { value: '12/12/2017 02:20 am' }, body);
+			test.only('it should add a time to the picker', function (done) {
+				const node = dom('date-time-input', { label: 'Enter Date and Time', value: '12/12/2017 02:20 am' }, body);
 				ready(node, function () {
 					let emitted;
 					const events = [];
@@ -222,14 +222,14 @@
 						events.push(1);
 						emitted = events.join(',');
 					});
-
+					done();
 				});
 			});
 		});
 
 		suite('date picker', function () {
 
-			test('it should add a time to the picker', function () {
+			test('it should add a time to the picker', function (done) {
 				const node = dom('date-picker', { time: true, value: '12/12/2017 02:20 am' }, body);
 				ready(node, function () {
 					let emitted;
@@ -243,6 +243,7 @@
 					node.timeInput.focus();
 					clear(node.timeInput);
 					node.timeInput.blur();
+					done();
 				});
 			});
 
@@ -266,7 +267,7 @@
 
 			});
 
-			test.only('it should load custom input of type `date`', function () {
+			test('it should load custom input of type `date`', function () {
 				const node = dom('date-input', { type: 'date', label: 'Date', xvalue: '12/12/2017' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {
@@ -309,6 +310,7 @@
 				expect(dom.isNode(node)).to.equal(true);
 
 				ready(node, function () {
+					console.log('node.value', node.value);
 					expect(node.value).to.equal('01/10/2017 - 02/14/2017');
 
 					expect(node.leftInput.value).to.equal('01/10/2017');
