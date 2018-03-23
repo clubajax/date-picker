@@ -1,5 +1,5 @@
-function round(n, r, down) {
-	return (Math.ceil( n / r ) * r) - (down ? r : 0);
+function round (n, r, down) {
+	return (Math.ceil(n / r) * r) - (down ? r : 0);
 }
 
 function incMinutes (value, inc, mult = 1) {
@@ -99,6 +99,7 @@ function nextNumPos (beg, s) {
 }
 
 const numReg = /[0123456789]/;
+
 function isNum (k) {
 	return numReg.test(k);
 }
@@ -151,6 +152,48 @@ function replaceText (str, chars, beg, end, xChars) {
 	return str.substring(0, beg) + chars + str.substring(end);
 }
 
+function formatDate (s, mask) {
+	function sub (pos) {
+		let subStr = '';
+		for (let i = pos; i < mask.length; i++) {
+			if (mask[i] === 'X') {
+				break;
+			}
+			subStr += mask[i];
+		}
+		return subStr;
+	}
+
+	s = s.replace(/(?!X)\D/g, '');
+	const maskLength = mask.match(/X/g).join('').length;
+	let f = '';
+	const len = Math.min(s.length, maskLength);
+	for (let i = 0; i < len; i++) {
+		if (mask[f.length] !== 'X') {
+			f += sub(f.length);
+		}
+		f += s[i];
+	}
+	return f;
+}
+
+function formatTime (s) {
+	s = s.replace(/(?!X)\D/g, '');
+	s = s.substring(0, 4);
+	if (s.length >= 2) {
+		s = s.split('');
+		s.splice(2, 0, ':');
+		s = s.join('');
+	}
+	return s;
+}
+
+function getAMPM (value) {
+	const result = /[ap]m/.exec(value);
+	return result ? result[0] : null;
+
+}
+
 module.exports = {
 	addTimeToDate,
 	timeIsValid,
@@ -165,5 +208,8 @@ module.exports = {
 	stopEvent,
 	nextNumPos,
 	removeCharAtPos,
-	replaceText
+	replaceText,
+	formatDate,
+	formatTime,
+	getAMPM
 };

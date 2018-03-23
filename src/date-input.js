@@ -4,6 +4,7 @@ const dom = require('@clubajax/dom');
 const on = require('@clubajax/on');
 const dates = require('@clubajax/dates');
 const util = require('./util');
+const onKey = require('./onKey');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
@@ -96,6 +97,10 @@ class DateInput extends BaseComponent {
 		return value;
 	}
 
+	format (value) {
+		return  util.formatDate(value, this.mask);
+	}
+
 	isValid (value = this.input.value) {
 		if(!value && !this.required){
 			return true;
@@ -110,83 +115,6 @@ class DateInput extends BaseComponent {
 		}
 		this.classList.add('invalid');
 		return false;
-	}
-
-	format (s) {
-		function sub (pos) {
-			let subStr = '';
-			for (let i = pos; i < mask.length; i++) {
-				if (mask[i] === 'X') {
-					break;
-				}
-				subStr += mask[i];
-			}
-			return subStr;
-		}
-
-		s = s.replace(/\D/g, '');
-		const mask = this.mask;
-		let f = '';
-		const len = Math.min(s.length, this.maskLength);
-		for (let i = 0; i < len; i++) {
-			if (mask[f.length] !== 'X') {
-				f += sub(f.length);
-			}
-			f += s[i];
-		}
-		return f;
-	}
-
-	onKey (e) {
-		let str = this.typedValue || '';
-		const beg = e.target.selectionStart;
-		const end = e.target.selectionEnd;
-		const k = e.key;
-
-		if(k === 'Enter'){
-			this.hide();
-			this.emit('change', { value: this.value });
-		}
-
-		if(k === 'Escape'){
-			if(!this.isValid()){
-				this.value = this.strDate;
-				this.hide();
-				this.input.blur();
-			}
-		}
-
-		function setSelection (amt) {
-			// TODO
-			// This might not be exactly right...
-			// have to allow for the slashes
-			if (end - beg) {
-				e.target.selectionEnd = end - (end - beg - 1);
-			} else {
-				e.target.selectionEnd = end + amt;
-			}
-		}
-
-		if (!util.isNum(k)) {
-			// handle paste, backspace
-			if (this.input.value !== this.typedValue) {
-				this.setValue(this.input.value, true);
-			}
-			setSelection(0);
-			util.stopEvent(e);
-			return;
-		}
-		if (str.length !== end || beg !== end) {
-			// handle selection or middle-string edit
-			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
-			this.setValue(temp, true);
-
-			setSelection(1);
-			util.stopEvent(e);
-			return;
-		}
-
-		this.setValue(str + k, true);
 	}
 
 	flash (addFocus) {
@@ -261,7 +189,7 @@ class DateInput extends BaseComponent {
 		this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
-			this.onKey(e);
+			onKey.call(this, e);
 		});
 	}
 }

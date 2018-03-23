@@ -3,6 +3,7 @@ const dom = require('@clubajax/dom');
 const on = require('@clubajax/on');
 const dates = require('@clubajax/dates');
 const util = require('./util');
+const onKey = require('./onKey');
 
 const defaultPlaceholder = 'HH:MM am/pm';
 const defaultMask = 'XX:XX';
@@ -31,6 +32,11 @@ class TimeInput extends BaseComponent {
 	}
 
 	set value (value) {
+		if (dates.isValidObject(value)) {
+			const org = value;
+			value = dates.format(value, 'h:m a');
+			this.setAMPM(value);
+		}
 		this.strDate = value; //isValid(value) ? value : '';
 		onDomReady(this, () => {
 			this.setValue(this.strDate);
@@ -75,7 +81,10 @@ class TimeInput extends BaseComponent {
 		if (ampm) {
 			this.setAMPM(value, ampm);
 		}
-		value = this.format(value);
+		value = util.formatTime(value);
+		if (value.length === 5) {
+			value = this.setAMPM(value);
+		}
 
 		this.typedValue = value;
 		this.input.value = value;
@@ -106,20 +115,6 @@ class TimeInput extends BaseComponent {
 		return false;
 	}
 
-	format (s) {
-		s = s.replace(/\D/g, '');
-		s = s.substring(0, 4);
-		if (s.length >= 2) {
-			s = s.split('');
-			s.splice(2, 0, ':');
-			s = s.join('');
-		}
-		if (s.length === 5) {
-			s = this.setAMPM(s);
-		}
-		return s;
-	}
-
 	setAMPM (value, ampm) {
 		let isAM;
 		if (ampm) {
@@ -133,79 +128,6 @@ class TimeInput extends BaseComponent {
 		this.isAM = isAM;
 		this.isPM = !isAM;
 		return value;
-	}
-
-	onKey (e) {
-		let str = this.typedValue || '';
-		const beg = e.target.selectionStart;
-		const end = e.target.selectionEnd;
-		const k = e.key;
-
-		if (k === 'Enter') {
-			this.validate();
-			this.emitEvent();
-			util.stopEvent(e);
-			return;
-		}
-
-		if (k === 'Escape') {
-			if (!this.isValid()) {
-				this.value = this.strDate;
-			}
-			this.input.blur();
-			util.stopEvent(e);
-			return;
-		}
-
-		function setSelection (amt) {
-			if (end - beg) {
-				e.target.selectionEnd = end - (end - beg - 1);
-			} else {
-				e.target.selectionEnd = end + amt;
-			}
-		}
-
-		if (util.isControl(e)) {
-			util.stopEvent(e);
-			return;
-		}
-
-		if (!util.isNum(k)) {
-			// TODO handle paste, backspace
-			if (util.isArrowKey[k]) {
-				const inc = k === 'ArrowUp' ? 1 : -1;
-				if (end <= 2) {
-					this.setValue(util.incHours(this.input.value, inc), true);
-				} else if (end <= 5) {
-					this.setValue(util.incMinutes(this.input.value, inc, 15), true);
-				} else {
-					this.setValue(this.input.value, true, this.isAM ? 'pm' : 'am');
-				}
-			}
-
-			if (/[ap]/.test(k)) {
-				this.setValue(this.input.value, true, k === 'a' ? 'am' : 'pm');
-			} else if (this.input.value !== this.typedValue) {
-				console.log('DOC THIS', k);
-				this.setValue(this.input.value, true);
-			}
-			setSelection(0);
-			util.stopEvent(e);
-			return;
-		}
-
-		if (str.length !== end || beg !== end) {
-			// handle selection or middle-string edit
-			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
-			this.setValue(temp, true);
-
-			// "2" means typed right before colon
-			setSelection(beg === 2 ? 2 : 1);
-			util.stopEvent(e);
-			return;
-		}
-
-		this.setValue(str + k, true);
 	}
 
 	focus () {
@@ -251,7 +173,7 @@ class TimeInput extends BaseComponent {
 		this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
-			this.onKey(e);
+			onKey.call(this, e);
 		});
 		this.on(this.input, 'blur', () => {
 			this.blur();

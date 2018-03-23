@@ -498,6 +498,9 @@ class DatePicker extends BaseComponent {
 
 	setFooter () {
 		if (this.timeInput) {
+			if (this.current) {
+				this.timeInput.value = this.current;
+			}
 			return;
 		}
 		if (this.time) {

@@ -162,13 +162,27 @@
 				const node = dom('date-input', { type: 'date', label: 'Date', value: '12/12/2017' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {
-					console.log('change', e.value);
+					//console.log('change', e.value);
 				});
 			});
 		});
 		suite('time input', function () {
 
 			// TODO: handle min/max
+
+			test.only('it should render a time input', function (done) {
+				const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
+				ready(node, function () {
+					let emitted = '';
+					const events = [];
+					node.on('change', function (e) {
+						console.log('change', e.value);
+						events.push(1);
+						emitted = events.join(',')
+					});
+					done();
+				});
+			});
 
 			test('it should handle valid and invalid from blank', function (done) {
 				const node = dom('time-input', { label: 'Time', step: 15 }, body);
@@ -246,7 +260,7 @@
 					let emitted;
 					const events = [];
 					node.on('change', function (e) {
-						console.log('change', e);
+						//console.log('change', e);
 						events.push(1);
 						emitted = events.join(',');
 					});
