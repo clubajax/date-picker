@@ -146,6 +146,11 @@ function removeCharAtPos (str, pos) {
 	return str.substring(0, pos) + str.substring(pos + 1);
 }
 
+function replaceText (str, chars, beg, end, xChars) {
+	chars = chars.padEnd(end - beg, xChars);
+	return str.substring(0, beg) + chars + str.substring(end);
+}
+
 module.exports = {
 	addTimeToDate,
 	timeIsValid,
@@ -159,5 +164,6 @@ module.exports = {
 	isControl,
 	stopEvent,
 	nextNumPos,
-	removeCharAtPos
+	removeCharAtPos,
+	replaceText
 };

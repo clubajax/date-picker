@@ -24,7 +24,7 @@ class DateTimeInput extends DateInput {
 			return subStr;
 		}
 
-		s = s.replace(/\D/g, '');
+		s = s.replace(/(?!X)\D/g, '');
 		const mask = 'XX/XX/XXXX';
 		let f = '';
 		const len = 8; //Math.min(s.length, mask.length);
@@ -96,6 +96,11 @@ class DateTimeInput extends DateInput {
 			}
 		}
 
+		if (util.isControl(e)) {
+			util.stopEvent(e);
+			return;
+		}
+
 		function setSelection (pos) {
 			e.target.selectionEnd = pos;
 		}
@@ -128,6 +133,15 @@ class DateTimeInput extends DateInput {
 			console.log('nextChar', nextChar);
 
 			setSelection(/[\s\/:]/.test(nextChar) ? beg + 2 : beg + 1);
+			util.stopEvent(e);
+			return;
+		} else if (end !== beg) {
+			// selection replace
+			console.log('sel text', k);
+			let temp = util.replaceText(this.typedValue, k, beg, end, 'X');
+			const value = this.setValue(temp, true);
+
+			setSelection(beg + 1);
 			util.stopEvent(e);
 			return;
 		}
