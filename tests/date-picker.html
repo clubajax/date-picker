@@ -169,6 +169,7 @@
 		suite('time input', function () {
 
 			// TODO: handle min/max
+			// FIXME: time-input blur does not close calendar
 
 			test.only('it should render a time input', function (done) {
 				const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);

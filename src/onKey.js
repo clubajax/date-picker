@@ -1,3 +1,5 @@
+const util = require('./util');
+
 function onKey (e) {
 	let str = this.typedValue || '';
 	const beg = e.target.selectionStart;
