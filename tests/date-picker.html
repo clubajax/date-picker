@@ -42,7 +42,7 @@
 			margin: 10px 0;
 		}
 
-		time-input, date-input {
+		time-input, date-input, date-time-input {
 			vertical-align: middle;
 			margin: 5px;
 		}
@@ -138,7 +138,35 @@
 			});
 		});
 
-		suite('time picker', function () {
+		suite('date input', function () {
+			test('it should submit in a form', function (done) {
+				const form = dom('form', {}, body);
+				dom('input', { type: 'text', value: 'Mike', name: 'name' }, form);
+				const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
+				const btn = dom('button', { html: 'Submit' }, form);
+				on.once(form, 'submit', function (e) {
+					console.log('SUBMIT', e.target.value);
+					// e.preventDefault();
+					// return false;
+				});
+				ready(node, function () {
+					btn.focus();
+					on.emit(btn, 'click');
+					expect(dom.isNode(node)).to.equal(true);
+					done();
+				});
+
+			});
+
+			test.only('it should load custom input of type `date`', function () {
+				const node = dom('date-input', { type: 'date', label: 'Date', value: '12/12/2017' }, body);
+				expect(dom.isNode(node)).to.equal(true);
+				node.on('change', function (e) {
+					console.log('change', e.value);
+				});
+			});
+		});
+		suite('time input', function () {
 
 			// TODO: handle min/max
 
@@ -211,7 +239,7 @@
 			});
 		});
 
-		suite('date time picker', function () {
+		suite('date time input', function () {
 			test.only('it should add a time to the picker', function (done) {
 				const node = dom('date-time-input', { label: 'Enter Date and Time', value: '12/12/2017 02:20 am' }, body);
 				ready(node, function () {
@@ -247,33 +275,6 @@
 				});
 			});
 
-
-			test('it should submit in a form', function (done) {
-				const form = dom('form', {}, body);
-				dom('input', { type: 'text', value: 'Mike', name: 'name' }, form);
-				const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
-				const btn = dom('button', { html: 'Submit' }, form);
-				on.once(form, 'submit', function (e) {
-					console.log('SUBMIT', e.target.value);
-					// e.preventDefault();
-					// return false;
-				});
-				ready(node, function () {
-					btn.focus();
-					on.emit(btn, 'click');
-					expect(dom.isNode(node)).to.equal(true);
-					done();
-				});
-
-			});
-
-			test('it should load custom input of type `date`', function () {
-				const node = dom('date-input', { type: 'date', label: 'Date', xvalue: '12/12/2017' }, body);
-				expect(dom.isNode(node)).to.equal(true);
-				node.on('change', function (e) {
-					console.log('change', e.value);
-				});
-			});
 
 			test('it should not allow selection before min of after max', function () {
 				const node = dom('date-picker', { min: '07/05/2017', max: '07/19/2017', value: '07/01/2017' }, body);

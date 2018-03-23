@@ -96,15 +96,8 @@ class DateTimeInput extends DateInput {
 			}
 		}
 
-		function setSelection (amt) {
-			// TODO
-			// This might not be exactly right...
-			// have to allow for the slashes
-			if (end - beg) {
-				e.target.selectionEnd = end - (end - beg - 1);
-			} else {
-				e.target.selectionEnd = end + amt;
-			}
+		function setSelection (pos) {
+			e.target.selectionEnd = pos;
 		}
 
 		if (!util.isNum(k)) {
@@ -116,16 +109,30 @@ class DateTimeInput extends DateInput {
 			util.stopEvent(e);
 			return;
 		}
-		if (str.length !== end || beg !== end) {
-			// handle selection or middle-string edit
-			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
-			this.setValue(temp, true);
 
-			setSelection(1);
+		if (str.length !== end && beg === end) {
+			console.log('mid edit', beg, end, str.length);
+			// handle selection or middle-string edit
+			let temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
+			const nextCharPos = util.nextNumPos(beg + 1, temp);
+			if (nextCharPos > -1) {
+				console.log('before', temp);
+				temp = util.removeCharAtPos(temp, beg + 1);
+				console.log('after', temp);
+			}
+
+
+			const value = this.setValue(temp, true);
+
+			const nextChar = value.charAt(beg + 1);
+			console.log('nextChar', nextChar);
+
+			setSelection(/[\s\/:]/.test(nextChar) ? beg + 2 : beg + 1);
 			util.stopEvent(e);
 			return;
 		}
 
+		console.log('end edit');
 		this.setValue(str + k, true);
 	}
 

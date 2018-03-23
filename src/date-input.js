@@ -93,6 +93,7 @@ class DateInput extends BaseComponent {
 		if (!silent && valid) {
 			setTimeout(this.hide.bind(this), 300);
 		}
+		return value;
 	}
 
 	isValid (value = this.input.value) {

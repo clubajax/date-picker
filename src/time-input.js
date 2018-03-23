@@ -87,6 +87,7 @@ class TimeInput extends BaseComponent {
 				this.emitEvent();
 			}
 		}
+		return value;
 	}
 
 	isValid (value = this.input.value) {
@@ -185,7 +186,7 @@ class TimeInput extends BaseComponent {
 			if (/[ap]/.test(k)) {
 				this.setValue(this.input.value, true, k === 'a' ? 'am' : 'pm');
 			} else if (this.input.value !== this.typedValue) {
-				console.log('do WUT?', k);
+				console.log('DOC THIS', k);
 				this.setValue(this.input.value, true);
 			}
 			setSelection(0);

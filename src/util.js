@@ -78,6 +78,26 @@ function addTimeToDate (time, date) {
 	return date;
 }
 
+function nextNumPos (beg, s) {
+	let char, i, found = false;
+	for (i = 0; i < s.length; i++) {
+		if (i < beg) {
+			continue;
+		}
+		char = s.charAt(i);
+		if (!isNaN(parseInt(char))) {
+			char = parseInt(char);
+		}
+		if (typeof char === 'number') {
+			found = true;
+			break;
+		}
+	}
+
+	console.log(char);
+	return found ? i : -1;
+}
+
 const numReg = /[0123456789]/;
 function isNum (k) {
 	return numReg.test(k);
@@ -122,6 +142,10 @@ function stopEvent (e) {
 	e.stopImmediatePropagation();
 }
 
+function removeCharAtPos (str, pos) {
+	return str.substring(0, pos) + str.substring(pos + 1);
+}
+
 module.exports = {
 	addTimeToDate,
 	timeIsValid,
@@ -133,5 +157,7 @@ module.exports = {
 	control,
 	isArrowKey,
 	isControl,
-	stopEvent
+	stopEvent,
+	nextNumPos,
+	removeCharAtPos
 };
