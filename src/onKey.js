@@ -34,6 +34,22 @@ function onKey (e) {
 			this.setValue(this.input.value, true);
 		}
 
+		if (util.isArrowKey[k]) {
+
+			// FIXME: range only handle time, not date+time
+
+			// FIXME: test is not adding picker time
+
+			const inc = k === 'ArrowUp' ? 1 : -1;
+			if (end <= 2) {
+				this.setValue(util.incHours(this.input.value, inc), true);
+			} else if (end <= 5) {
+				this.setValue(util.incMinutes(this.input.value, inc, 15), true);
+			} else {
+				this.setValue(this.input.value, true, this.isAM ? 'pm' : 'am');
+			}
+		}
+
 		if (/[ap]/.test(k)) {
 			this.setValue(this.setAMPM(this.input.value, k === 'a' ? 'am' : 'pm'), true);
 		}

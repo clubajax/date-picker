@@ -158,7 +158,7 @@
 
 			});
 
-			test.only('it should load custom input of type `date`', function () {
+			test('it should load custom input of type `date`', function () {
 				const node = dom('date-input', { type: 'date', label: 'Date', value: '12/12/2017' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 				node.on('change', function (e) {
@@ -166,12 +166,14 @@
 				});
 			});
 		});
+
 		suite('time input', function () {
 
+			// TODO: UTC timestamp
 			// TODO: handle min/max
 			// FIXME: time-input blur does not close calendar
 
-			test.only('it should render a time input', function (done) {
+			test('it should render a time input', function (done) {
 				const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
 				ready(node, function () {
 					let emitted = '';
@@ -255,7 +257,7 @@
 		});
 
 		suite('date time input', function () {
-			test.only('it should add a time to the picker', function (done) {
+			test('it should add a time to the picker', function (done) {
 				const node = dom('date-time-input', { label: 'Enter Date and Time', value: '12/12/2017 02:20 am' }, body);
 				ready(node, function () {
 					let emitted;
@@ -290,19 +292,15 @@
 				});
 			});
 
+			test.only('it should allow `now` as a min or max', function () {
+				const dateStr = dates.format(new Date(), 'MM/dd/yyyy');
+				console.log('dateStr', dateStr);
+				const node = dom('date-picker', { min: 'now', value: dateStr }, body);
 
-			test('it should not allow selection before min of after max', function () {
+			});
+
+			test('it should not allow selection before min or after max', function () {
 				const node = dom('date-picker', { min: '07/05/2017', max: '07/19/2017', value: '07/01/2017' }, body);
-				expect(dom.isNode(node)).to.equal(true);
-			});
-
-			test('it should load a range calendar', function () {
-				const node = dom('date-picker', { 'range-picker': true }, body);
-				expect(dom.isNode(node)).to.equal(true);
-			});
-
-			test('it should load a date range picker', function () {
-				const node = dom('date-range-picker', {}, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
 
@@ -310,12 +308,9 @@
 				const node = dom('date-input', { class: 'BR' }, body);
 				expect(dom.isNode(node)).to.equal(true);
 			});
+		});
 
-			test('it should load a date input', function () {
-				const node = dom('date-input', { value: '12/22/2000', label: 'El Date Input' }, body);
-				expect(dom.isNode(node)).to.equal(true);
-			});
-
+		suite('date range inputs', function () {
 			test('it should load a date range input', function () {
 				const node = dom('date-range-input', { label: 'El Date Picker', value: '01/10/2017 - 02/14/2017' }, body);
 				expect(dom.isNode(node)).to.equal(true);
@@ -355,6 +350,20 @@
 					expect(node.value).to.equal('02/10/2017 - 03/17/2017');
 					done();
 				});
+			});
+
+		});
+
+		suite('date range', function () {
+
+			test('it should load a range calendar', function () {
+				const node = dom('date-picker', { 'range-picker': true }, body);
+				expect(dom.isNode(node)).to.equal(true);
+			});
+
+			test('it should load a date range picker', function () {
+				const node = dom('date-range-picker', {}, body);
+				expect(dom.isNode(node)).to.equal(true);
 			});
 
 			test('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {

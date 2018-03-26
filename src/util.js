@@ -191,7 +191,29 @@ function formatTime (s) {
 function getAMPM (value) {
 	const result = /[ap]m/.exec(value);
 	return result ? result[0] : null;
+}
 
+function getToday () {
+	const d = new Date();
+	d.setHours(0);
+	d.setMinutes(0);
+	d.setSeconds(0);
+	d.setMilliseconds(0);
+	return d;
+}
+
+function getTomorrow () {
+	const d = new Date();
+	d.setDate(d.getDate() + 1);
+	d.setSeconds(0);
+	d.setMinutes(0);
+	d.setHours(0);
+	d.setMilliseconds(0);
+	return d;
+}
+
+function toAriaLabel (date) {
+	return dates.format(date, 'd, E MMMM yyyy');
 }
 
 module.exports = {
@@ -211,5 +233,8 @@ module.exports = {
 	replaceText,
 	formatDate,
 	formatTime,
-	getAMPM
+	getAMPM,
+	getToday,
+	getTomorrow,
+	toAriaLabel
 };

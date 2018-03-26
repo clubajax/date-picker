@@ -58,14 +58,14 @@ class DatePicker extends BaseComponent {
 	}
 
 	onMin (value) {
-		const d = dates.toDate(value);
+		const d = value === 'now' ? util.getToday() : dates.toDate(value);
 		this.minDate = d;
 		this.minInt = d.getTime();
 		this.render();
 	}
 
 	onMax (value) {
-		const d = dates.toDate(value);
+		const d = value === 'now' ? util.getTomorrow() : dates.toDate(value);
 		this.maxDate = d;
 		this.maxInt = d.getTime();
 		this.render();
@@ -108,7 +108,7 @@ class DatePicker extends BaseComponent {
 		const date = this.valueDate;
 		if (this.time) {
 			if (!this.timeInput.valid) {
-				this.timeInput.setValidity();
+				this.timeInput.validate();
 				return;
 			}
 			util.addTimeToDate(this.timeInput.value, date);
@@ -141,7 +141,7 @@ class DatePicker extends BaseComponent {
 
 	onClickDay (node) {
 		const
-			day = +node.innerHTML,
+			day = +node.textContent,
 			isFuture = node.classList.contains('future'),
 			isPast = node.classList.contains('past'),
 			isDisabled = node.classList.contains('disabled');
@@ -412,7 +412,8 @@ class DatePicker extends BaseComponent {
 
 		let
 			node = dom('div', { class: 'cal-body' }),
-			i, tx, nextMonth = 0, isThisMonth, day, css, isSelected, isToday,
+			i, tx, isThisMonth, day, css, isSelected, isToday,
+			nextMonth = 0,
 			isRange = this['range-picker'],
 			d = this.current,
 			incDate = copy(d),
@@ -433,6 +434,7 @@ class DatePicker extends BaseComponent {
 
 		for (i = 0; i < 42; i++) {
 
+			//console.log('less', dateObj, this.minDate, dates.isLess(dateObj, this.minDate));
 			minmax = dates.isLess(dateObj, this.minDate) || dates.isGreater(dateObj, this.maxDate);
 
 			tx = dateNum + 1 > 0 && dateNum + 1 <= daysInMonth ? dateNum + 1 : "&nbsp;";
@@ -474,7 +476,8 @@ class DatePicker extends BaseComponent {
 				}
 			}
 
-			day = dom("div", { innerHTML: tx, class: css }, node);
+			const ariaLabel = util.toAriaLabel(dateObj);
+			day = dom("div", { innerHTML: `<span>${tx}</span>`, class: css, 'aria-label': ariaLabel }, node);
 
 			dateNum++;
 			dateObj.setDate(dateObj.getDate() + 1);
@@ -531,8 +534,8 @@ class DatePicker extends BaseComponent {
 
 		this.on(this.container, 'click', (e) => {
 			this.fire('pre-click', e, true, true);
-			const node = e.target;
-			if (node.classList.contains('day')) {
+			const node = e.target.closest('.day');
+			if (node) {
 				this.onClickDay(node);
 			}
 			else if (node.classList.contains('year')) {
