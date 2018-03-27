@@ -38,7 +38,7 @@ class TimeInput extends BaseComponent {
 			value = dates.format(value, 'h:m a');
 			this.setAMPM(value);
 		}
-		this.strDate = value; //isValid(value) ? value : '';
+		this.strDate = util.stripDate(value);
 		onDomReady(this, () => {
 			this.setValue(this.strDate);
 		});

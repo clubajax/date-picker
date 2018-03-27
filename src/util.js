@@ -3,7 +3,11 @@ function round (n, r, down) {
 }
 
 function incMinutes (value, inc, mult = 1) {
-	let mn = parseInt(value.substring(3, 5));
+
+	const type = is(value).type();
+	const MN = type === 'time' ? [3,5] : [14,16];
+
+	let mn = parseInt(value.substring(MN[0], MN[1]));
 	const org = mn;
 
 	mn = round(mn, mult, inc === -1);
@@ -19,18 +23,50 @@ function incMinutes (value, inc, mult = 1) {
 		mn = 45;
 	}
 
-	return `${value.substring(0, 3)}${pad(mn)}${value.substring(5)}`;
+	return `${value.substring(0, MN[0])}${pad(mn)}${value.substring(MN[1])}`;
 }
 
 function incHours (value, inc) {
-	let hr = parseInt(value.substring(0, 2));
+	const type = is(value).type();
+	const HR = type === 'time' ? [0,2] : [11,13];
+	let hr = parseInt(value.substring(HR[0], HR[1]));
 	hr += inc;
 	if (hr < 1) {
 		hr = 12;
 	} else if (hr > 12) {
 		hr = 1;
 	}
-	return `${pad(hr)}${value.substring(2)}`;
+	return `${value.substring(0, HR[0])}${pad(hr)}${value.substring(HR[1])}`;
+}
+
+function incMonth (value, inc) {
+	let mo = parseInt(value.substring(0,2));
+	mo += inc;
+	if (mo > 12) {
+		mo = 1;
+	} else if (mo <= 0) {
+		mo = 12;
+	}
+	return `${pad(mo)}${value.substring(2)}`;
+}
+
+function incDate (value, inc) {
+	const date = dates.toDate(value);
+	const max = dates.getDaysInMonth(date);
+	let dt = parseInt(value.substring(3,5));
+	dt += inc;
+	if (dt <= 0) {
+		dt = max;
+	} else if (dt > max) {
+		dt = 1;
+	}
+	return `${value.substring(0,2)}${pad(dt)}${value.substring(6)}`;
+}
+
+function incYear (value, inc) {
+	let yr = parseInt(value.substring(6,10));
+	yr += inc;
+	return `${value.substring(0,5)}${pad(yr)}${value.substring(11)}`;
 }
 
 function pad (num) {
@@ -254,6 +290,9 @@ function formatDate (s, mask) {
 function formatTime (s) {
 	s = s.replace(/(?!X)\D/g, '');
 	s = s.substring(0, 4);
+	if (s.length < 4) {
+		s = `0${s}`;
+	}
 	if (s.length >= 2) {
 		s = s.split('');
 		s.splice(2, 0, ':');
@@ -325,13 +364,34 @@ function isSameDate (d1, d2) {
 		d1.getDate() === d2.getDate();
 }
 
-function is (time1) {
+function is (value) {
 	return {
-		less (time2) {
-			return timeToSeconds(time1) < timeToSeconds(time2);
+		less (time) {
+			return timeToSeconds(value) < timeToSeconds(time);
 		},
-		greater (time2) {
-			return timeToSeconds(time1) > timeToSeconds(time2);
+		greater (time) {
+			return timeToSeconds(value) > timeToSeconds(time);
+		},
+		dateAndTime () {
+			return dates.is(value).date() && dates.is(value).time();
+		},
+		time () {
+			return dates.is(value).time();
+		},
+		date () {
+			return dates.is(value).date();
+		},
+		type () {
+			if (this.dateAndTime()) {
+				return 'datetime';
+			}
+			if (this.time()) {
+				return 'time';
+			}
+			if (this.date()) {
+				return 'date';
+			}
+			return '';
 		}
 	}
 }
@@ -342,6 +402,9 @@ module.exports = {
 	timeIsValid,
 	incMinutes,
 	incHours,
+	incMonth,
+	incDate,
+	incYear,
 	round,
 	pad,
 	isNum,
@@ -363,5 +426,6 @@ module.exports = {
 	timeIsInRange,
 	toDateTime,
 	isSameDate,
-	timeToSeconds
+	timeToSeconds,
+	stripDate
 };

@@ -9,7 +9,7 @@ const onKey = require('./onKey');
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
 const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time'];
-const bools = ['required', 'time'];
+const bools = ['required', 'time', 'static'];
 
 const FLASH_TIME = 1000;
 
@@ -91,7 +91,7 @@ class DateInput extends BaseComponent {
 			}
 		}
 
-		if (!silent && valid) {
+		if (!silent && valid && !this.static) {
 			setTimeout(this.hide.bind(this), 300);
 		}
 		return value;
@@ -181,7 +181,11 @@ class DateInput extends BaseComponent {
 			this.picker.on('change', (e) => {
 				this.setValue(e.value, true);
 			});
-			this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
+			if (this.static) {
+				this.show();
+			} else {
+				this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
+			}
 		});
 	}
 

@@ -448,9 +448,9 @@
     grunt "^1.0.1"
     uglify "^0.1.5"
 
-"@clubajax/dates@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@clubajax/dates/-/dates-2.1.0.tgz#945ea3fb7ada29d0c361908f311b3ba36178bb8b"
+"@clubajax/dates@^2.1.1":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@clubajax/dates/-/dates-2.1.1.tgz#a576fbbdec95770ee666cbddda980e3e5aa9cfec"
 
 "@clubajax/dom@^2.6.1":
   version "2.7.0"

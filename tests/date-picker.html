@@ -84,27 +84,50 @@
 			node.input.value = '';
 		}
 
-		function setSelection (node, beg, end) {
-			end = end === undefined ? beg : end;
-			node.selectionStart = beg;
-			node.selectionEnd = end + 1;
+		function select (node, beg, end) {
+			node.focus();
+			//setTimeout(function () {
+				end = end === undefined ? beg : end;
+				node.selectionStart = beg;
+				node.selectionEnd = end;
+			// }, 1)
+			return {
+				up: function () {
+					arrow(node, 1);
+				},
+				down: function () {
+					arrow(node, -1);
+				}
+			}
 		}
 
-		function arrow (node, selection, inc) {
-			const dir = inc < 0 ? -1 : 1;
-			inc = Math.abs(inc);
-			setSelection(node, selection);
-
+		function arrow (node, inc) {
+			if (inc > 0) {
+				on.emit(node, 'keyup', {key: 'ArrowUp'});
+			} else {
+				on.emit(node, 'keyup', {key: 'ArrowDown'});
+			}
 		}
-
-		// const value = '12/12/2017 06:30 am';
-		// const min = '12/12/2017 05:30 am';
-		// const max = '12/13/2017 07:30 am';
-		// const node = dom('date-picker', { time: true, value: value, min: min, max: max }, body);
 
 		suite('tests', function () {
 
 			suite('utils', function () {
+				test('it should validate date and time strings', function () {
+					const DATE = '12/25/2017';
+					const TIME = '02:30 am';
+					const DATETIME = DATE + ' ' + TIME;
+					expect(util.is(DATE).date()).to.equal(true);
+					expect(util.is(TIME).time()).to.equal(true);
+					expect(util.is(DATETIME).dateAndTime()).to.equal(true);
+
+					expect(util.is(DATE).time()).to.equal(false);
+					expect(util.is(TIME).date()).to.equal(false);
+					expect(util.is(DATETIME).type()).to.equal('datetime');
+					expect(util.is(DATE).type()).to.equal('date');
+					expect(util.is(TIME).type()).to.equal('time');
+
+				});
+
 				test('it should convert a time string to seconds', function () {
 					expect(util.timeToSeconds('12:01 am')).to.equal(60);
 					expect(util.timeToSeconds('12:01 pm')).to.equal(43260);
@@ -119,7 +142,6 @@
 					expect(util.is('12:01 am').less('12:01 pm')).to.equal(true);
 					expect(util.is('12:03 am').greater('12:02 am')).to.equal(true);
 					expect(util.is('12:01 pm').greater('12:01 am')).to.equal(true);
-
 				});
 
 				test('it should round', function () {
@@ -162,14 +184,48 @@
 				});
 			});
 
+			suite('input keys', function () {
+				test.only('it should increment and decrement values', function (done) {
+					const value = '12/25/2017 2:00 pm';
+					const dateInput = dom('date-input', { value: value }, body);
+					const timeInput = dom('time-input', { value: value }, body);
+					const dateTimeInput = dom('date-time-input', { value: value }, body);
+					onDomReady([dateInput, timeInput, dateTimeInput], function () {
+
+						// // time
+						// expect(timeInput.value).to.equal('02:00 pm');
+						// select(timeInput.input, 0, 2).up(1);
+						// select(timeInput.input, 3, 5).down(1);
+						// select(timeInput.input, 6, 8).up(1);
+						// expect(timeInput.value).to.equal('03:45 am');
+						//
+						// // dateTime - time
+						// expect(dateTimeInput.value).to.equal('12/25/2017 02:00 pm');
+						// select(dateTimeInput.input, 11, 13).up(1);
+						// select(dateTimeInput.input, 14, 16).up(1);
+						// select(dateTimeInput.input, 18, 20).up(1);
+						// expect(dateTimeInput.value).to.equal('12/25/2017 03:15 am');
+
+						// date
+						expect(dateInput.value).to.equal('12/25/2017');
+						select(dateInput.input, 0, 2).up(1);
+
+						done();
+					});
+				});
+			});
+
 			suite('date input', function () {
-				test('it should submit in a form', function (done) {
-					const form = dom('form', {}, body);
+				test('it should submit in a form (MANUAL)', function (done) {
+
+					// click submit, view result in URL
+
+					const form = dom('form', { method: 'GET'}, body);
 					dom('input', { type: 'text', value: 'Mike', name: 'name' }, form);
 					const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
 					const btn = dom('button', { html: 'Submit' }, form);
 					on.once(form, 'submit', function (e) {
-						console.log('SUBMIT', e.target.value);
+						console.log('SUBMIT', e);
 						// e.preventDefault();
 						// return false;
 					});
@@ -182,9 +238,13 @@
 
 				});
 
-				test('it should load custom input of type `date`', function () {
-					const node = dom('date-input', { type: 'date', label: 'Date', value: '12/12/2017' }, body);
-					expect(dom.isNode(node)).to.equal(true);
+				test('it should handle min and max', function () {
+					const node = dom('date-input', {
+						label: 'Date',
+						value: '12/25/2017',
+						min: '12/24/2017',
+						max: '12/26/2017'
+					}, body);
 					node.on('change', function (e) {
 						//console.log('change', e.value);
 					});
@@ -385,7 +445,7 @@
 					expect(dom.isNode(node)).to.equal(true);
 				});
 
-				test.only('it should handle min and max with time', function (done) {
+				test('it should handle min and max with time', function (done) {
 					const value = '12/12/2017 04:30 am';
 					const min = '12/12/2017 05:30 am';
 					const max = '12/13/2017 07:30 am';
@@ -396,7 +456,7 @@
 						let error = node.timeInput.validationError;
 						node.on('validation', function (e) {
 							error = e.detail.message;
-							console.log('validation', error);
+							// console.log('validation', error);
 						});
 						node.timeInput.validate();
 
@@ -405,6 +465,8 @@
 						expect(error).to.equal(null);
 						node.timeInput.value = '08:00 am';
 						expect(error).to.equal(MAX);
+						node.timeInput.value = '08:30 am';
+						expect(error).to.equal(MAX);
 						done();
 					});
 				});
@@ -412,6 +474,13 @@
 				test('it should open to the top left', function () {
 					const node = dom('date-input', { class: 'BR' }, body);
 					expect(dom.isNode(node)).to.equal(true);
+				});
+
+				test('it should persist open', function () {
+					const node = dom('date-time-input', {
+						value: '03/27/2018 10:00 am',
+						static: true
+					}, body);
 				});
 			});
 

@@ -6,13 +6,13 @@ function onKey (e) {
 	const end = e.target.selectionEnd;
 	const k = e.key;
 
-	if(k === 'Enter'){
+	if (k === 'Enter') {
 		this.hide();
 		this.emit('change', { value: this.value });
 	}
 
-	if(k === 'Escape'){
-		if(!this.isValid()){
+	if (k === 'Escape') {
+		if (!this.isValid()) {
 			this.value = this.strDate;
 			this.hide();
 			this.input.blur();
@@ -34,22 +34,40 @@ function onKey (e) {
 			this.setValue(this.input.value, true);
 		}
 
+		const value = this.input.value;
+		const type = util.is(value).type();
+
 		if (util.isArrowKey[k]) {
 
-			// FIXME: range only handle time, not date+time
-
 			// FIXME: test is not adding picker time
+			// 12/12/2017 06:30 am'
 
 			const inc = k === 'ArrowUp' ? 1 : -1;
-			if (end <= 2) {
-				this.setValue(util.incHours(this.input.value, inc), true);
-			} else if (end <= 5) {
-				this.setValue(util.incMinutes(this.input.value, inc, 15), true);
-			} else {
-				this.setValue(this.input.value, true, this.isAM ? 'pm' : 'am');
+			if (/time/.test(type)) {
+				const HR = type === 'time' ? [0,2] : [11,13];
+				const MN = type === 'time' ? [3,5] : [14,16];
+				if (end >= HR[0] && end <= HR[1]) {
+					this.setValue(util.incHours(value, inc), true);
+				} else if (end >= MN[0] && end <= MN[1]) {
+					this.setValue(util.incMinutes(value, inc, 15), true);
+				} else {
+					this.setValue(value.replace(/([ap]m)/i, str => /a/i.test(str) ? 'pm' : 'am' ), true);
+					// this.setValue(value, true, /a/i.test(value) ? 'pm' : 'am');
+				}
 			}
-		} else if (/[ap]/i.test(k)) {
-			this.setValue(this.setAMPM(this.input.value, k === 'a' ? 'am' : 'pm'), true);
+
+			if (/date/.test(type)) {
+				if (end <= 2 ) {
+					this.setValue(util.incMonth(value, inc), true);
+				} else if (end < 5) {
+					this.setValue(util.incDate(value, inc), true);
+				} else if (end < 11) {
+					this.setValue(util.incYear(value, inc), true);
+				}
+			}
+
+		} else if (/[ap]/i.test(k) && /time/.test(type)) {
+			this.setValue(this.setAMPM(value, k === 'a' ? 'am' : 'pm'), true);
 		}
 
 		setSelection(beg);
@@ -71,6 +89,7 @@ function onKey (e) {
 		setSelection(/[\s\/:]/.test(nextChar) ? beg + 2 : beg + 1);
 		util.stopEvent(e);
 		return;
+
 	} else if (end !== beg) {
 		console.log('sel');
 		// selection replace
