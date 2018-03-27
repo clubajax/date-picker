@@ -40,6 +40,26 @@ function pad (num) {
 	return '' + num;
 }
 
+function toDateTime (value) {
+	// FIXME: toTime() or to strTime()
+	if (typeof value === 'object') {
+		value = dates.format(value, 'h:m a');
+	} else {
+		value = stripDate(value);
+	}
+	const hr = getHours(value);
+	const mn = getMinutes(value);
+	const sc = getSeconds(value);
+	if (isNaN(hr) || isNaN(mn)) {
+		throw new Error('Invalid time ' + time);
+	}
+	const date = new Date();
+	date.setHours(hr);
+	date.setMinutes(mn);
+	date.setSeconds(sc);
+	return date;
+}
+
 function timeIsValid (value) {
 	// 12:34 am
 	if (value.length < 8) {
@@ -59,6 +79,31 @@ function timeIsValid (value) {
 	if (mn < 0 || mn > 59) {
 		return false;
 	}
+	return true;
+}
+
+function timeIsInRange (time, min, max, date) {
+	if (!min && !max) {
+		return true;
+	}
+
+	if (date) {
+		// first check date range, before time range
+		console.log('date.range', date, '/', min, '/', max);
+		return true;
+	}
+
+
+	console.log('time.range', time, '/', min, '/', max);
+	const d = toDateTime(time);
+	// isGreater: 1st > 2nd
+	if (min && !dates.is(d).greater(toDateTime(min))) {
+		return false;
+	}
+	if (max && !dates.is(d).less(toDateTime(max))) {
+		return false;
+	}
+
 	return true;
 }
 
@@ -127,12 +172,41 @@ function isControl (e) {
 	return control[e.key];
 }
 
+function timeToSeconds (value) {
+	const isAM = /am/i.test(value);
+	let hr = getHours(value);
+	if (isAM && hr === 12) {
+		hr = 0;
+	} else if (!isAM && hr !== 12) {
+		hr += 12;
+	}
+	let mn = getMinutes(value);
+	const sc = getSeconds(value);
+	if (isNaN(hr) || isNaN(mn)) {
+		throw new Error('Invalid time ' + time);
+	}
+	mn *= 60;
+	hr *= 3600;
+	return hr + mn + sc;
+}
+
 function getHours (value) {
 	return parseInt(value.substring(0, 2));
 }
 
 function getMinutes (value) {
 	return parseInt(value.substring(3, 5));
+}
+
+function getSeconds (value) {
+	if (value.split(':').length === 3) {
+		return parseInt(value.substring(6, 8));
+	}
+	return 0;
+}
+
+function stripDate (str) {
+	return str.replace(/\d+[\/-]\d+[\/-]\d+\s*/, '');
 }
 
 function stopEvent (e) {
@@ -193,30 +267,77 @@ function getAMPM (value) {
 	return result ? result[0] : null;
 }
 
-function getToday () {
-	const d = new Date();
-	d.setHours(0);
-	d.setMinutes(0);
-	d.setSeconds(0);
-	d.setMilliseconds(0);
-	return d;
+function getMinDate (value) {
+	if (value === 'now') {
+		value = new Date();
+	} else {
+		value = dates.toDate(value);
+	}
+	value.setHours(0);
+	value.setMinutes(0);
+	value.setSeconds(0);
+	value.setMilliseconds(0);
+	return value;
 }
 
-function getTomorrow () {
-	const d = new Date();
-	d.setDate(d.getDate() + 1);
-	d.setSeconds(0);
-	d.setMinutes(0);
-	d.setHours(0);
-	d.setMilliseconds(0);
-	return d;
+function getMaxDate (value) {
+	if (value === 'now') {
+		value = new Date();
+	} else {
+		value = dates.toDate(value);
+	}
+	value.setHours(23);
+	value.setMinutes(59);
+	value.setSeconds(59);
+	value.setMilliseconds(999);
+	return value;
+}
+
+function getMinTime (value) {
+	if (value === 'now') {
+		value = new Date();
+	} else {
+		value = dates.toDate(value);
+	}
+	value.setSeconds(value.getSeconds() - 2);
+	return value;
+}
+
+function getMaxTime (value) {
+	if (value === 'now') {
+		value = new Date();
+	} else {
+		value = dates.toDate(value);
+	}
+	value.setSeconds(value.getSeconds() + 2);
+	return value;
 }
 
 function toAriaLabel (date) {
 	return dates.format(date, 'd, E MMMM yyyy');
 }
 
+function isSameDate (d1, d2) {
+	// TODO: move to @dates
+	// or as: compare(d1, d2, 'year,month,date')?
+	return d1.getFullYear() === d2.getFullYear() &&
+		d1.getMonth() === d2.getMonth() &&
+		d1.getDate() === d2.getDate();
+}
+
+function is (time1) {
+	return {
+		less (time2) {
+			return timeToSeconds(time1) < timeToSeconds(time2);
+		},
+		greater (time2) {
+			return timeToSeconds(time1) > timeToSeconds(time2);
+		}
+	}
+}
+
 module.exports = {
+	is,
 	addTimeToDate,
 	timeIsValid,
 	incMinutes,
@@ -234,7 +355,13 @@ module.exports = {
 	formatDate,
 	formatTime,
 	getAMPM,
-	getToday,
-	getTomorrow,
-	toAriaLabel
+	getMinDate,
+	getMaxDate,
+	toAriaLabel,
+	getMinTime,
+	getMaxTime,
+	timeIsInRange,
+	toDateTime,
+	isSameDate,
+	timeToSeconds
 };

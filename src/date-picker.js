@@ -58,16 +58,18 @@ class DatePicker extends BaseComponent {
 	}
 
 	onMin (value) {
-		const d = value === 'now' ? util.getToday() : dates.toDate(value);
-		this.minDate = d;
-		this.minInt = d.getTime();
+		this.minDate = util.getMinDate(value);
+		if (this.timeInput) {
+			this.timeInput.min = value;
+		}
 		this.render();
 	}
 
 	onMax (value) {
-		const d = value === 'now' ? util.getTomorrow() : dates.toDate(value);
-		this.maxDate = d;
-		this.maxInt = d.getTime();
+		this.maxDate = util.getMaxDate(value);
+		if (this.timeInput) {
+			this.timeInput.max = value;
+		}
 		this.render();
 	}
 
@@ -91,7 +93,7 @@ class DatePicker extends BaseComponent {
 		} else {
 			this.current.setMonth(args[0]);
 		}
-		this.valueDate = copy(this.current);
+		this.valueDate = dates.copy(this.current);
 		this.noEvents = true;
 		this.render();
 	}
@@ -158,7 +160,11 @@ class DatePicker extends BaseComponent {
 			this.current.setMonth(this.current.getMonth() - 1);
 		}
 
-		this.valueDate = copy(this.current);
+		this.valueDate = dates.copy(this.current);
+
+		if (this.timeInput) {
+			this.timeInput.setDate(this.valueDate);
+		}
 
 		this.emitEvent();
 
@@ -275,7 +281,7 @@ class DatePicker extends BaseComponent {
 		const
 			prevFirst = !!this.firstRange,
 			prevSecond = !!this.secondRange,
-			rangeDate = copy(this.current);
+			rangeDate = dates.copy(this.current);
 
 		if (this.isOwned) {
 			this.fire('select-range', {
@@ -318,7 +324,7 @@ class DatePicker extends BaseComponent {
 
 	displayRangeToEnd () {
 		if (this.firstRange) {
-			this.hoverDate = copy(this.current);
+			this.hoverDate = dates.copy(this.current);
 			this.hoverDate.setMonth(this.hoverDate.getMonth() + 1);
 			this.displayRange();
 		}
@@ -392,9 +398,7 @@ class DatePicker extends BaseComponent {
 		if (this.isOwned) {
 			this.classList.add('minimal');
 		}
-
-		this.current = copy(this.value);
-
+		this.current = dates.copy(this.value);
 		this.connect();
 		this.render();
 	}
@@ -416,7 +420,7 @@ class DatePicker extends BaseComponent {
 			nextMonth = 0,
 			isRange = this['range-picker'],
 			d = this.current,
-			incDate = copy(d),
+			incDate = dates.copy(d),
 			intDate = incDate.getTime(),
 			daysInPrevMonth = dates.getDaysInPrevMonth(d),
 			daysInMonth = dates.getDaysInMonth(d),
@@ -434,7 +438,6 @@ class DatePicker extends BaseComponent {
 
 		for (i = 0; i < 42; i++) {
 
-			//console.log('less', dateObj, this.minDate, dates.isLess(dateObj, this.minDate));
 			minmax = dates.isLess(dateObj, this.minDate) || dates.isGreater(dateObj, this.maxDate);
 
 			tx = dateNum + 1 > 0 && dateNum + 1 <= daysInMonth ? dateNum + 1 : "&nbsp;";
@@ -497,6 +500,10 @@ class DatePicker extends BaseComponent {
 		this.setRangeEndPoints();
 
 		this.emitDisplayEvents();
+
+		if (this.timeInput) {
+			this.timeInput.setDate(this.current);
+		}
 	}
 
 	setFooter () {
@@ -507,7 +514,15 @@ class DatePicker extends BaseComponent {
 			return;
 		}
 		if (this.time) {
-			this.timeInput = dom('time-input', { label: 'Time:', required: true, value: '12:34 pm', 'event-name': 'time-change' }, this.calFooter);
+			this.timeInput = dom('time-input', {
+				label: 'Time:',
+				required: true,
+				value: this.value,
+				min: this.minDate,
+				max: this.maxDate,
+				'event-name': 'time-change'
+			}, this.calFooter);
+			this.timeInput.setDate(this.current);
 			this.timeInput.on('time-change', this.emitEvent.bind(this));
 		} else {
 			const d = new Date();
@@ -528,7 +543,7 @@ class DatePicker extends BaseComponent {
 			this.focus();
 			this.current = new Date();
 			this.render();
-			this.valueDate = copy(this.current);
+			this.valueDate = dates.copy(this.current);
 			this.emitEvent();
 		});
 
@@ -577,16 +592,8 @@ function destroy (node) {
 	}
 }
 
-function isThisMonth (date, currentDate) {
-	return date.getMonth() === currentDate.getMonth() && date.getFullYear() === currentDate.getFullYear();
-}
-
 function inRange (dateTime, begTime, endTime) {
 	return dateTime >= begTime && dateTime <= endTime;
-}
-
-function copy (date) {
-	return new Date(date.getTime());
 }
 
 customElements.define('date-picker', DatePicker);

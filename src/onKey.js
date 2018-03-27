@@ -48,9 +48,7 @@ function onKey (e) {
 			} else {
 				this.setValue(this.input.value, true, this.isAM ? 'pm' : 'am');
 			}
-		}
-
-		if (/[ap]/.test(k)) {
+		} else if (/[ap]/i.test(k)) {
 			this.setValue(this.setAMPM(this.input.value, k === 'a' ? 'am' : 'pm'), true);
 		}
 

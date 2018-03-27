@@ -33,7 +33,8 @@ class TimeInput extends BaseComponent {
 
 	set value (value) {
 		if (dates.isValidObject(value)) {
-			const org = value;
+			this.orgDate = value;
+			// this.setDate(value);
 			value = dates.format(value, 'h:m a');
 			this.setAMPM(value);
 		}
@@ -56,11 +57,17 @@ class TimeInput extends BaseComponent {
 	}
 
 	onMin (value) {
-
+		this.minTime = dates.format(util.getMinTime(value), 'h:m a');
+		this.minDisplay = util.incMinutes(this.minTime, 1);
+		this.minDate = util.getMinDate(value);
+		this.validate();
 	}
 
 	onMax (value) {
-
+		this.maxTime = dates.format(util.getMaxTime(value), 'h:m a');
+		this.maxDisplay = this.maxTime;
+		this.maxDate = util.getMaxDate(value);
+		this.validate();
 	}
 
 	get templateString () {
@@ -77,10 +84,7 @@ class TimeInput extends BaseComponent {
 	}
 
 	setValue (value, silent, ampm) {
-
-		if (ampm) {
-			this.setAMPM(value, ampm);
-		}
+		this.setAMPM(value, getAMPM(value, ampm));
 		value = util.formatTime(value);
 		if (value.length === 5) {
 			value = this.setAMPM(value);
@@ -99,9 +103,33 @@ class TimeInput extends BaseComponent {
 		return value;
 	}
 
+	setDate (value) {
+		// sets the current date, but not the time
+		// used when inside a date picker for min/max
+		this.date = value;
+		this.validate();
+	}
+
 	isValid (value = this.input.value) {
-		if (!value && !this.required) {
-			return true;
+		if (!value && this.required) {
+			this.emitError('This field is required');
+			return false;
+		}
+		if (this.date && value) {
+			if (this.minDate && util.isSameDate(this.date, this.minDate)) {
+				if (util.is(value).less(this.minTime)) {
+					const msg = this.min === 'now' ? 'Value must be in the future' : `Value is less than the minimum, ${this.min}`;
+					this.emitError(msg);
+					return false;
+				}
+			}
+			if (this.maxDate && util.isSameDate(this.date, this.maxDate)) {
+				if (util.is(value).greater(this.maxTime)) {
+					const msg = this.max === 'now' ? 'Value must be in the past' : `Value is greater than the maximum, ${this.max}`;
+					this.emitError(msg);
+					return false;
+				}
+			}
 		}
 		return util.timeIsValid(value);
 	}
@@ -109,6 +137,7 @@ class TimeInput extends BaseComponent {
 	validate () {
 		if (this.isValid()) {
 			this.classList.remove('invalid');
+			this.emitError(null);
 			return true;
 		}
 		this.classList.add('invalid');
@@ -169,6 +198,14 @@ class TimeInput extends BaseComponent {
 		this[this.emitType](this.eventName, { value }, true);
 	}
 
+	emitError (msg) {
+		if (msg === this.validationError) {
+			return;
+		}
+		this.validationError = msg;
+		this.fire('validation', { message: msg }, true);
+	}
+
 	connectKeys () {
 		this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
@@ -179,6 +216,19 @@ class TimeInput extends BaseComponent {
 			this.blur();
 		});
 	}
+}
+
+function getAMPM (value, ampm) {
+	if (ampm) {
+		return ampm;
+	}
+	if (/a/i.test(value)) {
+		return 'am';
+	}
+	if (/p/i.test(value)) {
+		return 'pm';
+	}
+	return '';
 }
 
 customElements.define('time-input', TimeInput);
