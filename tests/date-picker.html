@@ -86,11 +86,9 @@
 
 		function select (node, beg, end) {
 			node.focus();
-			//setTimeout(function () {
-				end = end === undefined ? beg : end;
-				node.selectionStart = beg;
-				node.selectionEnd = end;
-			// }, 1)
+			end = end === undefined ? beg : end;
+			node.selectionStart = beg;
+			node.selectionEnd = end;
 			return {
 				up: function () {
 					arrow(node, 1);
@@ -103,9 +101,9 @@
 
 		function arrow (node, inc) {
 			if (inc > 0) {
-				on.emit(node, 'keyup', {key: 'ArrowUp'});
+				on.emit(node, 'keyup', { key: 'ArrowUp' });
 			} else {
-				on.emit(node, 'keyup', {key: 'ArrowDown'});
+				on.emit(node, 'keyup', { key: 'ArrowDown' });
 			}
 		}
 
@@ -185,42 +183,51 @@
 			});
 
 			suite('input keys', function () {
-				test.only('it should increment and decrement values', function (done) {
+				test('it should increment and decrement values', function () {
 					const value = '12/25/2017 2:00 pm';
 					const dateInput = dom('date-input', { value: value }, body);
-					const timeInput = dom('time-input', { value: value }, body);
-					const dateTimeInput = dom('date-time-input', { value: value }, body);
-					onDomReady([dateInput, timeInput, dateTimeInput], function () {
-
-						// // time
-						// expect(timeInput.value).to.equal('02:00 pm');
-						// select(timeInput.input, 0, 2).up(1);
-						// select(timeInput.input, 3, 5).down(1);
-						// select(timeInput.input, 6, 8).up(1);
-						// expect(timeInput.value).to.equal('03:45 am');
-						//
-						// // dateTime - time
-						// expect(dateTimeInput.value).to.equal('12/25/2017 02:00 pm');
-						// select(dateTimeInput.input, 11, 13).up(1);
-						// select(dateTimeInput.input, 14, 16).up(1);
-						// select(dateTimeInput.input, 18, 20).up(1);
-						// expect(dateTimeInput.value).to.equal('12/25/2017 03:15 am');
-
-						// date
-						expect(dateInput.value).to.equal('12/25/2017');
-						select(dateInput.input, 0, 2).up(1);
-
-						done();
-					});
+					// const timeInput = dom('time-input', { value: value }, body);
+					// const dateTimeInput = dom('date-time-input', { value: value }, body);
+					// onDomReady([dateInput, timeInput, dateTimeInput], function () {
+					//
+					// 	// time
+					// 	expect(timeInput.value).to.equal('02:00 pm');
+					// 	select(timeInput.input, 0, 2).up(1);
+					// 	select(timeInput.input, 3, 5).down(1);
+					// 	select(timeInput.input, 6, 8).up(1);
+					// 	expect(timeInput.value).to.equal('03:45 am');
+					//
+					// 	// dateTime - time
+					// 	expect(dateTimeInput.value).to.equal('12/25/2017 02:00 pm');
+					// 	select(dateTimeInput.input, 11, 13).up(1);
+					// 	select(dateTimeInput.input, 14, 16).up(1);
+					// 	select(dateTimeInput.input, 18, 20).up(1);
+					// 	expect(dateTimeInput.value).to.equal('12/25/2017 03:15 am');
+					//
+					// 	// dateTime - date
+					// 	select(dateTimeInput.input, 0, 2).down(1);
+					// 	select(dateTimeInput.input, 4).down(1);
+					// 	select(dateTimeInput.input, 0, 8).up(1);
+					// 	// expect(dateTimeInput.value).to.equal('11/24/2018 03:15 am');
+					//
+					// 	// date
+					// 	expect(dateInput.value).to.equal('12/25/2017');
+					// 	select(dateInput.input, 0, 2).up(1);
+					// 	select(dateInput.input, 4).up(1);
+					// 	select(dateInput.input, 0, 8).down(1);
+					// 	expect(dateInput.value).to.equal('01/26/2016');
+					//
+					// 	done();
+					// });
 				});
 			});
 
 			suite('date input', function () {
-				test('it should submit in a form (MANUAL)', function (done) {
+				test.only('it should submit in a form (MANUAL)', function (done) {
 
 					// click submit, view result in URL
 
-					const form = dom('form', { method: 'GET'}, body);
+					const form = dom('form', { method: 'GET' }, body);
 					dom('input', { type: 'text', value: 'Mike', name: 'name' }, form);
 					const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
 					const btn = dom('button', { html: 'Submit' }, form);

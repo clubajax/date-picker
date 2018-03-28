@@ -176,7 +176,7 @@ class DateInput extends BaseComponent {
 		}
 		this.connectKeys();
 
-		this.picker = dom('date-picker', { time: this.time }, this);
+		this.picker = dom('date-picker', { time: this.time, tabindex: '0' }, this);
 		this.picker.onDomReady(() => {
 			this.picker.on('change', (e) => {
 				this.setValue(e.value, true);

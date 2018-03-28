@@ -549,16 +549,17 @@ class DatePicker extends BaseComponent {
 
 		this.on(this.container, 'click', (e) => {
 			this.fire('pre-click', e, true, true);
-			const node = e.target.closest('.day');
+			const node = e.target.closest('.day,.year,.decade');
 			if (node) {
-				this.onClickDay(node);
+				if (node.classList.contains('day')) {
+					this.onClickDay(node);
+				} else if (node.classList.contains('year')) {
+					this.onClickYear(node);
+				} else if (node.classList.contains('decade')) {
+					this.onClickDecade(node);
+				}
 			}
-			else if (node.classList.contains('year')) {
-				this.onClickYear(node);
-			}
-			else if (node.classList.contains('decade')) {
-				this.onClickDecade(node);
-			}
+
 		});
 
 		this.on(this.monthNode, 'click', () => {
