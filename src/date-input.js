@@ -35,14 +35,22 @@ class DateInput extends BaseComponent {
 	}
 
 	set value (value) {
+		if (value === this.strDate) {
+			return;
+		}
+		const isInit = !this.strDate;
 		this.strDate = dates.isValid(value) ? value : '';
 		onDomReady(this, () => {
-			this.setValue(this.strDate);
+			this.setValue(this.strDate, isInit);
 		});
 	}
 
 	get value () {
 		return this.strDate;
+	}
+
+	get valid () {
+		return this.isValid();
 	}
 
 	onLabel (value) {
@@ -78,6 +86,9 @@ class DateInput extends BaseComponent {
 	}
 
 	setValue (value, silent) {
+		if (value === this.typedValue) {
+			return;
+		}
 		value = this.format(value);
 		this.typedValue = value;
 		this.input.value = value;
@@ -162,6 +173,12 @@ class DateInput extends BaseComponent {
 		});
 	}
 
+	blur () {
+		if (this.input) {
+			this.input.blur();
+		}
+	}
+
 	domReady () {
 		this.time = this.time || this.hasTime;
 		this.mask = this.mask || defaultMask;
@@ -179,7 +196,7 @@ class DateInput extends BaseComponent {
 		this.picker = dom('date-picker', { time: this.time, tabindex: '0' }, this);
 		this.picker.onDomReady(() => {
 			this.picker.on('change', (e) => {
-				this.setValue(e.value, true);
+				this.setValue(e.value);
 			});
 			if (this.static) {
 				this.show();

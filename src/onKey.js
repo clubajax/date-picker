@@ -74,7 +74,6 @@ function onKey (e) {
 		util.stopEvent(e);
 		return;
 	}
-
 	if (str.length !== end && beg === end) {
 		// handle selection or middle-string edit
 		let temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
@@ -91,16 +90,15 @@ function onKey (e) {
 		return;
 
 	} else if (end !== beg) {
-		console.log('sel');
 		// selection replace
 		let temp = util.replaceText(this.typedValue, k, beg, end, 'X');
-		console.log('temp');
 		const value = this.setValue(temp, true);
 
 		setSelection(beg + 1);
 		util.stopEvent(e);
 		return;
 	}
+
 
 	this.setValue(str + k, true);
 }

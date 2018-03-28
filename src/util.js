@@ -77,7 +77,7 @@ function pad (num) {
 }
 
 function toDateTime (value) {
-	// FIXME: toTime() or to strTime()
+	// FIXME: toTime() or to strTime() or DELETE - only used in util
 	if (typeof value === 'object') {
 		value = dates.format(value, 'h:m a');
 	} else {
@@ -150,8 +150,7 @@ function addTimeToDate (time, date) {
 	}
 	let hr = getHours(time);
 	const mn = getMinutes(time);
-	const isPM = /pm/i.test(time);
-	if (isPM && hr !== 12) {
+	if (/pm/i.test(time) && hr !== 12) {
 		hr += 12;
 	}
 	date.setHours(hr);
@@ -175,11 +174,10 @@ function nextNumPos (beg, s) {
 		}
 	}
 
-	console.log(char);
 	return found ? i : -1;
 }
 
-const numReg = /[0123456789]/;
+const numReg = /[0-9]/;
 
 function isNum (k) {
 	return numReg.test(k);
@@ -353,15 +351,8 @@ function getMaxTime (value) {
 }
 
 function toAriaLabel (date) {
+	date = dates.toDate(date);
 	return dates.format(date, 'd, E MMMM yyyy');
-}
-
-function isSameDate (d1, d2) {
-	// TODO: move to @dates
-	// or as: compare(d1, d2, 'year,month,date')?
-	return d1.getFullYear() === d2.getFullYear() &&
-		d1.getMonth() === d2.getMonth() &&
-		d1.getDate() === d2.getDate();
 }
 
 function is (value) {
@@ -425,7 +416,6 @@ module.exports = {
 	getMaxTime,
 	timeIsInRange,
 	toDateTime,
-	isSameDate,
 	timeToSeconds,
 	stripDate
 };

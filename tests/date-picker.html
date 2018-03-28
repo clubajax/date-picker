@@ -75,8 +75,10 @@
 			});
 		}
 
-		function key (node, value) {
-			node.input.value += value;
+		function key (node, value, pos) {
+			pos = pos || node.input.value.length;
+			node.input.selectionStart = pos;
+			node.input.selectionEnd = pos;
 			on.emit(node.input, 'keyup', { key: value });
 		}
 
@@ -105,6 +107,22 @@
 			} else {
 				on.emit(node, 'keyup', { key: 'ArrowDown' });
 			}
+		}
+
+		function clickDate (node, date) {
+			const day = util.toAriaLabel(date);
+			const n = dom.query(node, '[aria-label="'+day+'"]');
+			if (n) {
+				on.emit(n, 'click');
+				node.blur();
+			} else {
+				console.log('could not find:', date);
+			}
+		}
+
+		function focus (node) {
+			node.focus();
+			on.emit(node.input, 'focus');
 		}
 
 		suite('tests', function () {
@@ -161,69 +179,115 @@
 
 				test('it should increment minutes', function () {
 					// no rounding
-					expect(util.incMinutes('00:00', 1)).to.equal('00:01');
-					expect(util.incMinutes('00:30', -1)).to.equal('00:29');
-					expect(util.incMinutes('00:00', -1)).to.equal('00:45');
-					expect(util.incMinutes('00:59', 1)).to.equal('00:00');
+					expect(util.incMinutes('00:00 am', 1)).to.equal('00:01 am');
+					expect(util.incMinutes('00:30 am', -1)).to.equal('00:29 am');
+					expect(util.incMinutes('00:00 am', -1)).to.equal('00:45 am');
+					expect(util.incMinutes('00:59 am', 1)).to.equal('00:00 am');
 
-					// even rounding
-					expect(util.incMinutes('00:00', 1, 15)).to.equal('00:15');
-					expect(util.incMinutes('00:30', -1, 15)).to.equal('00:15');
-					expect(util.incMinutes('00:45', 1, 15)).to.equal('00:00');
-					expect(util.incMinutes('00:00', -1, 15)).to.equal('00:45');
+					// even rounding am
+					expect(util.incMinutes('00:00 am', 1, 15)).to.equal('00:15 am');
+					expect(util.incMinutes('00:30 am', -1, 15)).to.equal('00:15 am');
+					expect(util.incMinutes('00:45 am', 1, 15)).to.equal('00:00 am');
+					expect(util.incMinutes('00:00 am', -1, 15)).to.equal('00:45 am');
 
-					// odd rounding
-					expect(util.incMinutes('00:05', 1, 15)).to.equal('00:15');
-					expect(util.incMinutes('00:14', 1, 15)).to.equal('00:15');
-					expect(util.incMinutes('00:16', 1, 15)).to.equal('00:30');
-					expect(util.incMinutes('00:29', 1, 15)).to.equal('00:30');
-					expect(util.incMinutes('00:47', 1, 15)).to.equal('00:00');
+					// odd rounding am
+					expect(util.incMinutes('00:05 am', 1, 15)).to.equal('00:15 am');
+					expect(util.incMinutes('00:14 am', 1, 15)).to.equal('00:15 am');
+					expect(util.incMinutes('00:16 am', 1, 15)).to.equal('00:30 am');
+					expect(util.incMinutes('00:29 am', 1, 15)).to.equal('00:30 am');
+					expect(util.incMinutes('00:47 am', 1, 15)).to.equal('00:00 am');
 
 				});
 			});
 
 			suite('input keys', function () {
-				test('it should increment and decrement values', function () {
+				test('it should increment and decrement values', function (done) {
 					const value = '12/25/2017 2:00 pm';
 					const dateInput = dom('date-input', { value: value }, body);
-					// const timeInput = dom('time-input', { value: value }, body);
-					// const dateTimeInput = dom('date-time-input', { value: value }, body);
-					// onDomReady([dateInput, timeInput, dateTimeInput], function () {
-					//
-					// 	// time
-					// 	expect(timeInput.value).to.equal('02:00 pm');
-					// 	select(timeInput.input, 0, 2).up(1);
-					// 	select(timeInput.input, 3, 5).down(1);
-					// 	select(timeInput.input, 6, 8).up(1);
-					// 	expect(timeInput.value).to.equal('03:45 am');
-					//
-					// 	// dateTime - time
-					// 	expect(dateTimeInput.value).to.equal('12/25/2017 02:00 pm');
-					// 	select(dateTimeInput.input, 11, 13).up(1);
-					// 	select(dateTimeInput.input, 14, 16).up(1);
-					// 	select(dateTimeInput.input, 18, 20).up(1);
-					// 	expect(dateTimeInput.value).to.equal('12/25/2017 03:15 am');
-					//
-					// 	// dateTime - date
-					// 	select(dateTimeInput.input, 0, 2).down(1);
-					// 	select(dateTimeInput.input, 4).down(1);
-					// 	select(dateTimeInput.input, 0, 8).up(1);
-					// 	// expect(dateTimeInput.value).to.equal('11/24/2018 03:15 am');
-					//
-					// 	// date
-					// 	expect(dateInput.value).to.equal('12/25/2017');
-					// 	select(dateInput.input, 0, 2).up(1);
-					// 	select(dateInput.input, 4).up(1);
-					// 	select(dateInput.input, 0, 8).down(1);
-					// 	expect(dateInput.value).to.equal('01/26/2016');
-					//
-					// 	done();
-					// });
+					const timeInput = dom('time-input', { value: value }, body);
+					const dateTimeInput = dom('date-time-input', { value: value }, body);
+					onDomReady([
+						dateInput,
+						timeInput,
+						dateTimeInput
+					], function () {
+
+						// time
+						expect(timeInput.value).to.equal('02:00 pm');
+						select(timeInput.input, 0, 2).up(1);
+						select(timeInput.input, 3, 5).down(1);
+						select(timeInput.input, 6, 8).up(1);
+						expect(timeInput.value).to.equal('03:45 am');
+						//
+						// dateTime - time
+						expect(dateTimeInput.value).to.equal('12/25/2017 02:00 pm');
+						select(dateTimeInput.input, 11, 13).up(1);
+						select(dateTimeInput.input, 14, 16).up(1);
+						select(dateTimeInput.input, 18, 20).up(1);
+						expect(dateTimeInput.value).to.equal('12/25/2017 03:15 am');
+
+						// dateTime - date
+						select(dateTimeInput.input, 0, 2).down(1);
+						select(dateTimeInput.input, 4).down(1);
+						select(dateTimeInput.input, 0, 8).up(1);
+						// expect(dateTimeInput.value).to.equal('11/24/2018 03:15 am');
+
+						// date
+						expect(dateInput.value).to.equal('12/25/2017');
+						select(dateInput.input, 0, 2).up(1);
+						select(dateInput.input, 4).up(1);
+						select(dateInput.input, 0, 8).down(1);
+						expect(dateInput.value).to.equal('01/26/2016');
+
+						done();
+					});
 				});
 			});
 
 			suite('date input', function () {
-				test.only('it should submit in a form (MANUAL)', function (done) {
+				test.skip('it should select dates and note lose focus (NOT WORKING)', function (done) {
+
+					// problems with focus
+					const node = dom('date-input', {
+						label: 'Date',
+						value: '12/25/2017'
+					}, body);
+					ready(node, function () {
+						// const time = 1000;
+						// focus(node);
+						// clickDate(node, '12/01/2017');
+						// setTimeout(function () {
+						// 	clickDate(node, '12/03/2017');
+						// 	setTimeout(function () {
+						// 		clickDate(node, '12/05/2017');
+						// 		setTimeout(function () {
+						// 			clickDate(node, '12/07/2017');
+						// 		}, time);
+						// 	}, time);
+						// }, time);
+						done();
+					})
+				});
+
+				test('it should handle input starting blank', function (done) {
+					const node = dom('date-input', {
+						label: 'Date'
+					}, body);
+					ready(node, function () {
+						key(node, 1, 0);
+						key(node, 2);
+						key(node, 2);
+						key(node, 5);
+						key(node, 2);
+						key(node, 0);
+						key(node, 1);
+						key(node, 7);
+						expect(node.valid).to.equal(true);
+						done();
+					})
+				});
+
+				test('it should submit in a form (MANUAL)', function (done) {
 
 					// click submit, view result in URL
 
@@ -252,17 +316,13 @@
 						min: '12/24/2017',
 						max: '12/26/2017'
 					}, body);
-					node.on('change', function (e) {
-						//console.log('change', e.value);
-					});
+
 				});
 			});
 
 			suite('time input', function () {
 
-				// TODO: UTC timestamp
-				// TODO: handle min/max
-				// FIXME: time-input blur does not close calendar
+
 
 				test('it should render a time input', function (done) {
 					const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
@@ -270,7 +330,6 @@
 						let emitted = '';
 						const events = [];
 						node.on('change', function (e) {
-							console.log('change', e.value);
 							events.push(1);
 							emitted = events.join(',')
 						});
@@ -284,18 +343,18 @@
 						let emitted;
 						const events = [];
 						node.on('change', function (e) {
-							console.log('change', e.value);
+							// console.log('change', e.value);
 							events.push(1);
 							emitted = events.join(',')
 						});
 						node.focus();
-						key(node, 1);
-						key(node, 2);
-						key(node, 3);
+						key(node, 1, 0);
 						node.blur();
 						expect(node.valid).to.equal(false);
-						// node.focus();
-						key(node, 4);
+						node.focus();
+						key(node, 2, 1);
+						key(node, 3, 2);
+						key(node, 4, 3);
 						node.blur();
 						expect(node.valid).to.equal(true);
 						expect(emitted).to.equal('1');
@@ -414,7 +473,6 @@
 				test('it should allow `now` as a min', function (done) {
 					const date = new Date();
 					const dateStr = dates.format(date, 'MM/dd/yyyy');
-					console.log('dateStr', dateStr);
 					const node = dom('date-picker', { min: 'now', value: dateStr }, body);
 					ready(node, function () {
 						const todayLabel = util.toAriaLabel(date);
@@ -432,7 +490,6 @@
 				test('it should allow `now` as a max', function (done) {
 					const date = new Date();
 					const dateStr = dates.format(date, 'MM/dd/yyyy');
-					console.log('dateStr', dateStr);
 					const node = dom('date-picker', { max: 'now', value: dateStr }, body);
 					ready(node, function () {
 						const todayLabel = util.toAriaLabel(date);
@@ -502,7 +559,6 @@
 					expect(dom.isNode(node)).to.equal(true);
 
 					ready(node, function () {
-						console.log('node.value', node.value);
 						expect(node.value).to.equal('01/10/2017 - 02/14/2017');
 
 						expect(node.leftInput.value).to.equal('01/10/2017');
@@ -520,8 +576,8 @@
 					expect(dom.isNode(node)).to.equal(true);
 
 					node.on('change', function (e) {
-						console.log('change.value', node.value);
-						console.log('change.target', e.target);
+						// console.log('change.value', node.value);
+						// console.log('change.target', e.target);
 					});
 
 					ready(node, function () {
@@ -565,9 +621,8 @@
 					});
 
 					node.on('change', function (e) {
-						console.log('\nEMIT');
-						console.log('change.value', node.value);
-						console.log('change.target', e.target);
+						// console.log('change.value', node.value);
+						// console.log('change.target', e.target);
 					});
 
 					onDomReady(node, function () {

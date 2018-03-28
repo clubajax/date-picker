@@ -1,6 +1,8 @@
 const DateInput = require('./date-input');
 const util = require('./util');
 
+// FIXME: time-input blur does not close calendar
+
 class DateTimeInput extends DateInput {
 	constructor () {
 		super();
