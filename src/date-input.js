@@ -5,6 +5,7 @@ const on = require('@clubajax/on');
 const dates = require('@clubajax/dates');
 const util = require('./util');
 const onKey = require('./onKey');
+require('./icon-calendar');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
@@ -76,7 +77,10 @@ class DateInput extends BaseComponent {
 		return `
 <label>
 	<span ref="labelNode"></span>
-	<input ref="input" class="empty" />
+	<div class="input-wrapper">
+		<input ref="input" class="empty" />
+		<icon-calendar />
+	</div>
 </label>`;
 	}
 

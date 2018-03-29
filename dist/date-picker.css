@@ -1,6 +1,9 @@
 date-picker {
   display: inline-block;
-  font-size: 13px; }
+  font-size: 13px;
+  width: 210px; }
+  date-picker * {
+    box-sizing: border-box; }
   date-picker .calendar {
     border-radius: 4px;
     display: inline-block;
@@ -8,7 +11,7 @@ date-picker {
     padding: 3px;
     background: white; }
   date-picker .cal-container {
-    width: 200px;
+    width: 100%;
     height: 180px; }
   date-picker .cal-header {
     border-radius: 3px;
@@ -142,25 +145,26 @@ date-picker[time] .cal-footer input {
 date-time-input, time-input, date-input, date-range-input {
   display: inline-block;
   position: relative; }
-  date-time-input input, time-input input, date-input input, date-range-input input {
-    border-radius: 2px;
-    border: 1px solid #ccc;
-    transition: background-color 300ms ease, border-color 300ms ease; }
-    date-time-input input::placeholder, time-input input::placeholder, date-input input::placeholder, date-range-input input::placeholder {
-      font-style: italic; }
-    date-time-input input:-ms-input-placeholder, time-input input:-ms-input-placeholder, date-input input:-ms-input-placeholder, date-range-input input:-ms-input-placeholder {
-      font-style: italic; }
   date-time-input label span, time-input label span, date-input label span, date-range-input label span {
     font-size: 12px;
     color: #999;
     display: block;
     margin-bottom: 3px; }
-  date-time-input label input, time-input label input, date-input label input, date-range-input label input {
-    padding: 5px; }
-  date-time-input.invalid input, time-input.invalid input, date-input.invalid input, date-range-input.invalid input {
+  date-time-input label .input-wrapper, time-input label .input-wrapper, date-input label .input-wrapper, date-range-input label .input-wrapper {
+    position: relative; }
+    date-time-input label .input-wrapper input, time-input label .input-wrapper input, date-input label .input-wrapper input, date-range-input label .input-wrapper input {
+      padding: 5px;
+      border-radius: 2px;
+      border: 1px solid #ccc;
+      transition: background-color 300ms ease, border-color 300ms ease; }
+      date-time-input label .input-wrapper input::placeholder, time-input label .input-wrapper input::placeholder, date-input label .input-wrapper input::placeholder, date-range-input label .input-wrapper input::placeholder {
+        font-style: italic; }
+      date-time-input label .input-wrapper input:-ms-input-placeholder, time-input label .input-wrapper input:-ms-input-placeholder, date-input label .input-wrapper input:-ms-input-placeholder, date-range-input label .input-wrapper input:-ms-input-placeholder {
+        font-style: italic; }
+  date-time-input.invalid .input-wrapper input, time-input.invalid .input-wrapper input, date-input.invalid .input-wrapper input, date-range-input.invalid .input-wrapper input {
     border-color: red;
     outline-color: red; }
-  date-time-input.warning input, time-input.warning input, date-input.warning input, date-range-input.warning input {
+  date-time-input.warning .input-wrapper input, time-input.warning .input-wrapper input, date-input.warning .input-wrapper input, date-range-input.warning .input-wrapper input {
     border-color: #be4304;
     background-color: #fffdd5; }
   date-time-input date-picker,
@@ -225,5 +229,24 @@ date-range-inputs {
     margin-right: 5px; }
   date-range-inputs date-input:last-child {
     margin-left: 5px; }
+
+date-time-input, time-input, date-input {
+  width: 210px; }
+
+date-time-input > label input {
+  width: calc(100% - 40px); }
+
+date-time-input time-input {
+  width: auto; }
+
+icon-calendar {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer; }
 
 /*# sourceMappingURL=date-picker.css.map */

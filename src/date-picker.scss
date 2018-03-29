@@ -23,8 +23,12 @@ $warn-brd: #be4304;
 $warn-bk: #fffdd5;
 
 date-picker{
+    * {
+        box-sizing: border-box;
+    }
     display: inline-block;
     font-size: 13px;
+    width: 210px;
     .calendar{
         border-radius: 4px;
         display: inline-block;
@@ -33,7 +37,7 @@ date-picker{
         background: $bg;
     }
     .cal-container{
-        width: 200px;
+        width: 100%;
         height: 180px;
     }
     .cal-header{
@@ -213,17 +217,8 @@ date-time-input, time-input, date-input, date-range-input{
     display: inline-block;
     position: relative;
     //outline: none;
-    input{
-        border-radius: 2px;
-        border: 1px solid $brd;
-        transition: background-color 300ms ease, border-color 300ms ease;
-        &::placeholder{
-            font-style: italic;
-        }
-        &:-ms-input-placeholder{
-            font-style: italic;
-        }
-    }
+
+
     label{
         span{
             font-size: 12px;
@@ -231,18 +226,30 @@ date-time-input, time-input, date-input, date-range-input{
             display: block;
             margin-bottom: 3px;
         }
-        input{
-            padding: 5px;
+        .input-wrapper{
+            position: relative;
+            input{
+                padding: 5px;
+                border-radius: 2px;
+                border: 1px solid $brd;
+                transition: background-color 300ms ease, border-color 300ms ease;
+                &::placeholder{
+                    font-style: italic;
+                }
+                &:-ms-input-placeholder{
+                    font-style: italic;
+                }
+            }
         }
     }
     &.invalid{
-        input{
+        .input-wrapper input{
             border-color: red;
             outline-color: red;
         }
     }
     &.warning{
-        input{
+        .input-wrapper input{
             border-color: $warn-brd;
             background-color: $warn-bk;
         }
@@ -313,4 +320,29 @@ date-range-inputs{
             margin-left: 5px;
         }
     }
+}
+
+date-time-input, time-input, date-input{
+    width: 210px;
+}
+date-time-input{
+    & > label {
+        input {
+            width: calc(100% - 40px);
+        }
+    }
+    time-input {
+        width: auto;
+    }
+}
+
+icon-calendar{
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
 }

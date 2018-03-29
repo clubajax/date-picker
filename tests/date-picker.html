@@ -322,8 +322,6 @@
 
 			suite('time input', function () {
 
-
-
 				test('it should render a time input', function (done) {
 					const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
 					ready(node, function () {
@@ -434,7 +432,7 @@
 			});
 
 			suite('date time input', function () {
-				test('it should add a time to the picker', function (done) {
+				test.only('it should add a time to the picker', function (done) {
 					const dateStr = '12/12/2017 02:20 am';
 					const node = dom('date-time-input', { label: 'Enter Date and Time', value: dateStr, min: dateStr }, body);
 					ready(node, function () {
@@ -447,6 +445,14 @@
 						});
 						done();
 					});
+				});
+
+				test('it should persist open', function () {
+					const node = dom('date-time-input', {
+						label: 'Date and Time',
+						value: '03/27/2018 10:00 am',
+						static: true
+					}, body);
 				});
 			});
 
@@ -538,13 +544,6 @@
 				test('it should open to the top left', function () {
 					const node = dom('date-input', { class: 'BR' }, body);
 					expect(dom.isNode(node)).to.equal(true);
-				});
-
-				test('it should persist open', function () {
-					const node = dom('date-time-input', {
-						value: '03/27/2018 10:00 am',
-						static: true
-					}, body);
 				});
 			});
 

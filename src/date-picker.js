@@ -6,6 +6,7 @@ require('./time-input');
 
 // TODO:
 // https://axesslab.com/accessible-datepickers/
+// http://whatsock.com/tsg/Coding%20Arena/ARIA%20Date%20Pickers/ARIA%20Date%20Picker%20(Basic)/demo.htm
 
 const props = ['min', 'max'];
 
