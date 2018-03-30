@@ -1,7 +1,6 @@
 require('./date-picker');
 const BaseComponent = require('@clubajax/base-component');
 const dom = require('@clubajax/dom');
-const on = require('@clubajax/on');
 const dates = require('@clubajax/dates');
 const util = require('./util');
 const onKey = require('./onKey');
@@ -107,9 +106,9 @@ class DateInput extends BaseComponent {
 			}
 		}
 
-		if (!silent && valid && !this.static) {
-			setTimeout(this.hide.bind(this), 300);
-		}
+		// if (!silent && valid && !this.static) {
+		// 	setTimeout(this.hide.bind(this), 300);
+		// }
 		return value;
 	}
 
@@ -145,7 +144,6 @@ class DateInput extends BaseComponent {
 	}
 
 	show () {
-		console.log('show');
 		if (this.showing) {
 			return;
 		}
@@ -168,7 +166,6 @@ class DateInput extends BaseComponent {
 		if (!this.showing || window.keepPopupsOpen) {
 			return;
 		}
-		console.log('hide');
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
 		dom.classList.toggle(this, 'invalid', !this.isValid());

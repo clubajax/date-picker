@@ -74,7 +74,7 @@ date-picker {
         cursor: pointer;
         border-radius: 3px; }
         date-picker .cal-body div.on:hover, date-picker .cal-body div.off:hover {
-          background: #eee; }
+          background: #dadada; }
       date-picker .cal-body div.today {
         background: white;
         color: #666;
@@ -116,7 +116,7 @@ date-picker {
       line-height: 5;
       border-radius: 3px; }
       date-picker .cal-body.year div:hover, date-picker .cal-body.decade div:hover {
-        background: #eee; }
+        background: #dadada; }
   date-picker .cal-footer {
     text-align: center;
     padding: 5px; }

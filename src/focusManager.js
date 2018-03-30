@@ -1,9 +1,15 @@
+const on = require('@clubajax/on');
+
 module.exports = function (component, show, hide) {
 
 	const input = component.input;
 	const picker = component.picker;
 	const timeInput = picker.timeInput;
 	const focusLoop = picker.querySelector('input.focus-loop');
+	const calLft = picker.querySelector('span.cal-lft');
+	const calRgt = picker.querySelector('span.cal-rgt');
+	const calMth = picker.querySelector('span.cal-month');
+
 
 	let current;
 	let inPicker = false;
@@ -29,11 +35,13 @@ module.exports = function (component, show, hide) {
 		current = getParent(e.target);
 
 		inPicker = current === picker;
+		if (!current) {
+			hide();
+		}
 		return true;
 	}
 
-	const docHandle = on(document, 'keyup', (e) => {
-		console.log('key', e);
+	const upHandle = on(document, 'keyup', (e) => {
 		if (e.key === 'Escape') {
 			hide();
 		}
@@ -42,12 +50,22 @@ module.exports = function (component, show, hide) {
 		}
 	});
 
+	const downHandle = on(document, 'keydown', (e) => {
+		if (e.key === ' ' && isControl(e.target)) {
+			on.emit(e.target, 'click');
+			return stop(e);
+		}
+	});
+
 	on(input, 'focus', show);
 
 	on(document.body, 'mousedown', (e) => {
-		console.log('click', e.target);
 		return onNavigate(e);
 	});
+
+	function isControl (node) {
+		return node === calLft || node === calRgt || node === calMth;
+	}
 
 	function getParent (node) {
 		if (node === input) {
@@ -71,5 +89,5 @@ module.exports = function (component, show, hide) {
 		return false;
 	}
 
-	show();
+	//show();
 };
