@@ -82,6 +82,7 @@ class TimeInput extends BaseComponent {
 	}
 
 	setValue (value, silent, ampm) {
+		console.log('time:', value);
 		const isReady = /[ap]m/i.test(value) || value.replace(/(?!X)\D/g, '').length >= 4;
 		if (isReady) {
 			this.setAMPM(value, getAMPM(value, ampm));

@@ -5,6 +5,7 @@ const on = require('@clubajax/on');
 const dates = require('@clubajax/dates');
 const util = require('./util');
 const onKey = require('./onKey');
+const focusManager = require('./focusManager');
 require('./icon-calendar');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
@@ -144,6 +145,7 @@ class DateInput extends BaseComponent {
 	}
 
 	show () {
+		console.log('show');
 		if (this.showing) {
 			return;
 		}
@@ -166,6 +168,7 @@ class DateInput extends BaseComponent {
 		if (!this.showing || window.keepPopupsOpen) {
 			return;
 		}
+		console.log('hide');
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
 		dom.classList.toggle(this, 'invalid', !this.isValid());
@@ -205,7 +208,8 @@ class DateInput extends BaseComponent {
 			if (this.static) {
 				this.show();
 			} else {
-				this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
+				//this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
+				focusManager(this, this.show.bind(this), this.hide.bind(this));
 			}
 		});
 	}
@@ -219,74 +223,76 @@ class DateInput extends BaseComponent {
 	}
 }
 
-function handleOpen (input, picker, show, hide) {
-	let inputFocus = false;
-	let pickerFocus = false;
-	let timeFocus = false;
+// function handleOpen (input, picker, show, hide) {
+// 	let inputFocus = false;
+// 	let pickerFocus = false;
+// 	let timeFocus = false;
+//
+// 	const docHandle = on(document, 'keyup', (e) => {
+// 		if (e.key === 'Escape') {
+// 			hide();
+// 		}
+// 	});
+// 	docHandle.pause();
+// 	const changeHandle = on(picker, 'change', () => {
+// 		if (!inputFocus) {
+// 			setTimeout(() => {
+// 				hide();
+// 				docHandle.pause();
+// 				changeHandle.pause();
+// 			}, 100);
+// 		}
+// 	});
+// 	changeHandle.pause();
+//
+// 	const timeHandles = picker.timeInput ? [
+// 		on(picker.timeInput.input, 'focus', () => {
+// 			timeFocus = true;
+// 		}),
+// 		on(picker.timeInput.input, 'blur', () => {
+// 			timeFocus = false;
+// 		})
+// 	] : [];
+//
+// 	return on.makeMultiHandle([
+// 		...timeHandles,
+// 		on(input, 'focus', () => {
+// 			inputFocus = true;
+// 			show();
+// 			docHandle.resume();
+// 		}),
+// 		on(input, 'blur', () => {
+// 			inputFocus = false;
+// 			setTimeout(() => {
+// 				if (!pickerFocus && !timeFocus) {
+// 					hide();
+// 					docHandle.pause();
+// 				}
+// 			}, 100);
+// 		}),
+// 		on(picker, 'focus', () => {
+// 			pickerFocus = true;
+// 			show();
+// 			docHandle.resume();
+// 			changeHandle.resume();
+// 		}),
+// 		on(picker, 'blur', () => {
+// 			console.log('picker blur');
+// 			pickerFocus = false;
+// 			setTimeout(() => {
+// 				if (!inputFocus && !timeFocus) {
+// 					hide();
+// 					docHandle.pause();
+// 					changeHandle.pause();
+// 				}
+// 			}, 100);
+//
+// 		}),
+// 		changeHandle,
+// 		docHandle
+// 	]);
+// }
 
-	const docHandle = on(document, 'keyup', (e) => {
-		if (e.key === 'Escape') {
-			hide();
-		}
-	});
-	docHandle.pause();
-	const changeHandle = on(picker, 'change', () => {
-		if (!inputFocus) {
-			setTimeout(() => {
-				hide();
-				docHandle.pause();
-				changeHandle.pause();
-			}, 100);
-		}
-	});
-	changeHandle.pause();
-
-	const timeHandles = picker.timeInput ? [
-		on(picker.timeInput.input, 'focus', () => {
-			timeFocus = true;
-		}),
-		on(picker.timeInput.input, 'blur', () => {
-			timeFocus = false;
-		})
-	] : [];
-
-	return on.makeMultiHandle([
-		...timeHandles,
-		on(input, 'focus', () => {
-			inputFocus = true;
-			show();
-			docHandle.resume();
-		}),
-		on(input, 'blur', () => {
-			inputFocus = false;
-			setTimeout(() => {
-				if (!pickerFocus && !timeFocus) {
-					hide();
-					docHandle.pause();
-				}
-			}, 100);
-		}),
-		on(picker, 'focus', () => {
-			pickerFocus = true;
-			show();
-			docHandle.resume();
-			changeHandle.resume();
-		}),
-		on(picker, 'blur', () => {
-			pickerFocus = false;
-			setTimeout(() => {
-				if (!inputFocus && !timeFocus) {
-					hide();
-					docHandle.pause();
-					changeHandle.pause();
-				}
-			}, 100);
-
-		}),
-		changeHandle,
-		docHandle
-	]);
-}
 
 customElements.define('date-input', DateInput);
 

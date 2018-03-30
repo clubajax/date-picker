@@ -130,6 +130,10 @@ date-picker {
     border: 0; }
   date-picker.minimal .cal-footer {
     display: none; }
+  date-picker input.focus-loop {
+    width: 10px;
+    position: absolute;
+    left: -10000px; }
 
 date-picker[time] .cal-footer span {
   display: inline-block;
@@ -205,7 +209,7 @@ date-time-input, time-input, date-input, date-range-input {
       left: auto; }
 
 time-input input {
-  width: 55px; }
+  width: 70px; }
 
 date-range-input input {
   width: 50px; }

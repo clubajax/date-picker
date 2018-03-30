@@ -194,6 +194,11 @@ date-picker{
             display: none;
         }
     }
+    input.focus-loop{
+        width: 10px;
+        position: absolute;
+        left: -10000px;
+    }
 }
 
 date-picker[time] {
@@ -285,7 +290,7 @@ date-time-input, time-input, date-input, date-range-input{
 
 time-input {
     input{
-        width: 55px;
+        width: 70px;
     }
 }
 

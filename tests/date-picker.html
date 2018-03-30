@@ -432,7 +432,7 @@
 			});
 
 			suite('date time input', function () {
-				test.only('it should add a time to the picker', function (done) {
+				test('it should add a time to the picker', function (done) {
 					const dateStr = '12/12/2017 02:20 am';
 					const node = dom('date-time-input', { label: 'Enter Date and Time', value: dateStr, min: dateStr }, body);
 					ready(node, function () {
@@ -453,6 +453,16 @@
 						value: '03/27/2018 10:00 am',
 						static: true
 					}, body);
+				});
+
+				test.only('it should handle complex focus', function (done) {
+					const dateStr = '12/12/2017 02:20 am';
+					const node = dom('date-time-input', { label: 'Enter Date and Time', value: dateStr }, body);
+					dom('input', { class: 'BR' }, body);
+					ready(node, function () {
+
+						done();
+					});
 				});
 			});
 

@@ -31,15 +31,17 @@ class DatePicker extends BaseComponent {
 		return `
 <div class="calendar" ref="calNode">
 <div class="cal-header" ref="headerNode">
-	<span class="cal-lft" ref="lftNode"></span>
-	<span class="cal-month" ref="monthNode"></span>
-	<span class="cal-rgt" ref="rgtNode"></span>
+	<span class="cal-lft" ref="lftNode" tabindex="0"></span>
+	<span class="cal-month" ref="monthNode" tabindex="0"></span>
+	<span class="cal-rgt" ref="rgtNode" tabindex="0"></span>
 </div>
 <div class="cal-container" ref="container"></div>
 <div class="cal-footer" ref="calFooter">
 	<span ref="footerLink"></span>
 </div>
-</div>`;
+</div>
+<input class="focus-loop" />
+`;
 	}
 
 	set value (value) {
@@ -400,8 +402,8 @@ class DatePicker extends BaseComponent {
 			this.classList.add('minimal');
 		}
 		this.current = dates.copy(this.value);
-		this.connect();
 		this.render();
+		this.connect();
 	}
 
 	render () {
@@ -417,18 +419,19 @@ class DatePicker extends BaseComponent {
 
 		let
 			node = dom('div', { class: 'cal-body' }),
-			i, tx, isThisMonth, day, css, isSelected, isToday,
+			i, tx, isThisMonth, day, css, isSelected, isToday, hasSelected,
 			nextMonth = 0,
 			isRange = this['range-picker'],
 			d = this.current,
 			incDate = dates.copy(d),
-			intDate = incDate.getTime(),
 			daysInPrevMonth = dates.getDaysInPrevMonth(d),
 			daysInMonth = dates.getDaysInMonth(d),
 			dateNum = dates.getFirstSunday(d),
 			dateToday = getSelectedDate(today, d),
 			dateSelected = getSelectedDate(this.valueDate, d),
 			dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum),
+			defaultDate = 15,
+			defaultDateSelector,
 			minmax;
 
 		this.monthNode.innerHTML = dates.getMonthName(d) + ' ' + d.getFullYear();
@@ -458,7 +461,11 @@ class DatePicker extends BaseComponent {
 				}
 				if (dateSelected === tx && !isRange) {
 					isSelected = true;
+					hasSelected = true;
 					css += ' selected';
+				}
+				if (tx === defaultDate) {
+					defaultDateSelector = util.toAriaLabel(dateObj);
 				}
 			} else if (dateNum < 0) {
 				// previous month
@@ -472,16 +479,16 @@ class DatePicker extends BaseComponent {
 
 			if (minmax) {
 				css = 'day disabled';
-				if(isSelected){
+				if (isSelected) {
 					css += ' selected';
 				}
-				if(isToday){
+				if (isToday) {
 					css += ' today';
 				}
 			}
 
 			const ariaLabel = util.toAriaLabel(dateObj);
-			day = dom("div", { innerHTML: `<span>${tx}</span>`, class: css, 'aria-label': ariaLabel }, node);
+			day = dom("div", { html: `<span>${tx}</span>`, class: css, 'aria-label': ariaLabel, tabindex: isSelected ? 0 : -1 }, node);
 
 			dateNum++;
 			dateObj.setDate(dateObj.getDate() + 1);
@@ -492,6 +499,10 @@ class DatePicker extends BaseComponent {
 				day._date = incDate.getTime();
 				this.dayMap[tx] = day;
 			}
+		}
+
+		if (!hasSelected) {
+			node.querySelector(`[aria-label="${defaultDateSelector}"]`).setAttribute('tabindex', 0);
 		}
 
 		this.container.appendChild(node);
@@ -510,7 +521,7 @@ class DatePicker extends BaseComponent {
 	setFooter () {
 		if (this.timeInput) {
 			if (this.current) {
-				this.timeInput.value = this.current;
+				this.timeInput.value = this.valueDate;
 			}
 			return;
 		}
