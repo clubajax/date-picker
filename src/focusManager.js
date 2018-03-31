@@ -6,10 +6,6 @@ module.exports = function (component, show, hide) {
 	const picker = component.picker;
 	const timeInput = picker.timeInput;
 	const focusLoop = picker.querySelector('input.focus-loop');
-	const calLft = picker.querySelector('span.cal-lft');
-	const calRgt = picker.querySelector('span.cal-rgt');
-	const calMth = picker.querySelector('span.cal-month');
-
 
 	let current;
 	let inPicker = false;
@@ -64,7 +60,7 @@ module.exports = function (component, show, hide) {
 	});
 
 	function isControl (node) {
-		return node === calLft || node === calRgt || node === calMth;
+		return node === picker.lftMoNode || node === picker.rgtMoNode || node === picker.lftYrNode || node === picker.rgtYrNode;
 	}
 
 	function getParent (node) {
@@ -89,5 +85,5 @@ module.exports = function (component, show, hide) {
 		return false;
 	}
 
-	//show();
+	show();
 };

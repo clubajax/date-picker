@@ -148,6 +148,7 @@ class DateInput extends BaseComponent {
 			return;
 		}
 		this.showing = true;
+		this.picker.onShow();
 		this.picker.classList.add('show');
 
 		window.requestAnimationFrame(() => {
@@ -169,6 +170,8 @@ class DateInput extends BaseComponent {
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
 		dom.classList.toggle(this, 'invalid', !this.isValid());
+		console.log('ONHIDE');
+		this.picker.onHide();
 	}
 
 	focus () {

@@ -31,9 +31,11 @@ class DatePicker extends BaseComponent {
 		return `
 <div class="calendar" ref="calNode">
 <div class="cal-header" ref="headerNode">
-	<span class="cal-lft" ref="lftNode" tabindex="0"></span>
-	<span class="cal-month" ref="monthNode" tabindex="0"></span>
-	<span class="cal-rgt" ref="rgtNode" tabindex="0"></span>
+	<span class="cal-yr-lft" ref="lftYrNode" tabindex="0"></span>
+	<span class="cal-lft" ref="lftMoNode" tabindex="0"></span>
+	<span class="cal-month" ref="monthNode"></span>	
+	<span class="cal-rgt" ref="rgtMoNode" tabindex="0"></span>
+	<span class="cal-yr-rgt" ref="rgtYrNode" tabindex="0"></span>
 </div>
 <div class="cal-container" ref="container"></div>
 <div class="cal-footer" ref="calFooter">
@@ -46,7 +48,7 @@ class DatePicker extends BaseComponent {
 
 	set value (value) {
 		this.valueDate = dates.isDate(value) ? dates.toDate(value) : today;
-		this.current = this.valueDate;
+		this.current = dates.copy(this.valueDate);
 		onDomReady(this, () => {
 			this.render();
 		});
@@ -80,11 +82,10 @@ class DatePicker extends BaseComponent {
 		super();
 		this.current = new Date();
 		this.previous = {};
-		this.modes = ['month', 'year', 'decade'];
-		this.mode = 0;
 	}
 
-	setDisplay (...args/*year, month*/) {
+	setDisplay (...args) {
+		// used by date-range-picker
 		if (args.length === 2) {
 			this.current.setFullYear(args[0]);
 			this.current.setMonth(args[1]);
@@ -144,6 +145,15 @@ class DatePicker extends BaseComponent {
 		};
 	}
 
+	onHide () {
+		// not an attribute; called by owner
+	}
+
+	onShow () {
+		this.current = dates.copy(this.valueDate);
+		this.render();
+	}
+
 	onClickDay (node) {
 		const
 			day = +node.textContent,
@@ -183,76 +193,13 @@ class DatePicker extends BaseComponent {
 	}
 
 	onClickMonth (direction) {
-		switch (this.mode) {
-			case 1: // year mode
-				this.current.setFullYear(this.current.getFullYear() + (direction * 1));
-				this.setMode(this.mode);
-				break;
-			case 2: // century mode
-				this.current.setFullYear(this.current.getFullYear() + (direction * 12));
-				this.setMode(this.mode);
-				break;
-			default:
-				this.current.setMonth(this.current.getMonth() + (direction * 1));
-				this.render();
-				break;
-		}
-	}
-
-	onClickYear (node) {
-		const index = dates.getMonthIndex(node.innerHTML);
-		this.current.setMonth(index);
+		this.current.setMonth(this.current.getMonth() + direction);
 		this.render();
 	}
 
-	onClickDecade (node) {
-		const year = +node.innerHTML;
-		this.current.setFullYear(year);
-		this.setMode(this.mode - 1);
-	}
-
-	setMode (mode) {
-		destroy(this.modeNode);
-		this.mode = mode || 0;
-		switch (this.modes[this.mode]) {
-			case 'month':
-				break;
-			case 'year':
-				this.setYearMode();
-				break;
-			case 'decade':
-				this.setDecadeMode();
-				break;
-		}
-	}
-
-	setYearMode () {
-		destroy(this.bodyNode);
-
-		let i;
-		const node = dom('div', { class: 'cal-body year' });
-
-		for (i = 0; i < 12; i++) {
-			dom('div', { html: dates.months.abbr[i], class: 'year' }, node);
-		}
-
-		this.monthNode.innerHTML = this.current.getFullYear();
-		this.container.appendChild(node);
-		this.modeNode = node;
-	}
-
-	setDecadeMode () {
-		let i;
-		const node = dom('div', { class: 'cal-body decade' });
-		let year = this.current.getFullYear() - 6;
-
-		for (i = 0; i < 12; i++) {
-			dom('div', { html: year, class: 'decade' }, node);
-			year += 1;
-		}
-		this.monthNode.innerHTML = (year - 12) + '-' + (year - 1);
-		this.container.appendChild(node);
-		this.modeNode = node;
+	onClickYear (direction) {
+		this.current.setFullYear(this.current.getFullYear() + direction);
+		this.render();
 	}
 
 	selectDay () {
@@ -389,12 +336,12 @@ class DatePicker extends BaseComponent {
 
 	domReady () {
 		if (this['range-left']) {
-			this.rgtNode.style.display = 'none';
+			this.classList.add('left-range');
 			this['range-picker'] = true;
 			this.isOwned = true;
 		}
 		if (this['range-right']) {
-			this.lftNode.style.display = 'none';
+			this.classList.add('right-range');
 			this['range-picker'] = true;
 			this.isOwned = true;
 		}
@@ -410,16 +357,13 @@ class DatePicker extends BaseComponent {
 		// dateNum increments, starting with the first Sunday
 		// showing on the monthly calendar. This is usually the
 		// previous month, so dateNum will start as a negative number
-		this.setMode(0);
-		if (this.bodyNode) {
-			dom.destroy(this.bodyNode);
-		}
+		destroy(this.bodyNode);
 
 		this.dayMap = {};
 
 		let
 			node = dom('div', { class: 'cal-body' }),
-			i, tx, isThisMonth, day, css, isSelected, isToday, hasSelected,
+			i, tx, isThisMonth, day, css, isSelected, isToday, hasSelected, defaultDateSelector, minmax, isHighlighted,
 			nextMonth = 0,
 			isRange = this['range-picker'],
 			d = this.current,
@@ -428,11 +372,10 @@ class DatePicker extends BaseComponent {
 			daysInMonth = dates.getDaysInMonth(d),
 			dateNum = dates.getFirstSunday(d),
 			dateToday = getSelectedDate(today, d),
-			dateSelected = getSelectedDate(this.valueDate, d),
+			dateSelected = getSelectedDate(this.valueDate, d, true),
+			highlighted = d.getDate(),
 			dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum),
-			defaultDate = 15,
-			defaultDateSelector,
-			minmax;
+			defaultDate = 15;
 
 		this.monthNode.innerHTML = dates.getMonthName(d) + ' ' + d.getFullYear();
 
@@ -448,6 +391,7 @@ class DatePicker extends BaseComponent {
 
 			isThisMonth = false;
 			isSelected = false;
+			isHighlighted = false;
 			isToday = false;
 
 			if (dateNum + 1 > 0 && dateNum + 1 <= daysInMonth) {
@@ -463,7 +407,12 @@ class DatePicker extends BaseComponent {
 					isSelected = true;
 					hasSelected = true;
 					css += ' selected';
+				} else if (tx === highlighted) {
+					console.log('HIGHLIGHTED', tx);
+					css += ' highlighted';
+					isHighlighted = true;
 				}
+
 				if (tx === defaultDate) {
 					defaultDateSelector = util.toAriaLabel(dateObj);
 				}
@@ -488,7 +437,12 @@ class DatePicker extends BaseComponent {
 			}
 
 			const ariaLabel = util.toAriaLabel(dateObj);
-			day = dom("div", { html: `<span>${tx}</span>`, class: css, 'aria-label': ariaLabel, tabindex: isSelected ? 0 : -1 }, node);
+			day = dom("div", {
+				html: `<span>${tx}</span>`,
+				class: css,
+				'aria-label': ariaLabel,
+				tabindex: isSelected || isHighlighted ? 0 : -1
+			}, node);
 
 			dateNum++;
 			dateObj.setDate(dateObj.getDate() + 1);
@@ -499,10 +453,6 @@ class DatePicker extends BaseComponent {
 				day._date = incDate.getTime();
 				this.dayMap[tx] = day;
 			}
-		}
-
-		if (!hasSelected) {
-			node.querySelector(`[aria-label="${defaultDateSelector}"]`).setAttribute('tabindex', 0);
 		}
 
 		this.container.appendChild(node);
@@ -538,17 +488,25 @@ class DatePicker extends BaseComponent {
 			this.timeInput.on('time-change', this.emitEvent.bind(this));
 		} else {
 			const d = new Date();
-			this.footerLink.innerHTML = dates.days.full[d.getDay()] + ' ' + dates.months.full[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+			this.footerLink.innerHTML = dates.format(d, 'E MMMM dd, yyyy');
 		}
 	}
 
 	connect () {
-		this.on(this.lftNode, 'click', () => {
+		this.on(this.lftMoNode, 'click', () => {
 			this.onClickMonth(-1);
 		});
 
-		this.on(this.rgtNode, 'click', () => {
+		this.on(this.rgtMoNode, 'click', () => {
 			this.onClickMonth(1);
+		});
+
+		this.on(this.lftYrNode, 'click', () => {
+			this.onClickYear(-1);
+		});
+
+		this.on(this.rgtYrNode, 'click', () => {
+			this.onClickYear(1);
 		});
 
 		this.on(this.footerLink, 'click', () => {
@@ -561,27 +519,11 @@ class DatePicker extends BaseComponent {
 
 		this.on(this.container, 'click', (e) => {
 			this.fire('pre-click', e, true, true);
-			const node = e.target.closest('.day,.year,.decade');
+			const node = e.target.closest('.day');
 			if (node) {
-				if (node.classList.contains('day')) {
-					this.onClickDay(node);
-				} else if (node.classList.contains('year')) {
-					this.onClickYear(node);
-				} else if (node.classList.contains('decade')) {
-					this.onClickDecade(node);
-				}
+				this.onClickDay(node);
 			}
 
-		});
-
-		this.on(this.monthNode, 'click', () => {
-			if (this.mode + 1 === this.modes.length) {
-				this.mode = 0;
-				this.render();
-			}
-			else {
-				this.setMode(this.mode + 1);
-			}
 		});
 
 		if (this['range-picker']) {
