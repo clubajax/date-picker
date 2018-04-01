@@ -249,6 +249,7 @@ function stopEvent (e) {
 	}
 	e.preventDefault();
 	e.stopImmediatePropagation();
+	return false;
 }
 
 function removeCharAtPos (str, pos) {

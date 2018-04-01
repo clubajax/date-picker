@@ -74,6 +74,12 @@ date-picker {
       line-height: 2;
       background: transparent;
       transition: background 300ms; }
+      date-picker .cal-body div span {
+        width: 100%;
+        height: 100%;
+        display: inline-block;
+        border: 1px solid transparent;
+        border-radius: 3px; }
       date-picker .cal-body div.off {
         color: #999; }
       date-picker .cal-body div.on, date-picker .cal-body div.off {
@@ -91,8 +97,9 @@ date-picker {
         date-picker .cal-body div.selected:hover {
           background: #57add1; }
       date-picker .cal-body div:focus {
-        outline: 0;
-        border: 1px solid blue; }
+        outline: 0; }
+        date-picker .cal-body div:focus span {
+          border: 1px solid blue; }
       date-picker .cal-body div.range.on {
         background: #beecff;
         border-radius: 0; }
@@ -118,14 +125,6 @@ date-picker {
           date-picker .cal-body div.disabled.selected:hover {
             background: #9dc8da;
             color: #999; }
-    date-picker .cal-body.year div, date-picker .cal-body.decade div {
-      cursor: pointer;
-      width: 25%;
-      height: 33%;
-      line-height: 5;
-      border-radius: 3px; }
-      date-picker .cal-body.year div:hover, date-picker .cal-body.decade div:hover {
-        background: #dadada; }
   date-picker .cal-footer {
     text-align: center;
     padding: 5px; }

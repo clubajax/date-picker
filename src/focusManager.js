@@ -8,8 +8,8 @@ module.exports = function (component, show, hide) {
 	const focusLoop = picker.querySelector('input.focus-loop');
 
 	let current;
+	let daySelectMode = false;
 	let inPicker = false;
-
 
 	function onNavigate (e, tabbingBackwards) {
 		const first = picker.querySelector('[tabindex="0"]');
@@ -34,15 +34,33 @@ module.exports = function (component, show, hide) {
 		if (!current) {
 			hide();
 		}
+
+		daySelectMode = inPicker && e.target.closest('.day');
+		// if (inPicker && e.target.closest('.day')) {
+		// 	console.log('DAY');
+		// } else {
+		// 	console.log('not day');
+		// }
 		return true;
 	}
 
 	const upHandle = on(document, 'keyup', (e) => {
 		if (e.key === 'Escape') {
 			hide();
+			return;
 		}
 		if (e.key === 'Tab') {
 			return onNavigate(e, e.shiftKey);
+		}
+		if (daySelectMode) {
+			switch (e.key) {
+				case 'ArrowLeft' :
+
+					break;
+				case 'ArrowRight' :
+
+					break;
+			}
 		}
 	});
 

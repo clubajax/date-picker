@@ -457,7 +457,8 @@
 
 				test.only('it should handle complex focus', function (done) {
 					const dateStr = '12/12/2017 02:20 am';
-					const node = dom('date-time-input', { label: 'Enter Date and Time', value: dateStr }, body);
+					const min = '12/08/2017 02:20 am';
+					const node = dom('date-time-input', { label: 'Enter Date and Time', value: dateStr, min: min }, body);
 					dom('input', { class: 'BR' }, body);
 					ready(node, function () {
 

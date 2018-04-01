@@ -408,7 +408,6 @@ class DatePicker extends BaseComponent {
 					hasSelected = true;
 					css += ' selected';
 				} else if (tx === highlighted) {
-					console.log('HIGHLIGHTED', tx);
 					css += ' highlighted';
 					isHighlighted = true;
 				}
@@ -468,6 +467,29 @@ class DatePicker extends BaseComponent {
 		}
 	}
 
+	focusDay () {
+		const node = this.container.querySelector('div.highlighted[tabindex="0"]') ||
+			this.container.querySelector('div.selected[tabindex="0"]');
+		if (node) {
+			node.focus();
+		}
+	}
+
+	isValidDate (date) {
+		date = dates.zeroTime(date);
+		if (this.minDate) {
+			if (dates.is(date).less(this.minDate)) {
+				return false;
+			}
+		}
+		if (this.maxDate) {
+			if (dates.is(date).greater(this.maxDate)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	setFooter () {
 		if (this.timeInput) {
 			if (this.current) {
@@ -523,7 +545,34 @@ class DatePicker extends BaseComponent {
 			if (node) {
 				this.onClickDay(node);
 			}
+		});
 
+		this.on(this.container, 'keydown', (e) => {
+			let date;
+			switch (e.key) {
+				case 'ArrowLeft' :
+					date = dates.subtract(this.current, 1);
+					break;
+				case 'ArrowRight' :
+					date = dates.add(this.current, 1);
+					break;
+				case 'ArrowUp' :
+					date = dates.subtract(this.current, 7);
+					break;
+				case 'ArrowDown' :
+					date = dates.add(this.current, 7);
+					break;
+			}
+			if (date) {
+				if (this.isValidDate(date)) {
+					this.current = date;
+					this.render();
+					this.focusDay();
+				}
+				e.preventDefault();
+				e.stopImmediatePropagation();
+				return false;
+			}
 		});
 
 		if (this['range-picker']) {
