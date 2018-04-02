@@ -37,6 +37,12 @@
 			bottom: 20px;
 		}
 
+		.focus-start{
+			position: absolute;
+			right: 20px;
+			top: 120px;
+		}
+
 		date-range-input,
 		date-range-inputs {
 			margin: 10px 0;
@@ -54,7 +60,9 @@
 <div id="mocha"></div>
 
 <div class="xspacing"></div>
-<div id="tests"></div>
+<div id="tests">
+	<input placeholder="focus start" autofocus class="focus-start"/>
+</div>
 <div class="spacing"></div>
 
 <script>
@@ -455,7 +463,7 @@
 					}, body);
 				});
 
-				test.only('it should handle complex focus', function (done) {
+				test('it should handle complex focus', function (done) {
 					const dateStr = '12/12/2017 02:20 am';
 					const min = '12/08/2017 02:20 am';
 					const node = dom('date-time-input', { label: 'Enter Date and Time', value: dateStr, min: min }, body);
@@ -613,7 +621,7 @@
 					expect(dom.isNode(node)).to.equal(true);
 				});
 
-				test('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
+				test.only('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
 					const node = dom('date-range-inputs', { 'left-label': 'Start Date', 'right-label': 'End Date', value: '02/10/2017 - 02/14/2017' }, body);
 					const b1 = dom('button', { html: 'clear' }, body);
 					const b2 = dom('button', { html: 'value.set' }, body);

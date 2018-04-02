@@ -557,6 +557,7 @@ class DatePicker extends BaseComponent {
 			let date;
 			let stopEvent = false;
 			let num;
+			console.log('container.key', e.key);
 			switch (e.key) {
 				case 'ArrowLeft' :
 					num = -1;
@@ -587,6 +588,14 @@ class DatePicker extends BaseComponent {
 			}
 		});
 
+		this.on(document, 'keydown', (e) => {
+			console.log('doc.key', e.key);
+			if (e.key === ' ' && isControl(e.target, this)) {
+				on.emit(e.target, 'click');
+				return util.stopEvent(e);
+			}
+		});
+
 		this.on(this.lftMoNode, 'click', () => {
 			this.onClickMonth(-1);
 		});
@@ -604,11 +613,7 @@ class DatePicker extends BaseComponent {
 		});
 
 		this.on(this.footerLink, 'click', () => {
-			this.focus();
-			this.current = new Date();
-			this.render();
-			this.valueDate = dates.copy(this.current);
-			this.emitEvent();
+			this.setValue(new Date());
 		});
 
 		if (this['range-picker']) {
@@ -618,6 +623,11 @@ class DatePicker extends BaseComponent {
 }
 
 const today = new Date();
+
+function isControl (node, picker) {
+	console.log('isControl');
+	return node === picker.lftMoNode || node === picker.rgtMoNode || node === picker.lftYrNode || node === picker.rgtYrNode || node === picker.footerLink;
+}
 
 function getSelectedDate (date, current) {
 	if (date.getMonth() === current.getMonth() && date.getFullYear() === current.getFullYear()) {
