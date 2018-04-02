@@ -591,7 +591,7 @@ class DatePicker extends BaseComponent {
 		this.on(document, 'keydown', (e) => {
 			console.log('doc.key', e.key);
 			if (e.key === ' ' && isControl(e.target, this)) {
-				on.emit(e.target, 'click');
+				this.emit(e.target, 'click');
 				return util.stopEvent(e);
 			}
 		});
