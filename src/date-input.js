@@ -90,6 +90,7 @@ class DateInput extends BaseComponent {
 	}
 
 	setValue (value, silent) {
+		console.log('input.set:', value, silent);
 		if (value === this.typedValue) {
 			return;
 		}
@@ -106,9 +107,9 @@ class DateInput extends BaseComponent {
 			}
 		}
 
-		// if (!silent && valid && !this.static) {
-		// 	setTimeout(this.hide.bind(this), 300);
-		// }
+		if (!silent && valid && !this.static) {
+			setTimeout(this.hide.bind(this), 300);
+		}
 		return value;
 	}
 
@@ -203,7 +204,7 @@ class DateInput extends BaseComponent {
 		this.picker = dom('date-picker', { time: this.time, tabindex: '0' }, this);
 		this.picker.onDomReady(() => {
 			this.picker.on('change', (e) => {
-				this.setValue(e.value);
+				this.setValue(e.value, e.silent);
 			});
 			if (this.static) {
 				this.show();

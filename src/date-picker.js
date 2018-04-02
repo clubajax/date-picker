@@ -31,27 +31,23 @@ class DatePicker extends BaseComponent {
 		return `
 <div class="calendar" ref="calNode">
 <div class="cal-header" ref="headerNode">
-	<span class="cal-yr-lft" ref="lftYrNode" tabindex="0"></span>
-	<span class="cal-lft" ref="lftMoNode" tabindex="0"></span>
-	<span class="cal-month" ref="monthNode"></span>	
-	<span class="cal-rgt" ref="rgtMoNode" tabindex="0"></span>
-	<span class="cal-yr-rgt" ref="rgtYrNode" tabindex="0"></span>
+	<span class="cal-yr-lft" ref="lftYrNode" tabindex="0" role="button" aria-label="Previous Year"></span>
+	<span class="cal-lft" ref="lftMoNode" tabindex="0" role="button" aria-label="Previous Month"></span>
+	<span class="cal-month" ref="monthNode" role="presentation"></span>	
+	<span class="cal-rgt" ref="rgtMoNode" tabindex="0"  role="button" aria-label="Next Month"></span>
+	<span class="cal-yr-rgt" ref="rgtYrNode" tabindex="0" role="button" aria-label="Next Year"></span>
 </div>
 <div class="cal-container" ref="container"></div>
 <div class="cal-footer" ref="calFooter">
-	<span ref="footerLink"></span>
+	<span ref="footerLink" tabindex="0" role="button" aria-label="Set Date to Today"></span>
 </div>
 </div>
-<input class="focus-loop" />
+<input class="focus-loop" aria-hidden="true"/>
 `;
 	}
 
 	set value (value) {
-		this.valueDate = dates.isDate(value) ? dates.toDate(value) : today;
-		this.current = dates.copy(this.valueDate);
-		onDomReady(this, () => {
-			this.render();
-		});
+		this.setValue(dates.isDate(value) ? dates.toDate(value) : today);
 	}
 
 	get value () {
@@ -110,7 +106,7 @@ class DatePicker extends BaseComponent {
 		return str;
 	}
 
-	emitEvent () {
+	emitEvent (silent) {
 		const date = this.valueDate;
 		if (this.time) {
 			if (!this.timeInput.valid) {
@@ -121,6 +117,7 @@ class DatePicker extends BaseComponent {
 		}
 		const event = {
 			value: this.getFormattedValue(),
+			silent,
 			date
 		};
 		if (this['range-picker']) {
@@ -154,7 +151,15 @@ class DatePicker extends BaseComponent {
 		this.render();
 	}
 
-	onClickDay (node) {
+	setValue (valueObject) {
+		this.valueDate = valueObject;
+		this.current = dates.copy(this.valueDate);
+		onDomReady(this, () => {
+			this.render();
+		});
+	}
+
+	onClickDay (node, silent) {
 		const
 			day = +node.textContent,
 			isFuture = node.classList.contains('future'),
@@ -179,7 +184,7 @@ class DatePicker extends BaseComponent {
 			this.timeInput.setDate(this.valueDate);
 		}
 
-		this.emitEvent();
+		this.emitEvent(silent);
 
 		if (this['range-picker']) {
 			this.clickSelectRange();
@@ -192,6 +197,66 @@ class DatePicker extends BaseComponent {
 		}
 	}
 
+	selectDay () {
+		if (this['range-picker']) {
+			return;
+		}
+		console.log('SELECT DAY');
+		const now = this.querySelector('.selected');
+		const node = this.dayMap[this.current.getDate()];
+		if (now) {
+			now.classList.remove('selected');
+		}
+		node.classList.add('selected');
+
+	}
+
+	focusDay () {
+		const node = this.container.querySelector('div.highlighted[tabindex="0"]') ||
+			this.container.querySelector('div.selected[tabindex="0"]');
+		if (node) {
+			node.focus();
+		}
+	}
+
+	highlightDay (date) {
+		let node;
+		if (this.isValidDate(date)) {
+			node = this.container.querySelector('div[tabindex="0"]');
+			if (node) {
+				node.setAttribute('tabindex', '-1');
+			}
+
+			const shouldRerender = date.getMonth() !== this.current || date.getFullYear() !== this.current.getFullYear();
+
+			this.current = date;
+			if (shouldRerender) {
+				this.render();
+			} else {
+				const dateSelector = util.toAriaLabel(this.current);
+				node = this.container.querySelector(`div[aria-label="${dateSelector}"]`);
+				node.setAttribute('tabindex', '0');
+			}
+			this.focusDay();
+		}
+	}
+
+	isValidDate (date) {
+		// used by arrow keys
+		date = dates.zeroTime(date);
+		if (this.minDate) {
+			if (dates.is(date).less(this.minDate)) {
+				return false;
+			}
+		}
+		if (this.maxDate) {
+			if (dates.is(date).greater(this.maxDate)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	onClickMonth (direction) {
 		this.current.setMonth(this.current.getMonth() + direction);
 		this.render();
@@ -200,19 +265,6 @@ class DatePicker extends BaseComponent {
 	onClickYear (direction) {
 		this.current.setFullYear(this.current.getFullYear() + direction);
 		this.render();
-	}
-
-	selectDay () {
-		if (this['range-picker']) {
-			return;
-		}
-		const now = this.querySelector('.selected');
-		const node = this.dayMap[this.current.getDate()];
-		if (now) {
-			now.classList.remove('selected');
-		}
-		node.classList.add('selected');
-
 	}
 
 	clearRange () {
@@ -412,9 +464,9 @@ class DatePicker extends BaseComponent {
 					isHighlighted = true;
 				}
 
-				if (tx === defaultDate) {
-					defaultDateSelector = util.toAriaLabel(dateObj);
-				}
+				// if (tx === defaultDate) {
+				// 	defaultDateSelector = util.toAriaLabel(dateObj);
+				// }
 			} else if (dateNum < 0) {
 				// previous month
 				tx = daysInPrevMonth + dateNum + 1;
@@ -467,29 +519,6 @@ class DatePicker extends BaseComponent {
 		}
 	}
 
-	focusDay () {
-		const node = this.container.querySelector('div.highlighted[tabindex="0"]') ||
-			this.container.querySelector('div.selected[tabindex="0"]');
-		if (node) {
-			node.focus();
-		}
-	}
-
-	isValidDate (date) {
-		date = dates.zeroTime(date);
-		if (this.minDate) {
-			if (dates.is(date).less(this.minDate)) {
-				return false;
-			}
-		}
-		if (this.maxDate) {
-			if (dates.is(date).greater(this.maxDate)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	setFooter () {
 		if (this.timeInput) {
 			if (this.current) {
@@ -508,6 +537,7 @@ class DatePicker extends BaseComponent {
 			}, this.calFooter);
 			this.timeInput.setDate(this.current);
 			this.timeInput.on('time-change', this.emitEvent.bind(this));
+			destroy(this.footerLink);
 		} else {
 			const d = new Date();
 			this.footerLink.innerHTML = dates.format(d, 'E MMMM dd, yyyy');
@@ -515,6 +545,48 @@ class DatePicker extends BaseComponent {
 	}
 
 	connect () {
+		this.on(this.container, 'click', (e) => {
+			this.fire('pre-click', e, true, true);
+			const node = e.target.closest('.day');
+			if (node) {
+				this.onClickDay(node);
+			}
+		});
+
+		this.on(this.container, 'keydown', (e) => {
+			let date;
+			let stopEvent = false;
+			let num;
+			switch (e.key) {
+				case 'ArrowLeft' :
+					num = -1;
+					break;
+				case 'ArrowRight' :
+					num = 1;
+					break;
+				case 'ArrowUp' :
+					num = -7;
+					break;
+				case 'ArrowDown':
+					num = 7;
+					break;
+				case 'Enter':
+					this.onClickDay(e.target);
+					break;
+				case ' ':
+					this.onClickDay(e.target, true);
+					this.focusDay();
+					return util.stopEvent(e);
+			}
+
+			if (num) {
+				this.highlightDay(dates.add(this.current, num));
+				e.preventDefault();
+				e.stopImmediatePropagation();
+				return false;
+			}
+		});
+
 		this.on(this.lftMoNode, 'click', () => {
 			this.onClickMonth(-1);
 		});
@@ -537,42 +609,6 @@ class DatePicker extends BaseComponent {
 			this.render();
 			this.valueDate = dates.copy(this.current);
 			this.emitEvent();
-		});
-
-		this.on(this.container, 'click', (e) => {
-			this.fire('pre-click', e, true, true);
-			const node = e.target.closest('.day');
-			if (node) {
-				this.onClickDay(node);
-			}
-		});
-
-		this.on(this.container, 'keydown', (e) => {
-			let date;
-			switch (e.key) {
-				case 'ArrowLeft' :
-					date = dates.subtract(this.current, 1);
-					break;
-				case 'ArrowRight' :
-					date = dates.add(this.current, 1);
-					break;
-				case 'ArrowUp' :
-					date = dates.subtract(this.current, 7);
-					break;
-				case 'ArrowDown' :
-					date = dates.add(this.current, 7);
-					break;
-			}
-			if (date) {
-				if (this.isValidDate(date)) {
-					this.current = date;
-					this.render();
-					this.focusDay();
-				}
-				e.preventDefault();
-				e.stopImmediatePropagation();
-				return false;
-			}
 		});
 
 		if (this['range-picker']) {

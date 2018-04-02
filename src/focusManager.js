@@ -25,6 +25,7 @@ module.exports = function (component, show, hide) {
 		}
 
 		if (e.target === focusLoop) {
+			console.log('focus-loop');
 			first.focus();
 			return stop(e);
 		}
@@ -36,11 +37,6 @@ module.exports = function (component, show, hide) {
 		}
 
 		daySelectMode = inPicker && e.target.closest('.day');
-		// if (inPicker && e.target.closest('.day')) {
-		// 	console.log('DAY');
-		// } else {
-		// 	console.log('not day');
-		// }
 		return true;
 	}
 
