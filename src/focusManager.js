@@ -23,7 +23,6 @@ module.exports = function (component, show, hide) {
 		}
 
 		if (e.target === focusLoop) {
-			console.log('focus-loop');
 			first.focus();
 			return stop(e);
 		}

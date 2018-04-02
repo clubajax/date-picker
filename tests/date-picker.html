@@ -295,7 +295,7 @@
 					})
 				});
 
-				test('it should submit in a form (MANUAL)', function (done) {
+				test.skip('it should submit in a form (MANUAL)', function (done) {
 
 					// click submit, view result in URL
 
@@ -317,13 +317,32 @@
 
 				});
 
-				test('it should handle min and max', function () {
+				test.only('it should handle min and max', function (done) {
 					const node = dom('date-input', {
 						label: 'Date',
 						value: '12/25/2017',
 						min: '12/24/2017',
 						max: '12/26/2017'
 					}, body);
+
+					ready(node, function () {
+						focus(node);
+						clickDate(node, '12/24/2017');
+						expect(node.value).to.equal('12/24/2017');
+
+						focus(node);
+						clickDate(node, '12/26/2017');
+						expect(node.value).to.equal('12/26/2017');
+
+						focus(node);
+						clickDate(node, '12/27/2017');
+						expect(node.value).to.equal('12/26/2017');
+
+						focus(node);
+						clickDate(node, '12/23/2017');
+						expect(node.value).to.equal('12/26/2017');
+						done();
+					});
 
 				});
 			});
@@ -621,7 +640,7 @@
 					expect(dom.isNode(node)).to.equal(true);
 				});
 
-				test.only('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
+				test('it should open the other picker if range is (auto-set) the same - MANUAL TEST', function (done) {
 					const node = dom('date-range-inputs', { 'left-label': 'Start Date', 'right-label': 'End Date', value: '02/10/2017 - 02/14/2017' }, body);
 					const b1 = dom('button', { html: 'clear' }, body);
 					const b2 = dom('button', { html: 'value.set' }, body);

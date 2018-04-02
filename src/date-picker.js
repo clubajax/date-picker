@@ -557,7 +557,6 @@ class DatePicker extends BaseComponent {
 			let date;
 			let stopEvent = false;
 			let num;
-			console.log('container.key', e.key);
 			switch (e.key) {
 				case 'ArrowLeft' :
 					num = -1;
@@ -589,7 +588,6 @@ class DatePicker extends BaseComponent {
 		});
 
 		this.on(document, 'keydown', (e) => {
-			console.log('doc.key', e.key);
 			if (e.key === ' ' && isControl(e.target, this)) {
 				this.emit(e.target, 'click');
 				return util.stopEvent(e);
