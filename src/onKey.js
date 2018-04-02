@@ -7,7 +7,9 @@ function onKey (e) {
 	const k = e.key;
 
 	if (k === 'Enter') {
-		this.hide();
+		if (this.hide) {
+			this.hide();
+		}
 		this.emit('change', { value: this.value });
 	}
 
