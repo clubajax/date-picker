@@ -35,7 +35,7 @@ class DateRangeInput extends DateInput {
 	}
 
 	isValid (value) {
-		const ds = value.split(/\s*-\s*/);
+		const ds = (value || '').split(/\s*-\s*/);
 		return dates.isDate(ds[0]) && dates.isDate(ds[1]);
 	}
 }

@@ -4,6 +4,7 @@ const on = require('@clubajax/on');
 const dates = require('@clubajax/dates');
 const util = require('./util');
 const onKey = require('./onKey');
+const isValid = require('./isValid');
 
 const defaultPlaceholder = 'HH:MM am/pm';
 const defaultMask = 'XX:XX';
@@ -57,13 +58,13 @@ class TimeInput extends BaseComponent {
 	}
 
 	onMin (value) {
-		this.minTime = dates.format(util.getMinTime(value), 'h:m a');
+		// this.minTime = dates.format(util.getMinTime(value), 'h:m a');
 		this.minDate = util.getMinDate(value);
 		this.validate();
 	}
 
 	onMax (value) {
-		this.maxTime = dates.format(util.getMaxTime(value), 'h:m a');
+		// this.maxTime = dates.format(util.getMaxTime(value), 'h:m a');
 		this.maxDate = util.getMaxDate(value);
 		this.validate();
 	}
@@ -111,43 +112,12 @@ class TimeInput extends BaseComponent {
 		this.validate();
 	}
 
-	isValid (value = this.input.value) {
-		if (!value && this.required) {
-			this.emitError('This field is required');
-			return false;
+	isValid () {
+		let value = this.input.value;
+		if (this.date) {
+			value = dates.format(util.addTimeToDate(value, this.date), 'MM/dd/yyyy h:m a');
 		}
-		if (this.date && value) {
-			if (this.minDate && dates.is(this.date).equalDate(this.minDate)) {
-				if (util.is(value).less(this.minTime)) {
-					const msg = this.min === 'now' ? 'Value must be in the future' : `Value is less than the minimum, ${this.min}`;
-					this.emitError(msg);
-					return false;
-				}
-			}
-			if (this.maxDate && dates.is(this.date).equalDate(this.maxDate)) {
-				if (util.is(value).greater(this.maxTime)) {
-					const msg = this.max === 'now' ? 'Value must be in the past' : `Value is greater than the maximum, ${this.max}`;
-					this.emitError(msg);
-					return false;
-				}
-			}
-		} else if (value) {
-			if (this.minTime) {
-				if (util.is(value).less(this.minTime)) {
-					const msg = this.min === 'now' ? 'Value must be in the future' : `Value is less than the minimum, ${this.min}`;
-					this.emitError(msg);
-					return false;
-				}
-			}
-			if (this.maxTime) {
-				if (util.is(value).greater(this.maxTime)) {
-					const msg = this.max === 'now' ? 'Value must be in the past' : `Value is greater than the maximum, ${this.max}`;
-					this.emitError(msg);
-					return false;
-				}
-			}
-		}
-		return util.timeIsValid(value);
+		return isValid.call(this, value);
 	}
 
 	validate () {

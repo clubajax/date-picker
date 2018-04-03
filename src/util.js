@@ -68,7 +68,7 @@ function incDate (value, inc) {
 function incYear (value, inc) {
 	let yr = parseInt(value.substring(6,10));
 	yr += inc;
-	return `${value.substring(0,5)}${pad(yr)}${value.substring(11)}`;
+	return `${value.substring(0,5)}/${pad(yr)} ${value.substring(11)}`;
 }
 
 function pad (num) {
@@ -147,7 +147,7 @@ function timeIsInRange (time, min, max, date) {
 
 function addTimeToDate (time, date) {
 	if (!timeIsValid(time)) {
-		console.warn('time is not valid', time);
+		//console.warn('time is not valid', time);
 		return date;
 	}
 	let hr = getHours(time);
@@ -313,10 +313,11 @@ function getMinDate (value) {
 	} else {
 		value = dates.toDate(value);
 	}
-	value.setHours(0);
-	value.setMinutes(0);
-	value.setSeconds(0);
-	value.setMilliseconds(0);
+	// value.setHours(0);
+	// value.setMinutes(0);
+	// value.setSeconds(0);
+	// value.setMilliseconds(0);
+	value.setSeconds(value.getSeconds() - 1);
 	return value;
 }
 
@@ -326,10 +327,11 @@ function getMaxDate (value) {
 	} else {
 		value = dates.toDate(value);
 	}
-	value.setHours(23);
-	value.setMinutes(59);
-	value.setSeconds(59);
-	value.setMilliseconds(999);
+	// value.setHours(23);
+	// value.setMinutes(59);
+	// value.setSeconds(59);
+	// value.setMilliseconds(999);
+	value.setSeconds(value.getSeconds() + 1);
 	return value;
 }
 

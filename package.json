@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@clubajax/base-component": "2.0.0",
-    "@clubajax/dates": "^2.2.1",
+    "@clubajax/dates": "^2.2.4",
     "@clubajax/dom": "^2.6.1",
     "@clubajax/on": "^2.1.6"
   },

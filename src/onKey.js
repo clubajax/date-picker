@@ -43,7 +43,6 @@ function onKey (e) {
 
 			// FIXME: test is not adding picker time
 			// 12/12/2017 06:30 am'
-
 			const inc = k === 'ArrowUp' ? 1 : -1;
 			if (/time/.test(type)) {
 				const HR = type === 'time' ? [0,2] : [11,13];
@@ -52,9 +51,8 @@ function onKey (e) {
 					this.setValue(util.incHours(value, inc), true);
 				} else if (end >= MN[0] && end <= MN[1]) {
 					this.setValue(util.incMinutes(value, inc, 15), true);
-				} else {
+				} else if (type === 'time' || beg > 16) {
 					this.setValue(value.replace(/([ap]m)/i, str => /a/i.test(str) ? 'pm' : 'am' ), true);
-					// this.setValue(value, true, /a/i.test(value) ? 'pm' : 'am');
 				}
 			}
 

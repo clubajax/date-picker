@@ -8,6 +8,7 @@
 	<script src="../node_modules/chai/chai.js"></script>
 	<script src="./dist/vendor.js"></script>
 	<script src="./dist/output.js"></script>
+	<script src="./src/assertion.js"></script>
 
 	<script src="//localhost:35750/livereload.js"></script>
 
@@ -37,7 +38,7 @@
 			bottom: 20px;
 		}
 
-		.focus-start{
+		.focus-start {
 			position: absolute;
 			right: 20px;
 			top: 120px;
@@ -61,11 +62,12 @@
 
 <div class="xspacing"></div>
 <div id="tests">
-	<input placeholder="focus start" autofocus class="focus-start"/>
+	<input placeholder="focus start" autofocus class="focus-start" />
 </div>
 <div class="spacing"></div>
 
 <script>
+
 	window.mocha.setup('tdd');
 
 	suite('DatePicker', function () {
@@ -97,29 +99,22 @@
 		function select (node, beg, end) {
 			node.focus();
 			end = end === undefined ? beg : end;
-			node.selectionStart = beg;
-			node.selectionEnd = end;
-			return {
-				up: function () {
-					arrow(node, 1);
-				},
-				down: function () {
-					arrow(node, -1);
-				}
-			}
+			node.input.selectionStart = beg;
+			node.input.selectionEnd = end;
 		}
 
-		function arrow (node, inc) {
+		function arrow (node, sel, inc) {
+			select(node, sel);
 			if (inc > 0) {
-				on.emit(node, 'keyup', { key: 'ArrowUp' });
+				on.emit(node.input, 'keyup', { key: 'ArrowUp' });
 			} else {
-				on.emit(node, 'keyup', { key: 'ArrowDown' });
+				on.emit(node.input, 'keyup', { key: 'ArrowDown' });
 			}
 		}
 
 		function clickDate (node, date) {
 			const day = util.toAriaLabel(date);
-			const n = dom.query(node, '[aria-label="'+day+'"]');
+			const n = dom.query(node, '[aria-label="' + day + '"]');
 			if (n) {
 				on.emit(n, 'click');
 				node.blur();
@@ -127,6 +122,11 @@
 				console.log('could not find:', date);
 			}
 		}
+
+		function showing (node) {
+			return node.picker.classList.contains('show') && dom.style(node.picker, 'display') !== 'none';
+		}
+
 
 		function focus (node) {
 			node.focus();
@@ -209,43 +209,52 @@
 			});
 
 			suite('input keys', function () {
-				test('it should increment and decrement values', function (done) {
+
+
+				test('it should increment and decrement values - date', function (done) {
 					const value = '12/25/2017 2:00 pm';
 					const dateInput = dom('date-input', { value: value }, body);
-					const timeInput = dom('time-input', { value: value }, body);
-					const dateTimeInput = dom('date-time-input', { value: value }, body);
-					onDomReady([
-						dateInput,
-						timeInput,
-						dateTimeInput
-					], function () {
+					onDomReady(dateInput, function () {
+						expect(dateInput.value).to.equal('12/25/2017');
+						arrow(dateInput, 0, 1);
+						arrow(dateInput, 4, 1);
+						arrow(dateInput, 8, -1);
+						expect(dateInput.value).to.equal('01/26/2016');
+						done();
+					});
+				});
 
-						// time
+				test('it should increment and decrement values - time', function (done) {
+					const value = '12/25/2017 2:00 pm';
+					const timeInput = dom('time-input', { value: value }, body);
+					onDomReady(timeInput, function () {
 						expect(timeInput.value).to.equal('02:00 pm');
-						select(timeInput.input, 0, 2).up(1);
-						select(timeInput.input, 3, 5).down(1);
-						select(timeInput.input, 6, 8).up(1);
-						expect(timeInput.value).to.equal('03:45 am');
-						//
+						arrow(timeInput, 0, 1);
+						arrow(timeInput, 5, 1);
+						arrow(timeInput, 5, 1);
+						arrow(timeInput, 7, 1);
+						expect(timeInput.value).to.equal('03:30 am');
+						done();
+					});
+				});
+
+				test('it should increment and decrement values - date-time', function (done) {
+					const value = '12/25/2017 2:00 pm';
+					const dateTimeInput = dom('date-time-input', { value: value }, body);
+					onDomReady(dateTimeInput, function () {
+
 						// dateTime - time
 						expect(dateTimeInput.value).to.equal('12/25/2017 02:00 pm');
-						select(dateTimeInput.input, 11, 13).up(1);
-						select(dateTimeInput.input, 14, 16).up(1);
-						select(dateTimeInput.input, 18, 20).up(1);
+						arrow(dateTimeInput, 11, 1);
+						arrow(dateTimeInput, 14, 1);
+						arrow(dateTimeInput, 18, 1);
 						expect(dateTimeInput.value).to.equal('12/25/2017 03:15 am');
 
 						// dateTime - date
-						select(dateTimeInput.input, 0, 2).down(1);
-						select(dateTimeInput.input, 4).down(1);
-						select(dateTimeInput.input, 0, 8).up(1);
-						// expect(dateTimeInput.value).to.equal('11/24/2018 03:15 am');
-
-						// date
-						expect(dateInput.value).to.equal('12/25/2017');
-						select(dateInput.input, 0, 2).up(1);
-						select(dateInput.input, 4).up(1);
-						select(dateInput.input, 0, 8).down(1);
-						expect(dateInput.value).to.equal('01/26/2016');
+						arrow(dateTimeInput, 0, -1);
+						arrow(dateTimeInput, 4, -1);
+						arrow(dateTimeInput, 8, 1);
+						expect(dateTimeInput.value).to.equal('11/24/2018 03:15 am');
 
 						done();
 					});
@@ -253,28 +262,32 @@
 			});
 
 			suite('date input', function () {
-				test.skip('it should select dates and note lose focus (NOT WORKING)', function (done) {
 
-					// problems with focus
+				test('it should handle arrow keys', function (done) {
 					const node = dom('date-input', {
 						label: 'Date',
-						value: '12/25/2017'
+						value: '12/25/2017',
+						min: '12/24/2017'
 					}, body);
+
 					ready(node, function () {
-						// const time = 1000;
-						// focus(node);
-						// clickDate(node, '12/01/2017');
-						// setTimeout(function () {
-						// 	clickDate(node, '12/03/2017');
-						// 	setTimeout(function () {
-						// 		clickDate(node, '12/05/2017');
-						// 		setTimeout(function () {
-						// 			clickDate(node, '12/07/2017');
-						// 		}, time);
-						// 	}, time);
-						// }, time);
+
+						expect(node.value).to.equal('12/25/2017');
+
+						arrow(node, 1, 1);
+						expect(node.value).to.equal('12/25/2017'); // validation error
+						expect(node.valid).to.equal(false);
+
+						arrow(node, 1, -1);
+						arrow(node, 4, 1);
+						expect(node.value).to.equal('12/26/2017');
+
+						arrow(node, 8, 1);
+						expect(node.value).to.equal('12/26/2018');
+
 						done();
-					})
+					});
+
 				});
 
 				test('it should handle input starting blank', function (done) {
@@ -295,29 +308,7 @@
 					})
 				});
 
-				test.skip('it should submit in a form (MANUAL)', function (done) {
-
-					// click submit, view result in URL
-
-					const form = dom('form', { method: 'GET' }, body);
-					dom('input', { type: 'text', value: 'Mike', name: 'name' }, form);
-					const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
-					const btn = dom('button', { html: 'Submit' }, form);
-					on.once(form, 'submit', function (e) {
-						console.log('SUBMIT', e);
-						// e.preventDefault();
-						// return false;
-					});
-					ready(node, function () {
-						btn.focus();
-						on.emit(btn, 'click');
-						expect(dom.isNode(node)).to.equal(true);
-						done();
-					});
-
-				});
-
-				test.only('it should handle min and max', function (done) {
+				test('it should handle min and max', function (done) {
 					const node = dom('date-input', {
 						label: 'Date',
 						value: '12/25/2017',
@@ -345,22 +336,55 @@
 					});
 
 				});
+
+				test.skip('it should submit in a form (MANUAL)', function (done) {
+
+					// click submit, view result in URL
+
+					const form = dom('form', { method: 'GET' }, body);
+					dom('input', { type: 'text', value: 'Mike', name: 'name' }, form);
+					const node = dom('date-input', { name: 'date', label: 'Date of Event' }, form);
+					const btn = dom('button', { html: 'Submit' }, form);
+					on.once(form, 'submit', function (e) {
+						console.log('SUBMIT', e);
+						// e.preventDefault();
+						// return false;
+					});
+					ready(node, function () {
+						btn.focus();
+						on.emit(btn, 'click');
+						expect(dom.isNode(node)).to.equal(true);
+						done();
+					});
+
+				});
+
+				test.skip('it should select dates and not lose focus (NOT WORKING)', function (done) {
+
+					// problems with focus
+					const node = dom('date-input', {
+						label: 'Date',
+						value: '12/25/2017'
+					}, body);
+					ready(node, function () {
+						// const time = 1000;
+						// focus(node);
+						// clickDate(node, '12/01/2017');
+						// setTimeout(function () {
+						// 	clickDate(node, '12/03/2017');
+						// 	setTimeout(function () {
+						// 		clickDate(node, '12/05/2017');
+						// 		setTimeout(function () {
+						// 			clickDate(node, '12/07/2017');
+						// 		}, time);
+						// 	}, time);
+						// }, time);
+						done();
+					})
+				});
 			});
 
 			suite('time input', function () {
-
-				test('it should render a time input', function (done) {
-					const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
-					ready(node, function () {
-						let emitted = '';
-						const events = [];
-						node.on('change', function (e) {
-							events.push(1);
-							emitted = events.join(',')
-						});
-						done();
-					});
-				});
 
 				test('it should handle valid and invalid from blank', function (done) {
 					const node = dom('time-input', { label: 'Time', step: 15 }, body);
@@ -394,7 +418,6 @@
 						let emitted = '';
 						const events = [];
 						node.on('change', function (e) {
-							console.log('change', e.value);
 							events.push(1);
 							emitted = events.join(',')
 						});
@@ -402,6 +425,8 @@
 						expect(emitted).to.equal('');
 						expect(node.value).to.equal('12:34 am');
 						node.focus();
+
+						// test required
 						clear(node);
 						node.blur();
 						expect(node.valid).to.equal(false);
@@ -409,24 +434,22 @@
 					});
 				});
 
-				test.skip('it should handle valid and invalid from value', function () {
+				test('it should handle arrow keys', function (done) {
 					const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
 					ready(node, function () {
-						let emitted = '';
-						const events = [];
-						node.on('change', function (e) {
-							console.log('change', e.value);
-							events.push(1);
-							emitted = events.join(',')
-						});
 
-						node.focus();
-						setTimeout(() => {
-							arrow(node, 2, 2);
-							console.log(' - ', node.selectionStart, node.selectionEnd);
-						}, 130)
+						expect(node.value).to.equal('12:34 am');
 
+						arrow(node, 2, 1);
+						expect(node.value).to.equal('01:34 am');
 
+						arrow(node, 4, 1);
+						expect(node.value).to.equal('01:45 am');
+
+						arrow(node, 6, 1);
+						expect(node.value).to.equal('01:45 pm');
+
+						done();
 					});
 				});
 
@@ -434,11 +457,9 @@
 					const time = '02:00 am';
 					const node = dom('time-input', { label: 'Time', value: time, step: 15, min: '01:30 am', max: '02:30 am' }, body);
 					ready(node, function () {
-						let emitted = '';
-						const events = [];
-						node.on('change', function (e) {
-							events.push(1);
-							emitted = events.join(',')
+						let err;
+						node.on('validation', function (e) {
+							//console.log('val:::', e.detail.message);
 						});
 						expect(node.valid).to.equal(true);
 						node.value = '01:00 am';
@@ -459,27 +480,67 @@
 			});
 
 			suite('date time input', function () {
-				test('it should add a time to the picker', function (done) {
-					const dateStr = '12/12/2017 02:20 am';
-					const node = dom('date-time-input', { label: 'Enter Date and Time', value: dateStr, min: dateStr }, body);
-					ready(node, function () {
-						let emitted;
-						const events = [];
-						node.on('change', function (e) {
-							//console.log('change', e);
-							events.push(1);
-							emitted = events.join(',');
-						});
-						done();
-					});
-				});
-
-				test('it should persist open', function () {
+				test('it should persist open', function (done) {
 					const node = dom('date-time-input', {
 						label: 'Date and Time',
 						value: '03/27/2018 10:00 am',
 						static: true
 					}, body);
+					ready(node, function () {
+
+						expect(showing(node)).to.equal(true);
+						clickDate(node, '03/30/2018');
+
+						// for some reason, onClick is occasionally async
+						setTimeout(function () {
+							expect(showing(node)).to.equal(true);
+							expect(node.value).to.equal('03/30/2018 10:00 am');
+
+							arrow(node, 3, -1);
+							on.emit(node.input, 'keyup', { key: 'Enter' });
+							expect(node.value).to.equal('03/29/2018 10:00 am');
+							expect(showing(node)).to.equal(true);
+
+							arrow(node, 3, -1);
+							on.emit(node.input, 'keyup', { key: 'Enter' });
+							expect(node.value).to.equal('03/28/2018 10:00 am');
+							expect(showing(node)).to.equal(true);
+
+							done();
+						}, 1);
+					});
+				});
+
+				test('it should add a time to the picker and handle keys, min/max', function (done) {
+					const dateStr = '12/12/2017 02:20 am';
+					const max = '12/26/2017 12:00 am';
+					const node = dom('date-time-input', { label: 'Enter Date and Time', value: dateStr, min: dateStr, max: max }, body);
+					ready(node, function () {
+						let err;
+						node.on('validation', function (e) {
+							//console.log('val:::', e.detail.message);
+						});
+
+						expect(node.value).to.equal(dateStr);
+
+						// check time arrow keys
+						arrow(node, 12, 1);
+						expect(node.value).to.equal('12/12/2017 03:20 am');
+
+						arrow(node, 14, 1);
+						expect(node.value).to.equal('12/12/2017 03:30 am');
+
+						arrow(node, 17, 1);
+						expect(node.value).to.equal('12/12/2017 03:30 pm');
+
+						arrow(node, 12, -1);
+						arrow(node, 12, -1);
+						arrow(node, 14, -1);
+						on.emit(node.input, 'keyup', { key: 'Enter' });
+						expect(node.value).to.equal('12/12/2017 01:15 pm');
+
+						done();
+					});
 				});
 
 				test('it should handle complex focus', function (done) {
@@ -502,7 +563,7 @@
 						let emitted;
 						const events = [];
 						node.on('change', function (e) {
-							console.log('change', e);
+							// console.log('change', e);
 							events.push(1);
 							emitted = events.join(',');
 						});
@@ -541,9 +602,9 @@
 						expect(todayNode.classList.contains('disabled')).to.equal(false);
 
 						date.setDate(date.getDate() + 1);
-						const yesterdayLabel = util.toAriaLabel(date);
-						const yesterdayNode = dom.query(node, `[aria-label="${yesterdayLabel}"]`);
-						expect(yesterdayNode.classList.contains('disabled')).to.equal(true);
+						const tomorrowLabel = util.toAriaLabel(date);
+						const tomorrowNode = dom.query(node, `[aria-label="${tomorrowLabel}"]`);
+						expect(tomorrowNode.classList.contains('disabled')).to.equal(true);
 						done();
 					});
 				});
@@ -563,8 +624,8 @@
 					ready(node, function () {
 						let error = node.timeInput.validationError;
 						node.on('validation', function (e) {
+							//console.log(' --- validation', e.detail.message);
 							error = e.detail.message;
-							// console.log('validation', error);
 						});
 						node.timeInput.validate();
 
@@ -586,9 +647,12 @@
 			});
 
 			suite('date range inputs', function () {
-				test('it should load a date range input', function () {
+				test('it should load a date range input', function (done) {
 					const node = dom('date-range-input', { label: 'El Date Picker', value: '01/10/2017 - 02/14/2017' }, body);
 					expect(dom.isNode(node)).to.equal(true);
+					ready(node, function () {
+						done();
+					});
 				});
 
 				test('it should load date range inputs', function (done) {

@@ -2,6 +2,7 @@ const BaseComponent = require('@clubajax/base-component');
 const dates = require('@clubajax/dates');
 const dom = require('@clubajax/dom');
 const util = require('./util');
+const isValid = require('./isValid');
 require('./time-input');
 
 // TODO:
@@ -60,6 +61,7 @@ class DatePicker extends BaseComponent {
 
 	onMin (value) {
 		this.minDate = util.getMinDate(value);
+		this.minDate.setDate(this.minDate.getDate() - 1);
 		if (this.timeInput) {
 			this.timeInput.min = value;
 		}
@@ -152,11 +154,15 @@ class DatePicker extends BaseComponent {
 	}
 
 	setValue (valueObject) {
-		this.valueDate = valueObject;
-		this.current = dates.copy(this.valueDate);
-		onDomReady(this, () => {
-			this.render();
-		});
+		this.hasTime = !!this.timeInput;
+		const strDate = dates.format(valueObject, this.timeInput ? 'MM/dd/yyyy h:m a' : 'MM/dd/yyyy');
+		if (isValid.call(this, strDate)) {
+			this.valueDate = valueObject;
+			this.current = dates.copy(this.valueDate);
+			onDomReady(this, () => {
+				this.render();
+			});
+		}
 	}
 
 	onClickDay (node, silent) {
@@ -201,7 +207,6 @@ class DatePicker extends BaseComponent {
 		if (this['range-picker']) {
 			return;
 		}
-		console.log('SELECT DAY');
 		const now = this.querySelector('.selected');
 		const node = this.dayMap[this.current.getDate()];
 		if (now) {
@@ -426,8 +431,7 @@ class DatePicker extends BaseComponent {
 			dateToday = getSelectedDate(today, d),
 			dateSelected = getSelectedDate(this.valueDate, d, true),
 			highlighted = d.getDate(),
-			dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum),
-			defaultDate = 15;
+			dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum);
 
 		this.monthNode.innerHTML = dates.getMonthName(d) + ' ' + d.getFullYear();
 
@@ -536,7 +540,9 @@ class DatePicker extends BaseComponent {
 				'event-name': 'time-change'
 			}, this.calFooter);
 			this.timeInput.setDate(this.current);
-			this.timeInput.on('time-change', this.emitEvent.bind(this));
+			this.timeInput.on('time-change', () => {
+				this.emitEvent();
+			});
 			destroy(this.footerLink);
 		} else {
 			const d = new Date();
@@ -623,7 +629,6 @@ class DatePicker extends BaseComponent {
 const today = new Date();
 
 function isControl (node, picker) {
-	console.log('isControl');
 	return node === picker.lftMoNode || node === picker.rgtMoNode || node === picker.lftYrNode || node === picker.rgtYrNode || node === picker.footerLink;
 }
 

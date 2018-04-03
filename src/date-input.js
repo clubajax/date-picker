@@ -4,6 +4,7 @@ const dom = require('@clubajax/dom');
 const dates = require('@clubajax/dates');
 const util = require('./util');
 const onKey = require('./onKey');
+const isValid = require('./isValid');
 const focusManager = require('./focusManager');
 require('./icon-calendar');
 
@@ -15,6 +16,11 @@ const bools = ['required', 'time', 'static'];
 const FLASH_TIME = 1000;
 
 class DateInput extends BaseComponent {
+
+	constructor () {
+		super();
+		this.showing = false;
+	}
 
 	static get observedAttributes () {
 		return [...props, ...bools, 'value'];
@@ -40,6 +46,7 @@ class DateInput extends BaseComponent {
 			return;
 		}
 		const isInit = !this.strDate;
+		value = dates.padded(value);
 		this.strDate = dates.isValid(value) ? value : '';
 		onDomReady(this, () => {
 			this.setValue(this.strDate, isInit);
@@ -59,19 +66,14 @@ class DateInput extends BaseComponent {
 	}
 
 	onMin (value) {
-		const d = dates.toDate(value);
-		this.minDate = d;
-		this.minInt = d.getTime();
+		this.minDate = util.getMinDate(dates.toDate(value));
 		this.picker.min = value;
 	}
 
 	onMax (value) {
-		const d = dates.toDate(value);
-		this.maxDate = d;
-		this.maxInt = d.getTime();
+		this.maxDate = util.getMaxDate(dates.toDate(value));
 		this.picker.max = value;
 	}
-
 
 	get templateString () {
 		return `
@@ -82,11 +84,6 @@ class DateInput extends BaseComponent {
 		<icon-calendar />
 	</div>
 </label>`;
-	}
-
-	constructor () {
-		super();
-		this.showing = false;
 	}
 
 	setValue (value, silent) {
@@ -106,7 +103,7 @@ class DateInput extends BaseComponent {
 			}
 		}
 
-		if (!silent && valid && !this.static) {
+		if (!silent && valid) {
 			setTimeout(this.hide.bind(this), 300);
 		}
 		return value;
@@ -116,15 +113,12 @@ class DateInput extends BaseComponent {
 		return  util.formatDate(value, this.mask);
 	}
 
-	isValid (value = this.input.value) {
-		if(!value && !this.required){
-			return true;
-		}
-		return dates.isValid(this.input.value);
+	isValid () {
+		return isValid.call(this, this.input.value);
 	}
 
 	validate () {
-		if (this.isValid(this.input.value)) {
+		if (this.isValid()) {
 			this.classList.remove('invalid');
 			return true;
 		}
@@ -164,13 +158,12 @@ class DateInput extends BaseComponent {
 	}
 
 	hide () {
-		if (!this.showing || window.keepPopupsOpen) {
+		if (this.static || !this.showing || window.keepPopupsOpen) {
 			return;
 		}
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
 		dom.classList.toggle(this, 'invalid', !this.isValid());
-		console.log('ONHIDE');
 		this.picker.onHide();
 	}
 
@@ -189,7 +182,6 @@ class DateInput extends BaseComponent {
 	domReady () {
 		this.time = this.time || this.hasTime;
 		this.mask = this.mask || defaultMask;
-		this.maskLength = this.mask.match(/X/g).join('').length;
 		this.input.setAttribute('type', 'text');
 		this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
 		if (this.name) {
