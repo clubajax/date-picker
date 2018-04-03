@@ -83,7 +83,7 @@ function onKey (e) {
 		}
 
 		const value = this.setValue(temp, true);
-		const nextChar = value.charAt(beg + 1);
+		const nextChar = str.charAt(beg + 1);
 
 		setSelection(/[\s\/:]/.test(nextChar) ? beg + 2 : beg + 1);
 		util.stopEvent(e);
