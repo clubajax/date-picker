@@ -2,8 +2,6 @@ const DateInput = require('./date-input');
 const dates = require('@clubajax/dates');
 const util = require('./util');
 
-// FIXME: time-input blur does not close calendar
-
 class DateTimeInput extends DateInput {
 	constructor () {
 		super();
@@ -19,12 +17,17 @@ class DateTimeInput extends DateInput {
 	}
 
 	format (value) {
+		console.log('fmt', value);
+		if (/X/.test(value)) {
+			return value;
+		}
 		const parts = value.split(' ');
 		const dateStr = parts[0] || '';
 		const timeStr = `${parts[1] || ''} ${parts[2] || ''}`;
 		const date = util.formatDate(dateStr, this.mask);
 		let time = util.formatTime(timeStr);
 		time = this.setAMPM(time, util.getAMPM(value));
+		console.log('fmt.done', `${date} ${time}`);
 		return `${date} ${time}`;
 	}
 

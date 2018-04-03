@@ -103,6 +103,22 @@
 			node.input.selectionEnd = end;
 		}
 
+		function edit (node, beg, end, text) {
+			return new Promise(function (resolve) {
+				const input = node.input;
+				select(node, beg, end);
+				text.split('').forEach(function (char, i) {
+					setTimeout(function () {
+						on.emit(input, 'keyup', {key: char});
+						if (i === text.length - 1) {
+							resolve();
+						}
+					}, 1);
+				});
+			});
+
+		}
+
 		function arrow (node, sel, inc) {
 			select(node, sel);
 			if (inc > 0) {
@@ -132,6 +148,9 @@
 			node.focus();
 			on.emit(node.input, 'focus');
 		}
+
+		// FIXME: time-input blur does not close calendar
+
 
 		suite('tests', function () {
 
@@ -210,6 +229,58 @@
 
 			suite('input keys', function () {
 
+				test('it should edit a selection - date', function (done) {
+					const value = '12/25/2017 2:00 pm';
+					const node = dom('date-input', { value: value }, body);
+					onDomReady(node, function () {
+						edit(node, 3, 5, '13').then(function () {
+							expect(node.value).to.equal('12/13/2017');
+							edit(node, 0, 2, '07').then(function () {
+								expect(node.value).to.equal('07/13/2017');
+								done();
+							});
+						});
+					});
+				});
+
+				test('it should edit a selection - time', function (done) {
+					const value = '12/25/2017 2:00 pm';
+					const node = dom('time-input', { value: value }, body);
+					onDomReady(node, function () {
+						edit(node, 3, 5, '13').then(function () {
+							expect(node.value).to.equal('02:13 pm');
+							edit(node, 0, 2, '11').then(function () {
+								expect(node.value).to.equal('11:13 pm');
+								done();
+							});
+						});
+					});
+				});
+
+				test.only('it should edit a selection - date/time', function (done) {
+					const value = '12/25/2017 1:11 pm';
+					const node = dom('date-time-input', { value: value }, body);
+					onDomReady(node, function () {
+
+						edit(node, 14, 16, '22').then(function () {
+							//expect(node.value).to.equal('12/13/2017 11:00 pm');
+							// edit(node, 14, 16, '22');
+							done();
+						});
+
+						// edit(node, 3, 5, '13').then(function () {
+						// 	expect(node.value).to.equal('12/13/2017 02:22 pm');
+						// 	edit(node, 0, 2, '07').then(function () {
+						// 		expect(node.value).to.equal('07/13/2017 02:22 pm');
+						// 		edit(node, 11, 13, '11').then(function () {
+						// 			//expect(node.value).to.equal('12/13/2017 11:00 pm');
+						// 			// edit(node, 14, 16, '22');
+						// 		});
+						// 	});
+						// });
+						// done();
+					});
+				});
 
 				test('it should increment and decrement values - date', function (done) {
 					const value = '12/25/2017 2:00 pm';
@@ -480,7 +551,7 @@
 			});
 
 			suite('date time input', function () {
-				test.only('it should persist open with no value', function (done) {
+				test('it should persist open with no value', function (done) {
 					const node = dom('date-time-input', {
 						label: 'Date and Time',
 						//value: '03/27/2018 10:00 am',
