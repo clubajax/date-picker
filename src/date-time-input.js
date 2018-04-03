@@ -1,4 +1,5 @@
 const DateInput = require('./date-input');
+const dates = require('@clubajax/dates');
 const util = require('./util');
 
 // FIXME: time-input blur does not close calendar
