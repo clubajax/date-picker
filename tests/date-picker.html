@@ -480,7 +480,30 @@
 			});
 
 			suite('date time input', function () {
-				test('it should persist open', function (done) {
+				test.only('it should persist open with no value', function (done) {
+					const node = dom('date-time-input', {
+						label: 'Date and Time',
+						//value: '03/27/2018 10:00 am',
+						min: 'now',
+						static: true
+					}, body);
+					ready(node, function () {
+
+						node.on('validation', function (e) {
+							console.log('val:::', e.detail.message);
+						});
+
+						expect(showing(node)).to.equal(true);
+
+						// for some reason, onClick is occasionally async
+						setTimeout(function () {
+
+							done();
+						}, 1);
+					});
+				});
+
+				test('it should persist open (and staty open)', function (done) {
 					const node = dom('date-time-input', {
 						label: 'Date and Time',
 						value: '03/27/2018 10:00 am',

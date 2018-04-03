@@ -12,6 +12,9 @@ class DateTimeInput extends DateInput {
 	domReady () {
 		this.mask = 'XX/XX/XXXX XX:XX pm';
 		super.domReady();
+		if (!this.value) {
+			this.value = dates.format(new Date(), 'MM/dd/yyyy h:m a');
+		}
 	}
 
 	format (value) {

@@ -173,7 +173,7 @@ date-time-input, time-input, date-input, date-range-input {
         font-style: italic; }
       date-time-input label .input-wrapper input:-ms-input-placeholder, time-input label .input-wrapper input:-ms-input-placeholder, date-input label .input-wrapper input:-ms-input-placeholder, date-range-input label .input-wrapper input:-ms-input-placeholder {
         font-style: italic; }
-  date-time-input.invalid .input-wrapper input, time-input.invalid .input-wrapper input, date-input.invalid .input-wrapper input, date-range-input.invalid .input-wrapper input {
+  date-time-input.invalid .input-wrapper input, date-time-input.invalid input, time-input.invalid .input-wrapper input, time-input.invalid input, date-input.invalid .input-wrapper input, date-input.invalid input, date-range-input.invalid .input-wrapper input, date-range-input.invalid input {
     border-color: red;
     outline-color: red; }
   date-time-input.warning .input-wrapper input, time-input.warning .input-wrapper input, date-input.warning .input-wrapper input, date-range-input.warning .input-wrapper input {

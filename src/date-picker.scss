@@ -267,7 +267,7 @@ date-time-input, time-input, date-input, date-range-input{
         }
     }
     &.invalid{
-        .input-wrapper input{
+        .input-wrapper input, input{
             border-color: red;
             outline-color: red;
         }

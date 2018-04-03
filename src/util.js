@@ -313,11 +313,7 @@ function getMinDate (value) {
 	} else {
 		value = dates.toDate(value);
 	}
-	// value.setHours(0);
-	// value.setMinutes(0);
-	// value.setSeconds(0);
-	// value.setMilliseconds(0);
-	value.setSeconds(value.getSeconds() - 1);
+	value.setMinutes(value.getMinutes() - 2);
 	return value;
 }
 
@@ -327,11 +323,7 @@ function getMaxDate (value) {
 	} else {
 		value = dates.toDate(value);
 	}
-	// value.setHours(23);
-	// value.setMinutes(59);
-	// value.setSeconds(59);
-	// value.setMilliseconds(999);
-	value.setSeconds(value.getSeconds() + 1);
+	value.setMinutes(value.getMinutes() + 2);
 	return value;
 }
 
