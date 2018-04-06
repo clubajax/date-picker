@@ -83,6 +83,7 @@ class TimeInput extends BaseComponent {
 	}
 
 	setValue (value, silent, ampm) {
+		let valid = this.validate(value);
 		const isReady = /[ap]m/i.test(value) || value.replace(/(?!X)\D/g, '').length >= 4;
 		if (isReady) {
 			this.setAMPM(value, getAMPM(value, ampm));
@@ -94,7 +95,7 @@ class TimeInput extends BaseComponent {
 
 		this.typedValue = value;
 		this.input.value = value;
-		const valid = this.validate();
+		valid = this.validate();
 
 		if (valid) {
 			this.strDate = value;
@@ -112,8 +113,7 @@ class TimeInput extends BaseComponent {
 		this.validate();
 	}
 
-	isValid () {
-		let value = this.input.value;
+	isValid (value = this.input.value) {
 		if (this.date) {
 			value = dates.format(util.addTimeToDate(value, this.date), 'MM/dd/yyyy h:m a');
 		}

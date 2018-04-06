@@ -17,17 +17,12 @@ class DateTimeInput extends DateInput {
 	}
 
 	format (value) {
-		console.log('fmt', value);
-		if (/X/.test(value)) {
-			return value;
-		}
 		const parts = value.split(' ');
 		const dateStr = parts[0] || '';
 		const timeStr = `${parts[1] || ''} ${parts[2] || ''}`;
 		const date = util.formatDate(dateStr, this.mask);
 		let time = util.formatTime(timeStr);
 		time = this.setAMPM(time, util.getAMPM(value));
-		console.log('fmt.done', `${date} ${time}`);
 		return `${date} ${time}`;
 	}
 

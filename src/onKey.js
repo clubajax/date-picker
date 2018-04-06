@@ -76,14 +76,9 @@ function onKey (e) {
 	}
 
 	if (str.length !== end && beg === end) {
-		console.log('MID');
 		// handle selection or middle-string edit
-		let temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
+		let temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end + 1);
 		const nextCharPos = util.nextNumPos(beg + 1, temp);
-		if (nextCharPos > -1) {
-			temp = util.removeCharAtPos(temp, beg + 1);
-		}
-
 		const value = this.setValue(temp, true);
 		const nextChar = str.charAt(beg + 1);
 

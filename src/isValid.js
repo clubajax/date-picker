@@ -15,6 +15,13 @@ function isValid (value = this.input.value) {
 		return false;
 	}
 
+	if (type === 'time' && !util.timeIsValid(value)) {
+		return false;
+	}
+
+	// TODO: test datetime validity
+
+
 	let msg;
 	const strValue = value;
 	value = dates.toDate(value);

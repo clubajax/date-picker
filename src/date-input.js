@@ -90,6 +90,7 @@ class DateInput extends BaseComponent {
 		if (value === this.typedValue) {
 			return;
 		}
+		const isValid = this.isValid(value);
 		value = this.format(value);
 		this.typedValue = value;
 		this.input.value = value;
@@ -113,8 +114,8 @@ class DateInput extends BaseComponent {
 		return  util.formatDate(value, this.mask);
 	}
 
-	isValid () {
-		return isValid.call(this, this.input.value);
+	isValid (value = this.input.value) {
+		return isValid.call(this, value);
 	}
 
 	validate () {

@@ -53,6 +53,10 @@
 			vertical-align: middle;
 			margin: 5px;
 		}
+		input::selection{
+			background: red;
+			color: white;
+		}
 	</style>
 </head>
 <body>
@@ -142,7 +146,6 @@
 		function showing (node) {
 			return node.picker.classList.contains('show') && dom.style(node.picker, 'display') !== 'none';
 		}
-
 
 		function focus (node) {
 			node.focus();
