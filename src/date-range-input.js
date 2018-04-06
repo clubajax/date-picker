@@ -1,6 +1,6 @@
 require('./date-range-picker');
 const DateInput = require('./date-input');
-const dates = require('dates');
+const dates = require('@clubajax/dates');
 
 const props = ['label', 'name', 'placeholder'];
 const bools = ['range-expands'];
@@ -35,7 +35,7 @@ class DateRangeInput extends DateInput {
 	}
 
 	isValid (value) {
-		const ds = value.split(/\s*-\s*/);
+		const ds = (value || '').split(/\s*-\s*/);
 		return dates.isDate(ds[0]) && dates.isDate(ds[1]);
 	}
 }

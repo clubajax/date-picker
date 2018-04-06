@@ -1,6 +1,6 @@
 const BaseComponent = require('@clubajax/base-component');
 require('./date-input');
-const dates = require('dates');
+const dates = require('@clubajax/dates');
 const dom = require('@clubajax/dom');
 
 const props = ['left-label', 'right-label', 'name', 'placeholder'];

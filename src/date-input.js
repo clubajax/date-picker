@@ -1,17 +1,26 @@
 require('./date-picker');
 const BaseComponent = require('@clubajax/base-component');
 const dom = require('@clubajax/dom');
-const on = require('@clubajax/on');
-const dates = require('dates');
+const dates = require('@clubajax/dates');
+const util = require('./util');
+const onKey = require('./onKey');
+const isValid = require('./isValid');
+const focusManager = require('./focusManager');
+require('./icon-calendar');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
-const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max'];
-const bools = ['required'];
+const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time'];
+const bools = ['required', 'time', 'static'];
 
 const FLASH_TIME = 1000;
 
 class DateInput extends BaseComponent {
+
+	constructor () {
+		super();
+		this.showing = false;
+	}
 
 	static get observedAttributes () {
 		return [...props, ...bools, 'value'];
@@ -33,9 +42,14 @@ class DateInput extends BaseComponent {
 	}
 
 	set value (value) {
+		if (value === this.strDate) {
+			return;
+		}
+		const isInit = !this.strDate;
+		value = dates.padded(value);
 		this.strDate = dates.isValid(value) ? value : '';
 		onDomReady(this, () => {
-			this.setValue(this.strDate);
+			this.setValue(this.strDate, isInit);
 		});
 	}
 
@@ -43,59 +57,46 @@ class DateInput extends BaseComponent {
 		return this.strDate;
 	}
 
+	get valid () {
+		return this.isValid();
+	}
+
 	onLabel (value) {
 		this.labelNode.innerHTML = value;
 	}
 
 	onMin (value) {
-		const d = dates.toDate(value);
-		this.minDate = d;
-		this.minInt = d.getTime();
+		this.minDate = util.getMinDate(dates.toDate(value));
 		this.picker.min = value;
 	}
 
 	onMax (value) {
-		const d = dates.toDate(value);
-		this.maxDate = d;
-		this.maxInt = d.getTime();
+		this.maxDate = util.getMaxDate(dates.toDate(value));
 		this.picker.max = value;
 	}
-
 
 	get templateString () {
 		return `
 <label>
 	<span ref="labelNode"></span>
-	<input ref="input" class="empty" />
-	
-</label>
-<date-picker ref="picker" tabindex="0"></date-picker>`;
-	}
-
-	constructor () {
-		super();
-		this.showing = false;
-	}
-
-	isValid (value) {
-		if(!value && !this.required){
-			return true;
-		}
-		return dates.isDate(this.input.value);
+	<div class="input-wrapper">
+		<input ref="input" class="empty" />
+		<icon-calendar />
+	</div>
+</label>`;
 	}
 
 	setValue (value, silent) {
+		if (value === this.typedValue) {
+			return;
+		}
+		const isValid = this.isValid(value);
+		value = this.format(value);
 		this.typedValue = value;
 		this.input.value = value;
 		const len = this.input.value.length === this.mask.length;
-		let valid;
-		if (len) {
-			valid = dates.isValid(value);
-		} else {
-			valid = false;
-		}
-
-		if (valid || !len) {
+		const valid = this.validate();
+		if (valid) {
 			this.strDate = value;
 			this.picker.value = value;
 			if (!silent) {
@@ -103,92 +104,27 @@ class DateInput extends BaseComponent {
 			}
 		}
 
-		if (valid) {
-			this.classList.remove('invalid')
-		} else if (!silent) {
-			this.classList.add('invalid')
-		}
-
 		if (!silent && valid) {
 			setTimeout(this.hide.bind(this), 300);
 		}
+		return value;
 	}
 
-	format (s) {
-		function sub (pos) {
-			let subStr = '';
-			for (let i = pos; i < mask.length; i++) {
-				if (mask[i] === 'X') {
-					break;
-				}
-				subStr += mask[i];
-			}
-			return subStr;
-		}
-
-		s = s.replace(/\D/g, '');
-		const mask = this.mask;
-		let f = '';
-		const len = Math.min(s.length, this.maskLength);
-		for (let i = 0; i < len; i++) {
-			if (mask[f.length] !== 'X') {
-				f += sub(f.length);
-			}
-			f += s[i];
-		}
-		return f;
+	format (value) {
+		return  util.formatDate(value, this.mask);
 	}
 
-	onKey (e) {
-		let str = this.typedValue || '';
-		const beg = e.target.selectionStart;
-		const end = e.target.selectionEnd;
-		const k = e.key;
+	isValid (value = this.input.value) {
+		return isValid.call(this, value);
+	}
 
-		if(k === 'Enter'){
-			this.hide();
-			this.emit('change', { value: this.value });
+	validate () {
+		if (this.isValid()) {
+			this.classList.remove('invalid');
+			return true;
 		}
-
-		if(k === 'Escape'){
-			if(!this.isValid()){
-				this.value = this.strDate;
-				this.hide();
-				this.input.blur();
-			}
-		}
-
-		function setSelection (amt) {
-			// TODO
-			// This might not be exactly right...
-			// have to allow for the slashes
-			if (end - beg) {
-				e.target.selectionEnd = end - (end - beg - 1);
-			} else {
-				e.target.selectionEnd = end + amt;
-			}
-		}
-
-		if (!isNum(k)) {
-			// handle paste, backspace
-			if (this.input.value !== this.typedValue) {
-				this.setValue(this.input.value, true);
-			}
-			setSelection(0);
-			stopEvent(e);
-			return;
-		}
-		if (str.length !== end || beg !== end) {
-			// handle selection or middle-string edit
-			const temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
-			this.setValue(this.format(temp), true);
-
-			setSelection(1);
-			stopEvent(e);
-			return;
-		}
-
-		this.setValue(this.format(str + k), true);
+		this.classList.add('invalid');
+		return false;
 	}
 
 	flash (addFocus) {
@@ -207,6 +143,7 @@ class DateInput extends BaseComponent {
 			return;
 		}
 		this.showing = true;
+		this.picker.onShow();
 		this.picker.classList.add('show');
 
 		window.requestAnimationFrame(() => {
@@ -222,12 +159,13 @@ class DateInput extends BaseComponent {
 	}
 
 	hide () {
-		if (!this.showing || window.keepPopupsOpen) {
+		if (this.static || !this.showing || window.keepPopupsOpen) {
 			return;
 		}
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
 		dom.classList.toggle(this, 'invalid', !this.isValid());
+		this.picker.onHide();
 	}
 
 	focus () {
@@ -236,9 +174,15 @@ class DateInput extends BaseComponent {
 		});
 	}
 
+	blur () {
+		if (this.input) {
+			this.input.blur();
+		}
+	}
+
 	domReady () {
+		this.time = this.time || this.hasTime;
 		this.mask = this.mask || defaultMask;
-		this.maskLength = this.mask.match(/X/g).join('').length;
 		this.input.setAttribute('type', 'text');
 		this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
 		if (this.name) {
@@ -247,100 +191,34 @@ class DateInput extends BaseComponent {
 		if (this.label) {
 			this.labelNode.innerHTML = this.label;
 		}
-		this.picker.on('change', (e) => {
-			this.setValue(e.value, true);
-		});
 		this.connectKeys();
-		this.registerHandle(handleOpen(this.input, this.picker, this.show.bind(this), this.hide.bind(this)));
+
+		this.picker = dom('date-picker', { time: this.time, tabindex: '0' }, this);
+		this.picker.onDomReady(() => {
+			this.picker.on('change', (e) => {
+				this.setValue(e.value, e.silent);
+			});
+			if (this.static) {
+				this.show();
+			} else {
+				this.focusHandle = focusManager(this, this.show.bind(this), this.hide.bind(this));
+			}
+		});
 	}
 
 	connectKeys () {
-		this.on(this.input, 'keydown', stopEvent);
-		this.on(this.input, 'keypress', stopEvent);
+		this.on(this.input, 'keydown', util.stopEvent);
+		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
-			this.onKey(e);
+			onKey.call(this, e);
 		});
 	}
-}
 
-function handleOpen (input, picker, show, hide) {
-	let inputFocus = false;
-	let pickerFocus = false;
-	const docHandle = on(document, 'keyup', (e) => {
-		if (e.key === 'Escape') {
-			hide();
+	destroy () {
+		if (this.focusHandle) {
+			this.focusHandle.remove();
 		}
-	});
-	docHandle.pause();
-	const changeHandle = on(picker, 'change', () => {
-		if (!inputFocus) {
-			setTimeout(() => {
-				hide();
-				docHandle.pause();
-				changeHandle.pause();
-			}, 100);
-		}
-	});
-	changeHandle.pause();
-
-	return on.makeMultiHandle([
-		on(input, 'focus', () => {
-			inputFocus = true;
-			show();
-			docHandle.resume();
-		}),
-		on(input, 'blur', () => {
-			inputFocus = false;
-			setTimeout(() => {
-				if (!pickerFocus) {
-					hide();
-					docHandle.pause();
-				}
-			}, 100);
-		}),
-		on(picker, 'focus', () => {
-			pickerFocus = true;
-			show();
-			docHandle.resume();
-			changeHandle.resume();
-		}),
-		on(picker, 'blur', () => {
-			pickerFocus = false;
-			setTimeout(() => {
-				if (!inputFocus) {
-					hide();
-					docHandle.pause();
-					changeHandle.pause();
-				}
-			}, 100);
-
-		}),
-		changeHandle,
-		docHandle
-	]);
-}
-
-const numReg = /[0123456789]/;
-function isNum (k) {
-	return numReg.test(k);
-}
-
-const control = {
-	'Enter': 1,
-	'Backspace': 1,
-	'Delete': 1,
-	'ArrowLeft': 1,
-	'ArrowRight': 1,
-	'Escape': 1,
-	'Command': 1,
-	'Tab': 1
-};
-function stopEvent (e) {
-	if (e.metaKey || control[e.key]) {
-		return;
 	}
-	e.preventDefault();
-	e.stopImmediatePropagation();
 }
 
 customElements.define('date-input', DateInput);

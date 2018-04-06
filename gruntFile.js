@@ -12,7 +12,7 @@ module.exports = function (grunt) {
 		sourceMaps = 1,
         watch = false,
         watchPort = 35750,
-		devBabel = 1,
+		devBabel = 0,
 		babelTransform = devBabel ? [[
 			'babelify', {
 			global: true,

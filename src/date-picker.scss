@@ -11,7 +11,7 @@ $today-txt: white;
 $dsbl: white;
 $dsbl-txt: #999;
 $dsbl-sel: #9dc8da;
-$hov: #eee;
+$hov: #dadada;
 $sel: #5dbae0;
 $sel-txt: white;
 $sel-hov: #57add1;
@@ -23,8 +23,12 @@ $warn-brd: #be4304;
 $warn-bk: #fffdd5;
 
 date-picker{
+    * {
+        box-sizing: border-box;
+    }
     display: inline-block;
     font-size: 13px;
+    width: 210px;
     .calendar{
         border-radius: 4px;
         display: inline-block;
@@ -33,50 +37,44 @@ date-picker{
         background: $bg;
     }
     .cal-container{
-        width: 200px;
+        width: 100%;
         height: 180px;
-    }
-    .cal-header{
-        border-radius: 3px;
-        position: relative;
-        padding: 3px;
-        overflow: auto;
-    }
-    .cal-month{
-        cursor: pointer;
-        display: block;
-        position: absolute;
-        text-align: center;
-        border-radius: 2px;
-        top: 2px;
-        bottom: 2px;
-        left: 26px;
-        right: 26px;
-        line-height: 22px;
-        &:hover{
-            background: $header-hov;
-        }
     }
     .day-of-week{
         border-bottom: 1px solid $brd;
     }
-    .cal-lft, .cal-rgt{
-        cursor: pointer;
-        border-radius: 2px;
+    .cal-header{
         position: relative;
-        width: 20px;
+        padding: 3px;
+        overflow: auto;
+        display: flex;
+        flex-direction: row;
+    }
+    .cal-month{
+        cursor: pointer;
+        display: inline-block;
+        text-align: center;
+        vertical-align: top;
+        line-height: 22px;
+        flex: 1 1 auto;
+    }
+    .cal-lft, .cal-rgt, .cal-yr-lft, .cal-yr-rgt{
+        display: inline-block;
+        cursor: pointer;
+        position: relative;
+        flex: 0 0 20px;
         height: 20px;
-        &:before{
-            position: absolute;
-            content: '\25B6';
-            color: $header-nav;
-        }
+        vertical-align: top;
         &:hover{
             background:  $header-hov;
         }
     }
+    .cal-lft:before, .cal-rgt:before, .cal-yr-lft:before, .cal-yr-rgt:before, .cal-yr-lft:after, .cal-yr-rgt:after{
+        position: absolute;
+        content: '\25B6';
+        color: $header-nav;
+    }
     .cal-lft{
-        float: left;
         &:before{
             transform: rotate(180deg);
             left: 4px;
@@ -84,9 +82,30 @@ date-picker{
         }
     }
     .cal-rgt{
-        float: right;
         &:before{
             right: 4px;
+            top: 3px;
+        }
+    }
+    .cal-yr-lft{
+        &:before{
+            transform: rotate(180deg);
+            left: 0;
+            top: 2px;
+        }
+        &:after{
+            transform: rotate(180deg);
+            left: 6px;
+            top: 2px;
+        }
+    }
+    .cal-yr-rgt{
+        &:before{
+            right: 0;
+            top: 3px;
+        }
+        &:after{
+            right: 6px;
             top: 3px;
         }
     }
@@ -102,6 +121,13 @@ date-picker{
             line-height: 2;
             background: transparent;
             transition: background 300ms;
+            span{
+                width: 100%;
+                height: 100%;
+                display: inline-block;
+                border: 1px solid transparent;
+                border-radius: 3px;
+            }
             &.off{
                 color: $off-txt;
             }
@@ -122,6 +148,15 @@ date-picker{
                 color: $sel-txt;
                 &:hover{
                     background: $sel-hov;
+                }
+            }
+            &.highlighted{
+                //border: 1px solid blue;
+            }
+            &:focus{
+                outline: 0;
+                span {
+                    border: 1px solid blue;
                 }
             }
             &.range.on{
@@ -157,18 +192,6 @@ date-picker{
                 }
             }
         }
-        &.year, &.decade {
-            div {
-                cursor: pointer;
-                width: 25%;
-                height: 33%;
-                line-height: 5;
-                border-radius: 3px;
-                &:hover {
-                    background: $hov;
-                }
-            }
-        }
     }
     .cal-footer{
         text-align: center;
@@ -190,23 +213,36 @@ date-picker{
             display: none;
         }
     }
+    input.focus-loop{
+        width: 10px;
+        position: absolute;
+        left: -10000px;
+    }
 }
 
-date-input, date-range-input{
+date-picker[time] {
+    .cal-footer{
+        span{
+            display: inline-block;
+            cursor: default;
+            color: #333;
+            &:hover{
+                text-decoration: none;
+            }
+        }
+        input {
+            display: inline-block;
+            padding: 2px 6px;
+        }
+    }
+}
+
+date-time-input, time-input, date-input, date-range-input{
     display: inline-block;
     position: relative;
     //outline: none;
-    input{
-        border-radius: 2px;
-        border: 1px solid $brd;
-        transition: background-color 300ms ease, border-color 300ms ease;
-        &::placeholder{
-            font-style: italic;
-        }
-        &:-ms-input-placeholder{
-            font-style: italic;
-        }
-    }
+
+
     label{
         span{
             font-size: 12px;
@@ -214,18 +250,30 @@ date-input, date-range-input{
             display: block;
             margin-bottom: 3px;
         }
-        input{
-            padding: 5px;
+        .input-wrapper{
+            position: relative;
+            input{
+                padding: 5px;
+                border-radius: 2px;
+                border: 1px solid $brd;
+                transition: background-color 300ms ease, border-color 300ms ease;
+                &::placeholder{
+                    font-style: italic;
+                }
+                &:-ms-input-placeholder{
+                    font-style: italic;
+                }
+            }
         }
     }
     &.invalid{
-        input{
+        .input-wrapper input, input{
             border-color: red;
             outline-color: red;
         }
     }
     &.warning{
-        input{
+        .input-wrapper input{
             border-color: $warn-brd;
             background-color: $warn-bk;
         }
@@ -259,9 +307,15 @@ date-input, date-range-input{
     }
 }
 
+time-input {
+    input{
+        width: 70px;
+    }
+}
+
 date-range-input{
     input{
-        width: 140px;
+        width: 50px;
     }
 }
 date-range-picker{
@@ -290,4 +344,29 @@ date-range-inputs{
             margin-left: 5px;
         }
     }
+}
+
+date-time-input, time-input, date-input{
+    width: 210px;
+}
+date-time-input{
+    & > label {
+        input {
+            width: calc(100% - 40px);
+        }
+    }
+    time-input {
+        width: auto;
+    }
+}
+
+icon-calendar{
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
 }
