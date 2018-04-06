@@ -1,6 +1,6 @@
 {
   "name": "@clubajax/date-picker",
-  "version": "0.11.0",
+  "version": "1.0.0",
   "description": "Calendar custom-element",
   "main": "index.js",
   "scripts": {
