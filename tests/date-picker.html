@@ -260,7 +260,7 @@
 					});
 				});
 
-				test.only('it should edit a selection - date/time', function (done) {
+				test('it should edit a selection - date/time', function (done) {
 					const value = '12/25/2017 1:11 pm';
 					const node = dom('date-time-input', { value: value }, body);
 					onDomReady(node, function () {

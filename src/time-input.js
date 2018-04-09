@@ -115,6 +115,9 @@ class TimeInput extends BaseComponent {
 
 	isValid (value = this.input.value) {
 		if (this.date) {
+			if (/X/.test(value)) {
+				return false;
+			}
 			value = dates.format(util.addTimeToDate(value, this.date), 'MM/dd/yyyy h:m a');
 		}
 		return isValid.call(this, value);
@@ -128,6 +131,13 @@ class TimeInput extends BaseComponent {
 		}
 		this.classList.add('invalid');
 		return false;
+	}
+
+	onChange (e) {
+		if (this.date && this.isValid(e.target.value)) {
+			this.setValue(e.target.value, true);
+			this.emitEvent(true);
+		}
 	}
 
 	setAMPM (value, ampm) {
@@ -175,13 +185,13 @@ class TimeInput extends BaseComponent {
 		this.connectKeys();
 	}
 
-	emitEvent () {
+	emitEvent (silent) {
 		const value = this.value;
 		if (value === this.lastValue || !this.isValid(value)) {
 			return;
 		}
 		this.lastValue = value;
-		this[this.emitType](this.eventName, { value }, true);
+		this[this.emitType](this.eventName, { value, silent }, true);
 	}
 
 	emitError (msg) {
@@ -197,9 +207,13 @@ class TimeInput extends BaseComponent {
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
 			onKey.call(this, e);
+			this.onChange(e);
 		});
 		this.on(this.input, 'blur', () => {
 			this.blur();
+		});
+		this.on(this.input, 'input', (e) => {
+			this.onChange(e);
 		});
 	}
 }

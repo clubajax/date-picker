@@ -540,8 +540,8 @@ class DatePicker extends BaseComponent {
 				'event-name': 'time-change'
 			}, this.calFooter);
 			this.timeInput.setDate(this.current);
-			this.timeInput.on('time-change', () => {
-				this.emitEvent();
+			this.timeInput.on('time-change', (e) => {
+				this.emitEvent(e.detail.silent);
 			});
 			destroy(this.footerLink);
 		} else {
