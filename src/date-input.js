@@ -67,12 +67,12 @@ class DateInput extends BaseComponent {
 	}
 
 	onMin (value) {
-		this.minDate = util.getMinDate(dates.toDate(value));
+		this.minDate = util.getMinDate(value === 'now' ? new Date() : dates.toDate(value));
 		this.picker.min = value;
 	}
 
 	onMax (value) {
-		this.maxDate = util.getMaxDate(dates.toDate(value));
+		this.maxDate = util.getMaxDate(value === 'now' ? new Date() : dates.toDate(value));
 		this.picker.max = value;
 	}
 

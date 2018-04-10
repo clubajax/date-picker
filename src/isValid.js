@@ -43,7 +43,11 @@ function isValid (value = this.input.value, type) {
 		}
 	}
 
-	if (this.hasTime) {
+	// if (type === 'datetime' && this.minDate && dates.is(value).equalDate(this.minDate)) {
+	// 	console.log('CHECK TIME', value, this.minDate);
+	// }
+
+	if (/time/.test(type)) {
 		return util.isTimeValid(strValue);
 	}
 
