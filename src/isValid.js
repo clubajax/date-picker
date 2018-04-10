@@ -10,19 +10,23 @@ function isValid (value = this.input.value, type) {
 	}
 
 	if (value.length > 19) {
+		emitError.call(this, 'Not a valid date and time');
 		return false;
 	}
 
 	if (type !== 'time' && type !== 'date' && type !== 'datetime') {
 		// incomplete string
+		emitError.call(this, 'Not a valid date and time');
 		return false;
 	}
 
 	if (type === 'time' && !util.isTimeValid(value)) {
+		emitError.call(this, 'Not a valid time');
 		return false;
 	}
 
 	if (type === 'datetime' && !util.isDateTimeValid(value)) {
+		emitError.call(this, 'Not a valid date and time');
 		return false;
 	}
 	let msg;

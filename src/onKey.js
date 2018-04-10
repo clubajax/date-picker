@@ -17,12 +17,7 @@ function onKey (e, type) {
 	}
 
 	if (k === 'Escape') {
-		if (!this.isValid()) {
-			this.typedValue = '';
-			this.setValue(this.strDate, true);
-			this.hide();
-			this.input.blur();
-		}
+		this.blur();
 	}
 
 	if (util.isControl(e)) {
@@ -82,7 +77,7 @@ function onKey (e, type) {
 		} else if (/[ap]/i.test(k) && /time/.test(type)) {
 			this.setValue(this.setAMPM(value, k === 'a' ? 'am' : 'pm'), true);
 		} else {
-			console.log('CHAR IS', k);
+			//console.log('CHAR IS', k);
 		}
 
 		setSelection(beg);

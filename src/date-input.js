@@ -48,6 +48,7 @@ class DateInput extends BaseComponent {
 		}
 		const isInit = !this.strDate;
 		value = dates.padded(value);
+
 		this.strDate = dates.isValid(value) ? value : '';
 		onDomReady(this, () => {
 			this.setValue(this.strDate, isInit);
@@ -91,6 +92,10 @@ class DateInput extends BaseComponent {
 		if (value === this.typedValue) {
 			return;
 		}
+		if (this.dateType === 'datetime' && value.length === 10 && this.typedValue.length > 16) { // 19 total
+			value = util.mergeTime(value, this.typedValue);
+		}
+
 		const isValid = this.isValid(value);
 		value = this.format(value);
 		this.typedValue = value;
@@ -181,6 +186,20 @@ class DateInput extends BaseComponent {
 		}
 	}
 
+	onBlur () {
+		const valid = this.validate();
+		if (valid) {
+			this.emitEvent();
+		} else {
+			this.reset();
+		}
+	}
+
+	reset () {
+		this.typedValue = '';
+		this.setValue(this.strDate, true);
+	}
+
 	domReady () {
 		this.time = this.time || this.hasTime;
 		this.mask = this.mask || defaultMask;
@@ -213,6 +232,7 @@ class DateInput extends BaseComponent {
 		this.on(this.input, 'keyup', (e) => {
 			onKey.call(this, e, this.dateType);
 		});
+		this.on(this.input, 'blur', this.onBlur.bind(this));
 	}
 
 	destroy () {

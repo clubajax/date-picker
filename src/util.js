@@ -377,6 +377,10 @@ function getMaxTime (value) {
 	return value;
 }
 
+function mergeTime (date, datetime) {
+	return `${date.trim()} ${datetime.substring(11)}`;
+}
+
 function toAriaLabel (date) {
 	date = dates.toDate(date);
 	return dates.format(date, 'd, E MMMM yyyy');
@@ -446,5 +450,6 @@ module.exports = {
 	toDateTime,
 	timeToSeconds,
 	stripDate,
-	charCount
+	charCount,
+	mergeTime
 };
