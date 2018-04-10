@@ -78,6 +78,7 @@ class DatePicker extends BaseComponent {
 
 	constructor () {
 		super();
+		this.dateType = 'date';
 		this.current = new Date();
 		this.previous = {};
 	}
@@ -156,7 +157,7 @@ class DatePicker extends BaseComponent {
 	setValue (valueObject) {
 		this.hasTime = !!this.timeInput;
 		const strDate = dates.format(valueObject, this.timeInput ? 'MM/dd/yyyy h:m a' : 'MM/dd/yyyy');
-		if (isValid.call(this, strDate)) {
+		if (isValid.call(this, strDate, this.dateType)) {
 			this.valueDate = valueObject;
 			this.current = dates.copy(this.valueDate);
 			onDomReady(this, () => {

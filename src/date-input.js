@@ -19,6 +19,7 @@ class DateInput extends BaseComponent {
 
 	constructor () {
 		super();
+		this.dateType = 'date';
 		this.showing = false;
 	}
 
@@ -115,7 +116,7 @@ class DateInput extends BaseComponent {
 	}
 
 	isValid (value = this.input.value) {
-		return isValid.call(this, value);
+		return isValid.call(this, value, this.dateType);
 	}
 
 	validate () {
@@ -210,7 +211,7 @@ class DateInput extends BaseComponent {
 		this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
-			onKey.call(this, e);
+			onKey.call(this, e, this.dateType);
 		});
 	}
 

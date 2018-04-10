@@ -5,7 +5,8 @@ const util = require('./util');
 class DateTimeInput extends DateInput {
 	constructor () {
 		super();
-		this.hasTime = true;
+		this.dateType = 'datetime';
+		this.hasTime = false;
 	}
 
 	domReady () {
@@ -18,6 +19,9 @@ class DateTimeInput extends DateInput {
 
 	format (value) {
 		const parts = value.split(' ');
+		if (parts.length !== 3 ) {
+			return value;
+		}
 		const dateStr = parts[0] || '';
 		const timeStr = `${parts[1] || ''} ${parts[2] || ''}`;
 		const date = util.formatDate(dateStr, this.mask);

@@ -1,21 +1,25 @@
 const util = require('./util');
 
-function onKey (e) {
+function onKey (e, type) {
 	let str = this.typedValue || '';
 	const beg = e.target.selectionStart;
 	const end = e.target.selectionEnd;
 	const k = e.key;
 
 	if (k === 'Enter') {
-		if (this.hide) {
-			this.hide();
+		const valid = this.validate();
+		if (valid) {
+			if (this.hide) {
+				this.hide();
+			}
+			this.emit('change', { value: this.value });
 		}
-		this.emit('change', { value: this.value });
 	}
 
 	if (k === 'Escape') {
 		if (!this.isValid()) {
-			this.value = this.strDate;
+			this.typedValue = '';
+			this.setValue(this.strDate, true);
 			this.hide();
 			this.input.blur();
 		}
@@ -31,13 +35,22 @@ function onKey (e) {
 	}
 
 	if (!util.isNum(k)) {
-		// handle paste, backspace
-		if (this.input.value !== this.typedValue) {
-			this.setValue(this.input.value, true);
-		}
+		let value = this.input.value;
 
-		const value = this.input.value;
-		const type = util.is(value).type();
+		// handle paste, backspace
+		if (type === 'datetime' && k === ' ' && util.charCount(value, ' ') !== 2) {
+			// insert missing space
+			this.typedValue = '';
+			value = value.replace(' ', '');
+			this.setValue(`${value.substring(0, 10)} ${value.substring(10, 15)} ${value.substring(15)}`, true);
+			setSelection(11);
+			util.stopEvent(e);
+			return;
+
+		} else if (value !== this.typedValue) {
+			// console.log('not typed');
+			this.setValue(value, true);
+		}
 
 		if (util.isArrowKey[k]) {
 
@@ -68,6 +81,8 @@ function onKey (e) {
 
 		} else if (/[ap]/i.test(k) && /time/.test(type)) {
 			this.setValue(this.setAMPM(value, k === 'a' ? 'am' : 'pm'), true);
+		} else {
+			console.log('CHAR IS', k);
 		}
 
 		setSelection(beg);

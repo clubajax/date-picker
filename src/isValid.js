@@ -1,7 +1,7 @@
 const util = require('./util');
 const dates = require('@clubajax/dates');
 
-function isValid (value = this.input.value) {
+function isValid (value = this.input.value, type) {
 	if (!value && this.required) {
 		this.emitError('This field is required');
 		return false;
@@ -9,19 +9,22 @@ function isValid (value = this.input.value) {
 		return true;
 	}
 
-	const type = util.is(value).type();
+	if (value.length > 19) {
+		return false;
+	}
+
 	if (type !== 'time' && type !== 'date' && type !== 'datetime') {
 		// incomplete string
 		return false;
 	}
 
-	if (type === 'time' && !util.timeIsValid(value)) {
+	if (type === 'time' && !util.isTimeValid(value)) {
 		return false;
 	}
 
-	// TODO: test datetime validity
-
-
+	if (type === 'datetime' && !util.isDateTimeValid(value)) {
+		return false;
+	}
 	let msg;
 	const strValue = value;
 	value = dates.toDate(value);
@@ -41,7 +44,7 @@ function isValid (value = this.input.value) {
 	}
 
 	if (this.hasTime) {
-		return util.timeIsValid(strValue);
+		return util.isTimeValid(strValue);
 	}
 
 	emitError.call(this, null);

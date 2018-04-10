@@ -79,6 +79,7 @@ class TimeInput extends BaseComponent {
 
 	constructor () {
 		super();
+		this.dateType = 'time';
 		this.typedValue = '';
 	}
 
@@ -120,7 +121,7 @@ class TimeInput extends BaseComponent {
 			}
 			value = dates.format(util.addTimeToDate(value, this.date), 'MM/dd/yyyy h:m a');
 		}
-		return isValid.call(this, value);
+		return isValid.call(this, value, this.dateType);
 	}
 
 	validate () {

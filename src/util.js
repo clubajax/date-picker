@@ -98,7 +98,7 @@ function toDateTime (value) {
 	return date;
 }
 
-function timeIsValid (value) {
+function isTimeValid (value) {
 	// 12:34 am
 	if (value.length < 8) {
 		return false;
@@ -118,6 +118,36 @@ function timeIsValid (value) {
 		return false;
 	}
 	return true;
+}
+
+function isDateTimeValid (value) {
+	// 04/10/2018 19:11 am
+	if (value.length !== 19) {
+		return false;
+	}
+	if (charCount(value, ' ') !== 2) {
+		return false;
+	}
+	if (charCount(value, ':') !== 1) {
+		return false;
+	}
+	if (charCount(value, '/') !== 2) {
+		return false;
+	}
+	const date = value.substring(0, 10);
+	const time = value.substring(11);
+	return dates.is(date).valid() && isTimeValid(time);
+}
+
+function charCount (str, char) {
+	str = str.trim();
+	let count = 0;
+	for (let i = 0; i < str.length; i++) {
+		if (str.charAt(i) === char) {
+			count++;
+		}
+	}
+	return count;
 }
 
 function timeIsInRange (time, min, max, date) {
@@ -146,7 +176,7 @@ function timeIsInRange (time, min, max, date) {
 }
 
 function addTimeToDate (time, date) {
-	if (!timeIsValid(time)) {
+	if (!isTimeValid(time)) {
 		//console.warn('time is not valid', time);
 		return date;
 	}
@@ -387,7 +417,8 @@ function is (value) {
 module.exports = {
 	is,
 	addTimeToDate,
-	timeIsValid,
+	isTimeValid,
+	isDateTimeValid,
 	incMinutes,
 	incHours,
 	incMonth,
@@ -414,5 +445,6 @@ module.exports = {
 	timeIsInRange,
 	toDateTime,
 	timeToSeconds,
-	stripDate
+	stripDate,
+	charCount
 };
