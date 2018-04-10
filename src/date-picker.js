@@ -9,10 +9,12 @@ require('./time-input');
 // https://axesslab.com/accessible-datepickers/
 // http://whatsock.com/tsg/Coding%20Arena/ARIA%20Date%20Pickers/ARIA%20Date%20Picker%20(Basic)/demo.htm
 
-const props = ['min', 'max'];
+const props = ['min', 'max', 'event-name'];
 
 // range-left/range-right mean that this is one side of a date-range-picker
 const bools = ['range-picker', 'range-left', 'range-right', 'time'];
+
+const EVENT_NAME = 'change';
 
 class DatePicker extends BaseComponent {
 
@@ -127,7 +129,7 @@ class DatePicker extends BaseComponent {
 			event.first = this.firstRange;
 			event.second = this.secondRange;
 		}
-		this.emit('change', event);
+		this[this.emitType](this.eventName, event, true);
 	}
 
 	emitDisplayEvents () {
@@ -393,6 +395,9 @@ class DatePicker extends BaseComponent {
 	}
 
 	domReady () {
+		this.eventName = this['event-name'] || EVENT_NAME;
+		this.emitType = this.eventName === EVENT_NAME ? 'emit' : 'fire';
+
 		if (this['range-left']) {
 			this.classList.add('left-range');
 			this['range-picker'] = true;
@@ -619,6 +624,7 @@ class DatePicker extends BaseComponent {
 
 		this.on(this.footerLink, 'click', () => {
 			this.setValue(new Date());
+			this.emitEvent();
 		});
 
 		if (this['range-picker']) {
