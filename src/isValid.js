@@ -47,8 +47,8 @@ function isValid (value = this.input.value, type) {
 	// 	console.log('CHECK TIME', value, this.minDate);
 	// }
 
-	if (/time/.test(type)) {
-		return util.isTimeValid(strValue);
+	if (/time/.test(type) && !util.isTimeValid(strValue)) {
+		return false;
 	}
 
 	emitError.call(this, null);
