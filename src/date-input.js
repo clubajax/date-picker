@@ -106,7 +106,7 @@ class DateInput extends BaseComponent {
 			this.strDate = value;
 			this.picker.value = value;
 			if (!silent) {
-				this.emit('change', { value: value });
+				this.emitEvent();
 			}
 		}
 
@@ -114,6 +114,15 @@ class DateInput extends BaseComponent {
 			setTimeout(this.hide.bind(this), 300);
 		}
 		return value;
+	}
+
+	emitEvent () {
+		const value = this.value;
+		if (value === this.lastValue || !this.isValid(value)) {
+			return;
+		}
+		this.lastValue = value;
+		this.emit('change', { value });
 	}
 
 	format (value) {
