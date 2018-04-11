@@ -176,6 +176,7 @@ class DatePicker extends BaseComponent {
 			isDisabled = node.classList.contains('disabled');
 
 		if (isDisabled) {
+			node.blur();
 			return;
 		}
 
@@ -417,6 +418,8 @@ class DatePicker extends BaseComponent {
 	}
 
 	render () {
+
+		const focused = getFocusedDay();
 		// dateNum increments, starting with the first Sunday
 		// showing on the monthly calendar. This is usually the
 		// previous month, so dateNum will start as a negative number
@@ -526,6 +529,13 @@ class DatePicker extends BaseComponent {
 
 		if (this.timeInput) {
 			this.timeInput.setDate(this.current);
+		}
+
+		if (focused) {
+			const focusNode = dom.query(this.bodyNode, `[aria-label="${focused}"]`);
+			if (focusNode) {
+				focusNode.focus();
+			}
 		}
 	}
 
@@ -654,6 +664,14 @@ function destroy (node) {
 
 function inRange (dateTime, begTime, endTime) {
 	return dateTime >= begTime && dateTime <= endTime;
+}
+
+function getFocusedDay () {
+	const node = document.activeElement;
+	if (!node || !dom.classList.contains(node, 'day')) {
+		return null;
+	}
+	return node.getAttribute('aria-label');
 }
 
 customElements.define('date-picker', DatePicker);

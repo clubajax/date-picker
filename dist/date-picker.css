@@ -89,8 +89,8 @@ date-picker {
           background: #dadada; }
       date-picker .cal-body div.today {
         background: white;
-        color: #666;
-        border: 1px solid #666; }
+        color: #0968d2;
+        border: 1px solid #b1b1b1; }
       date-picker .cal-body div.selected {
         background: #5dbae0;
         color: white; }
@@ -98,7 +98,7 @@ date-picker {
           background: #57add1; }
       date-picker .cal-body div:focus {
         outline: 0; }
-        date-picker .cal-body div:focus span {
+        date-picker .cal-body div:focus:not(.disabled) span {
           border: 1px solid blue; }
       date-picker .cal-body div.range.on {
         background: #beecff;
@@ -117,7 +117,7 @@ date-picker {
         cursor: default;
         font-style: italic; }
         date-picker .cal-body div.disabled.today {
-          background: #666;
+          background: #b1b1b1;
           color: white; }
         date-picker .cal-body div.disabled.selected {
           background: #9dc8da;
