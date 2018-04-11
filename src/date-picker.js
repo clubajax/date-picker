@@ -176,7 +176,9 @@ class DatePicker extends BaseComponent {
 			isDisabled = node.classList.contains('disabled');
 
 		if (isDisabled) {
-			node.blur();
+			if (this.focusNode) {
+				this.focusNode.focus();
+			}
 			return;
 		}
 
@@ -532,9 +534,9 @@ class DatePicker extends BaseComponent {
 		}
 
 		if (focused) {
-			const focusNode = dom.query(this.bodyNode, `[aria-label="${focused}"]`);
-			if (focusNode) {
-				focusNode.focus();
+			this.focusNode = dom.query(this.bodyNode, `[aria-label="${focused}"]`);
+			if (this.focusNode) {
+				this.focusNode.focus();
 			}
 		}
 	}
