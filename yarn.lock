@@ -435,9 +435,9 @@
     lodash "^4.2.0"
     to-fast-properties "^2.0.0"
 
-"@clubajax/base-component@2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@clubajax/base-component/-/base-component-2.0.0.tgz#8712ee7a073ef74553742a5936ee2457b5508a23"
+"@clubajax/base-component@2.0.2":
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/@clubajax/base-component/-/base-component-2.0.2.tgz#f3d367fd8c94e9051f2450bb3ace3505349da248"
   dependencies:
     "@clubajax/on" "^2.1.6"
 
@@ -452,9 +452,9 @@
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/@clubajax/dates/-/dates-2.2.4.tgz#74fcc81679f5896293939a6358a2b5653f01c501"
 
-"@clubajax/dom@^2.6.1":
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/@clubajax/dom/-/dom-2.7.0.tgz#036ba2268e00ef2c65ad77042bbae4493365c56c"
+"@clubajax/dom@^2.7.1":
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/@clubajax/dom/-/dom-2.7.1.tgz#7ec6781d182414a0f11dd0e299b9f6be752e35f5"
 
 "@clubajax/on@^2.1.6":
   version "2.1.8"
