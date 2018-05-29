@@ -3,24 +3,9 @@ require('./date-input');
 const dates = require('@clubajax/dates');
 const dom = require('@clubajax/dom');
 
-const props = ['left-label', 'right-label', 'name', 'placeholder'];
-const bools = ['range-expands', 'required'];
-
 const DELIMITER = ' - ';
 
 class DateRangeInputs extends BaseComponent {
-
-	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	set value (value) {
 		this.setValue(value);
@@ -154,6 +139,8 @@ class DateRangeInputs extends BaseComponent {
 	}
 }
 
-customElements.define('date-range-inputs', DateRangeInputs);
-
-module.exports = DateRangeInputs;
+module.exports = BaseComponent.define('date-range-inputs', DateRangeInputs, {
+	bools: ['range-expands', 'required'],
+	props: ['left-label', 'right-label', 'name', 'placeholder'],
+	attrs: ['value']
+});

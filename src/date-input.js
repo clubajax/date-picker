@@ -10,10 +10,10 @@ require('./icon-calendar');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
-const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time'];
-const bools = ['required', 'time', 'static'];
 
 const FLASH_TIME = 1000;
+
+
 
 class DateInput extends BaseComponent {
 
@@ -21,18 +21,6 @@ class DateInput extends BaseComponent {
 		super();
 		this.dateType = 'date';
 		this.showing = false;
-	}
-
-	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
 	}
 
 	attributeChanged (name, value) {
@@ -251,6 +239,8 @@ class DateInput extends BaseComponent {
 	}
 }
 
-customElements.define('date-input', DateInput);
-
-module.exports = DateInput;
+module.exports = BaseComponent.define('date-input', DateInput, {
+	bools: ['required', 'time', 'static'],
+	props: ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time'],
+	attrs: ['value']
+});

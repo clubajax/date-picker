@@ -8,22 +8,10 @@ const isValid = require('./isValid');
 
 const defaultPlaceholder = 'HH:MM am/pm';
 const defaultMask = 'XX:XX';
-const props = ['label', 'name', 'placeholder', 'mask', 'event-name', 'min', 'max'];
-const bools = ['required'];
 const EVENT_NAME = 'change';
 
+
 class TimeInput extends BaseComponent {
-	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	attributeChanged (name, value) {
 		// need to manage value manually
@@ -207,7 +195,7 @@ class TimeInput extends BaseComponent {
 		this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
-			onKey.call(this, e);
+			onKey.call(this, e, this.dateType);
 			this.onChange(e);
 		});
 		this.on(this.input, 'blur', () => {
@@ -232,6 +220,8 @@ function getAMPM (value, ampm) {
 	return '';
 }
 
-customElements.define('time-input', TimeInput);
-
-module.exports = TimeInput;
+module.exports = BaseComponent.define('time-input', TimeInput, {
+	bools: ['required', 'range-expands'],
+	props: ['label', 'name', 'placeholder', 'mask', 'event-name', 'min', 'max'],
+	attrs: ['value']
+});

@@ -2,22 +2,8 @@ require('./date-range-picker');
 const DateInput = require('./date-input');
 const dates = require('@clubajax/dates');
 
-const props = ['label', 'name', 'placeholder'];
-const bools = ['range-expands'];
-
 class DateRangeInput extends DateInput {
 
-	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	get templateString () {
 		return `
@@ -29,8 +15,7 @@ class DateRangeInput extends DateInput {
 <date-range-picker ref="picker" tabindex="0"></date-range-picker>`;
 	}
 
-	constructor () {
-		super();
+	connected () {
 		this.mask = 'XX/XX/XXXX - XX/XX/XXXX'
 	}
 

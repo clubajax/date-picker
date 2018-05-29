@@ -5,30 +5,13 @@ const util = require('./util');
 const isValid = require('./isValid');
 require('./time-input');
 
-// TODO:
+// ref:
 // https://axesslab.com/accessible-datepickers/
 // http://whatsock.com/tsg/Coding%20Arena/ARIA%20Date%20Pickers/ARIA%20Date%20Picker%20(Basic)/demo.htm
-
-const props = ['min', 'max', 'event-name'];
-
-// range-left/range-right mean that this is one side of a date-range-picker
-const bools = ['range-picker', 'range-left', 'range-right', 'time'];
 
 const EVENT_NAME = 'change';
 
 class DatePicker extends BaseComponent {
-
-	static get observedAttributes () {
-		return [...props, ...bools];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	get templateString () {
 		return `
@@ -676,6 +659,8 @@ function getFocusedDay () {
 	return node.getAttribute('aria-label');
 }
 
-customElements.define('date-picker', DatePicker);
-
-module.exports = DatePicker;
+// range-left/range-right mean that this is one side of a date-range-picker
+module.exports = BaseComponent.define('date-picker', DatePicker, {
+	bools: ['range-picker', 'range-left', 'range-right', 'time'],
+	props: ['min', 'max', 'event-name']
+});

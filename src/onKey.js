@@ -48,7 +48,6 @@ function onKey (e, type) {
 		}
 
 		if (util.isArrowKey[k]) {
-
 			// FIXME: test is not adding picker time
 			// 12/12/2017 06:30 am'
 			const inc = k === 'ArrowUp' ? 1 : -1;

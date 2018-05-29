@@ -3,22 +3,7 @@ const BaseComponent = require('@clubajax/base-component');
 const dates = require('@clubajax/dates');
 const dom = require('@clubajax/dom');
 
-const props = ['value'];
-const bools = ['range-expands'];
-
 class DateRangePicker extends BaseComponent {
-
-	static get observedAttributes () {
-		return [...props, ...bools];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	onValue (value) {
 		// might need attributeChanged
@@ -246,6 +231,7 @@ function isDateCloserToLeft (date, left, right) {
 	return diff1 <= diff2;
 }
 
-customElements.define('date-range-picker', DateRangePicker);
-
-module.exports = DateRangePicker;
+module.exports = BaseComponent.define('date-range-picker', DateRangePicker, {
+	bools: ['range-expands'],
+	props: ['value']
+});
