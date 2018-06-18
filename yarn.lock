@@ -448,13 +448,13 @@
     grunt "^1.0.1"
     uglify "^0.1.5"
 
-"@clubajax/dates@^2.2.4":
-  version "2.2.4"
-  resolved "https://registry.yarnpkg.com/@clubajax/dates/-/dates-2.2.4.tgz#74fcc81679f5896293939a6358a2b5653f01c501"
+"@clubajax/dates@^2.2.5":
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/@clubajax/dates/-/dates-2.2.5.tgz#220f39ae46b8a98b306b7e4661458021783dad45"
 
-"@clubajax/dom@^2.8.0":
-  version "2.8.2"
-  resolved "https://registry.yarnpkg.com/@clubajax/dom/-/dom-2.8.2.tgz#8e64322637645e1fb3906ed9f22c8eda9b9d2d40"
+"@clubajax/dom@^2.8.3":
+  version "2.8.3"
+  resolved "https://registry.yarnpkg.com/@clubajax/dom/-/dom-2.8.3.tgz#92d81095f6eee913b8220bfe42f44e8d0974008d"
 
 "@clubajax/on@^2.1.8":
   version "2.1.8"
