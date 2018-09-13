@@ -1,6 +1,6 @@
 {
   "name": "@clubajax/date-picker",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Calendar custom-element",
   "main": "index.js",
   "scripts": {
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@clubajax/base-component": "2.2.2",
-    "@clubajax/dates": "^2.2.5",
+    "@clubajax/dates": "2.2.6",
     "@clubajax/dom": "^2.8.3",
     "@clubajax/on": "^2.1.8"
   },
