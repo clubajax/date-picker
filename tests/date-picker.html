@@ -152,8 +152,9 @@
 			on.emit(node.input, 'focus');
 		}
 
-		// FIXME: time-input blur does not close calendar
-
+        // FIXME: 
+        //  time-input blur does not close calendar
+        //  icon does not have index
 
 		suite('tests', function () {
 
@@ -339,7 +340,7 @@
 
 				test('it should handle arrow keys', function (done) {
 					const node = dom('date-input', {
-						label: 'Date',
+						label: 'handle arrow keys',
 						value: '12/25/2017',
 						min: '12/24/2017'
 					}, body);
@@ -366,7 +367,7 @@
 
 				test('it should handle input starting blank', function (done) {
 					const node = dom('date-input', {
-						label: 'Date'
+						label: 'input starting blank'
 					}, body);
 					ready(node, function () {
 						key(node, 1, 0);
@@ -384,7 +385,7 @@
 
 				test('it should handle min and max', function (done) {
 					const node = dom('date-input', {
-						label: 'Date',
+						label: 'min and max',
 						value: '12/25/2017',
 						min: '12/24/2017',
 						max: '12/26/2017'
@@ -409,7 +410,36 @@
 						done();
 					});
 
-				});
+                });
+                
+                test('it should handle big dates', function (done) {
+                    const node = dom('date-input', {
+                        label: 'big dates',
+                        value: '12/31/2099',
+                        // min: '12/24/2017',
+                        // max: '12/26/2017'
+                    }, body);
+
+                    ready(node, function () {
+                        // focus(node);
+                        // clickDate(node, '12/24/2017');
+                        // expect(node.value).to.equal('12/24/2017');
+
+                        // focus(node);
+                        // clickDate(node, '12/26/2017');
+                        // expect(node.value).to.equal('12/26/2017');
+
+                        // focus(node);
+                        // clickDate(node, '12/27/2017');
+                        // expect(node.value).to.equal('12/26/2017');
+
+                        // focus(node);
+                        // clickDate(node, '12/23/2017');
+                        // expect(node.value).to.equal('12/26/2017');
+                        done();
+                    });
+
+                });
 
 				test.skip('it should submit in a form (MANUAL)', function (done) {
 
@@ -461,7 +491,7 @@
 			suite('time input', function () {
 
 				test('it should handle valid and invalid from blank', function (done) {
-					const node = dom('time-input', { label: 'Time', step: 15 }, body);
+					const node = dom('time-input', { label: 'valid and invalid from blank', step: 15 }, body);
 					ready(node, function () {
 						let emitted;
 						const events = [];
@@ -487,7 +517,7 @@
 				});
 
 				test('it should handle valid and invalid from value', function (done) {
-					const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
+					const node = dom('time-input', { label: 'valid and invalid from value', value: '12:34am', step: 15, required: true }, body);
 					ready(node, function () {
 						let emitted = '';
 						const events = [];
@@ -509,7 +539,7 @@
 				});
 
 				test('it should handle arrow keys', function (done) {
-					const node = dom('time-input', { label: 'Time', value: '12:34am', step: 15, required: true }, body);
+					const node = dom('time-input', { label: 'handle arrow keys - time', value: '12:34am', step: 15, required: true }, body);
 					ready(node, function () {
 
 						expect(node.value).to.equal('12:34 am');
@@ -529,7 +559,7 @@
 
 				test('it should handle min and max', function (done) {
 					const time = '02:00 am';
-					const node = dom('time-input', { label: 'Time', value: time, step: 15, min: '01:30 am', max: '02:30 am' }, body);
+					const node = dom('time-input', { label: 'min and max time', value: time, step: 15, min: '01:30 am', max: '02:30 am' }, body);
 					ready(node, function () {
 						let err;
 						node.on('validation', function (e) {
@@ -659,7 +689,7 @@
 			suite('date picker', function () {
 
 				test('it should add a time to the picker', function (done) {
-					const node = dom('date-picker', { time: true, value: '12/12/2017 02:20 am' }, body);
+					const node = dom('date-picker', { label: 'add a time to the picker', time: true, value: '12/12/2017 02:20 am' }, body);
 					ready(node, function () {
 						let emitted;
 						const events = [];
@@ -679,7 +709,7 @@
 				test('it should allow `now` as a min', function (done) {
 					const date = new Date();
 					const dateStr = dates.format(date, 'MM/dd/yyyy');
-					const node = dom('date-picker', { min: 'now', value: dateStr }, body);
+					const node = dom('date-picker', { label: 'now as a min', min: 'now', value: dateStr }, body);
 					ready(node, function () {
 						const todayLabel = util.toAriaLabel(date);
 						const todayNode = dom.query(node, `[aria-label="${todayLabel}"]`);
@@ -696,7 +726,7 @@
 				test('it should allow `now` as a max', function (done) {
 					const date = new Date();
 					const dateStr = dates.format(date, 'MM/dd/yyyy');
-					const node = dom('date-picker', { max: 'now', value: dateStr }, body);
+					const node = dom('date-picker', { label: 'now as a max', max: 'now', value: dateStr }, body);
 					ready(node, function () {
 						const todayLabel = util.toAriaLabel(date);
 						const todayNode = dom.query(node, `[aria-label="${todayLabel}"]`);
@@ -711,7 +741,7 @@
 				});
 
 				test('it should not allow selection before min or after max', function () {
-					const node = dom('date-picker', { min: '07/05/2017', max: '07/19/2017', value: '07/01/2017' }, body);
+					const node = dom('date-picker', { label: 'block selection', min: '07/05/2017', max: '07/19/2017', value: '07/01/2017' }, body);
 					expect(dom.isNode(node)).to.equal(true);
 				});
 
@@ -721,7 +751,7 @@
 					const max = '12/13/2017 07:30 am';
 					const LESS = 'Value is less than the minimum, ' + min;
 					const MAX = 'Value is greater than the maximum, ' + max;
-					const node = dom('date-picker', { time: true, value: value, min: min, max: max }, body);
+					const node = dom('date-picker', { label: 'time min max', time: true, value: value, min: min, max: max }, body);
 					ready(node, function () {
 						let error = node.timeInput.validationError;
 						node.on('validation', function (e) {
@@ -742,14 +772,14 @@
 				});
 
 				test('it should open to the top left', function () {
-					const node = dom('date-input', { class: 'BR' }, body);
+					const node = dom('date-input', { label: 'open to top left',  class: 'BR' }, body);
 					expect(dom.isNode(node)).to.equal(true);
 				});
 			});
 
 			suite('date range inputs', function () {
 				test('it should load a date range input', function (done) {
-					const node = dom('date-range-input', { label: 'El Date Picker', value: '01/10/2017 - 02/14/2017' }, body);
+					const node = dom('date-range-input', { label: 'load date range input', value: '01/10/2017 - 02/14/2017' }, body);
 					expect(dom.isNode(node)).to.equal(true);
 					ready(node, function () {
 						done();

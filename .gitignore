@@ -22,3 +22,4 @@ testem.log
 .idea/UI-X.iml
 *.lnk
 ebuild.bat
+yarn-error.log

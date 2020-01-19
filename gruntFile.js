@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const sass = require('node-sass');
 
 module.exports = function (grunt) {
     
@@ -100,7 +101,8 @@ module.exports = function (grunt) {
 		sass: {
 			deploy: {
 				options: {
-					// case sensitive!
+                    // case sensitive!
+                    implementation: sass,
 					sourceMap: true
 				},
 				// 'path/to/result.css': 'path/to/source.scss'
@@ -110,7 +112,8 @@ module.exports = function (grunt) {
 			},
 			dev: {
 				options: {
-					// case sensitive!
+                    // case sensitive!
+                    implementation: sass,
 					sourceMap: true
 				},
 				// 'path/to/result.css': 'path/to/source.scss'

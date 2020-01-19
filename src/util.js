@@ -139,6 +139,10 @@ function isDateTimeValid (value) {
 	return dates.is(date).valid() && isTimeValid(time);
 }
 
+function isDateValid(value) {
+    return dates.isValid(value);
+}
+
 function charCount (str, char) {
 	str = str.trim();
 	let count = 0;
@@ -422,7 +426,8 @@ module.exports = {
 	is,
 	addTimeToDate,
 	isTimeValid,
-	isDateTimeValid,
+    isDateTimeValid,
+    isDateValid,
 	incMinutes,
 	incHours,
 	incMonth,

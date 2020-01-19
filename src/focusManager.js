@@ -1,7 +1,8 @@
 const on = require('@clubajax/on');
 
 module.exports = function (component, show, hide) {
-	const input = component.input;
+    const icon = component.icon;
+    const input = component.input;
 	const picker = component.picker;
 	const timeInput = picker.timeInput;
 	const focusLoop = picker.querySelector('input.focus-loop');
@@ -46,7 +47,7 @@ module.exports = function (component, show, hide) {
 		}
 	});
 
-	on(input, 'focus', show);
+	on(icon, 'click', show);
 
 	const docHandle = on(document.body, 'mousedown', (e) => {
 		return onNavigate(e);
@@ -73,8 +74,6 @@ module.exports = function (component, show, hide) {
 		e.stopImmediatePropagation();
 		return false;
 	}
-
-	//show();
 
 	return on.makeMultiHandle([upHandle, docHandle]);
 };

@@ -9,8 +9,11 @@ class DateRangeInput extends DateInput {
 		return `
 <label>
 	<span ref="labelNode"></span>
-	<input ref="input" />
-	
+	<div class="input-wrapper">
+		<input ref="input" class="empty" />
+		<button class="icon-button" ref="icon"><icon-calendar /></button>
+    </div>
+    <div class="input-error" ref="errorNode"></div>
 </label>
 <date-range-picker ref="picker" tabindex="0"></date-range-picker>`;
 	}

@@ -62,8 +62,15 @@ class DateInput extends BaseComponent {
 
 	onMax (value) {
 		this.maxDate = util.getMaxDate(value === 'now' ? new Date() : dates.toDate(value));
-		this.picker.max = value;
-	}
+        this.picker.max = value;
+        console.log('this.maxDate', this.maxDate);
+    }
+    
+    onValidation (e) {
+        console.log('onValidation', e.detail);
+        // if (e.detail.message)
+        this.errorNode.innerHTML = e.detail.message || '';
+    }
 
 	get templateString () {
 		return `
@@ -71,8 +78,9 @@ class DateInput extends BaseComponent {
 	<span ref="labelNode"></span>
 	<div class="input-wrapper">
 		<input ref="input" class="empty" />
-		<icon-calendar />
-	</div>
+		<button class="icon-button" ref="icon"><icon-calendar /></button>
+    </div>
+    <div class="input-error" ref="errorNode"></div>
 </label>`;
 	}
 
@@ -83,13 +91,11 @@ class DateInput extends BaseComponent {
 		if (this.dateType === 'datetime' && value.length === 10 && this.typedValue.length > 16) { // 19 total
 			value = util.mergeTime(value, this.typedValue);
 		}
-
-		const isValid = this.isValid(value);
 		value = this.format(value);
 		this.typedValue = value;
 		this.input.value = value;
-		const len = this.input.value.length === this.mask.length;
-		const valid = this.validate();
+        const valid = this.validate();
+        console.log('VALID', valid);
 		if (valid) {
 			this.strDate = value;
 			this.picker.value = value;
@@ -194,7 +200,7 @@ class DateInput extends BaseComponent {
 
 	reset () {
 		this.typedValue = '';
-		this.setValue(this.strDate, true);
+		this.setValue(this.strDate || '', true);
 	}
 
 	domReady () {
@@ -229,7 +235,8 @@ class DateInput extends BaseComponent {
 		this.on(this.input, 'keyup', (e) => {
 			onKey.call(this, e, this.dateType);
 		});
-		this.on(this.input, 'blur', this.onBlur.bind(this));
+        this.on(this.input, 'blur', this.onBlur.bind(this));
+        this.on(this, 'validation', this.onValidation.bind(this));
 	}
 
 	destroy () {
@@ -241,6 +248,6 @@ class DateInput extends BaseComponent {
 
 module.exports = BaseComponent.define('date-input', DateInput, {
 	bools: ['required', 'time', 'static'],
-	props: ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time'],
+	props: ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time', 'validation'],
 	attrs: ['value']
 });

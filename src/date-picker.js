@@ -17,11 +17,11 @@ class DatePicker extends BaseComponent {
 		return `
 <div class="calendar" ref="calNode">
 <div class="cal-header" ref="headerNode">
-	<span class="cal-yr-lft" ref="lftYrNode" tabindex="0" role="button" aria-label="Previous Year"></span>
-	<span class="cal-lft" ref="lftMoNode" tabindex="0" role="button" aria-label="Previous Month"></span>
+	<button class="cal-yr-lft" ref="lftYrNode" tabindex="0" aria-label="Previous Year"></button>
+	<button class="cal-lft" ref="lftMoNode" tabindex="0" aria-label="Previous Month"></button>
 	<span class="cal-month" ref="monthNode" role="presentation"></span>	
-	<span class="cal-rgt" ref="rgtMoNode" tabindex="0"  role="button" aria-label="Next Month"></span>
-	<span class="cal-yr-rgt" ref="rgtYrNode" tabindex="0" role="button" aria-label="Next Year"></span>
+	<button class="cal-rgt" ref="rgtMoNode" tabindex="0"  aria-label="Next Month"></button>
+	<button class="cal-yr-rgt" ref="rgtYrNode" tabindex="0" aria-label="Next Year"></button>
 </div>
 <div class="cal-container" ref="container"></div>
 <div class="cal-footer" ref="calFooter">
@@ -57,7 +57,8 @@ class DatePicker extends BaseComponent {
 		this.maxDate = util.getMaxDate(value);
 		if (this.timeInput) {
 			this.timeInput.max = value;
-		}
+        }
+        console.log('this.maxDate', this.maxDate);
 		this.render();
 	}
 

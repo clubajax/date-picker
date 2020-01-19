@@ -58,7 +58,12 @@ date-picker {
         line-height: 22px;
         flex: 1 1 auto;
     }
-    .cal-lft, .cal-rgt, .cal-yr-lft, .cal-yr-rgt {
+    .cal-lft,
+    .cal-rgt,
+    .cal-yr-lft,
+    .cal-yr-rgt {
+        border: 0;
+        background: none;
         display: inline-block;
         cursor: pointer;
         position: relative;
@@ -69,9 +74,14 @@ date-picker {
             background: $header-hov;
         }
     }
-    .cal-lft:before, .cal-rgt:before, .cal-yr-lft:before, .cal-yr-rgt:before, .cal-yr-lft:after, .cal-yr-rgt:after {
+    .cal-lft:before,
+    .cal-rgt:before,
+    .cal-yr-lft:before,
+    .cal-yr-rgt:before,
+    .cal-yr-lft:after,
+    .cal-yr-rgt:after {
         position: absolute;
-        content: '\25B6';
+        content: "\25B6";
         color: $header-nav;
     }
     .cal-lft {
@@ -112,7 +122,8 @@ date-picker {
     .cal-body {
         margin-top: 3px;
         height: 100%;
-        div { // .day
+        div {
+            // .day
             box-sizing: border-box;
             float: left;
             width: 14.285%;
@@ -131,7 +142,8 @@ date-picker {
             &.off {
                 color: $off-txt;
             }
-            &.on, &.off {
+            &.on,
+            &.off {
                 cursor: pointer;
                 border-radius: 3px;
                 &:hover {
@@ -240,7 +252,10 @@ date-picker[time] {
     }
 }
 
-date-time-input, time-input, date-input, date-range-input {
+date-time-input,
+time-input,
+date-input,
+date-range-input {
     display: inline-block;
     position: relative;
     //outline: none;
@@ -257,6 +272,8 @@ date-time-input, time-input, date-input, date-range-input {
             input {
                 padding: 5px;
                 border-radius: 2px;
+                font-size: 13px;
+                width: calc(100% - 45px);
                 border: 1px solid $brd;
                 transition: background-color 300ms ease, border-color 300ms ease;
                 &::placeholder {
@@ -269,7 +286,8 @@ date-time-input, time-input, date-input, date-range-input {
         }
     }
     &.invalid {
-        .input-wrapper input, input {
+        .input-wrapper input,
+        input {
             border-color: red;
             outline-color: red;
         }
@@ -349,7 +367,9 @@ date-range-inputs {
     }
 }
 
-date-time-input, time-input, date-input {
+date-time-input,
+time-input,
+date-input {
     width: 210px;
 }
 
@@ -364,13 +384,23 @@ date-time-input {
     }
 }
 
-icon-calendar {
+.icon-button {
     display: inline-block;
-    width: 18px;
-    height: 18px;
     position: absolute;
-    right: 2px;
+    right: -1px;
     top: 50%;
     transform: translateY(-50%);
+    border: 0;
+    background: none;
     cursor: pointer;
+    icon-calendar {
+        display: block;
+        width: 18px;
+        height: 18px;
+    }
+}
+
+.input-error{
+    font-size: 12px;
+    color: red;
 }
