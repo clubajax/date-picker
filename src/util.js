@@ -161,12 +161,12 @@ function timeIsInRange (time, min, max, date) {
 
 	if (date) {
 		// first check date range, before time range
-		console.log('date.range', date, '/', min, '/', max);
+		// console.log('date.range', date, '/', min, '/', max);
 		return true;
 	}
 
 
-	console.log('time.range', time, '/', min, '/', max);
+	// console.log('time.range', time, '/', min, '/', max);
 	const d = toDateTime(time);
 	// isGreater: 1st > 2nd
 	if (min && !dates.is(d).greater(toDateTime(min))) {

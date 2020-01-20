@@ -63,12 +63,9 @@ class DateInput extends BaseComponent {
 	onMax (value) {
 		this.maxDate = util.getMaxDate(value === 'now' ? new Date() : dates.toDate(value));
         this.picker.max = value;
-        console.log('this.maxDate', this.maxDate);
     }
     
     onValidation (e) {
-        console.log('onValidation', e.detail);
-        // if (e.detail.message)
         this.errorNode.innerHTML = e.detail.message || '';
     }
 
@@ -78,7 +75,9 @@ class DateInput extends BaseComponent {
 	<span ref="labelNode"></span>
 	<div class="date-input-wrapper">
 		<input ref="input" class="empty" />
-		<button class="icon-button" ref="icon"><icon-calendar /></button>
+        <button class="icon-button" ref="icon" aria-expanded="false" aria-label="Date Picker">
+            <icon-calendar aria-hidden="true" />
+        </button>
     </div>
     <div class="input-error" ref="errorNode"></div>
 </label>`;
@@ -95,7 +94,6 @@ class DateInput extends BaseComponent {
 		this.typedValue = value;
 		this.input.value = value;
         const valid = this.validate();
-        console.log('VALID', valid);
 		if (valid) {
 			this.strDate = value;
 			this.picker.value = value;

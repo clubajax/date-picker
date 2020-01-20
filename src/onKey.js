@@ -28,7 +28,6 @@ function onKey (e, type) {
     
 
     if (util.isControl(e)) {
-        console.log('block control key');
 		util.stopEvent(e);
 		return;
 	}
@@ -38,7 +37,6 @@ function onKey (e, type) {
 	}
 
     if (!util.isNum(k)) {
-        console.log('NOT NUM');
 		let value = this.input.value;
 
 		// handle paste, backspace
@@ -94,7 +92,6 @@ function onKey (e, type) {
 	}
 
     if (str.length !== end && beg === end) {
-        console.log('mid edit');
 		// handle selection or middle-string edit
 		let temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end + 1);
 		const nextCharPos = util.nextNumPos(beg + 1, temp);
@@ -106,7 +103,6 @@ function onKey (e, type) {
 		return;
 
     } else if (end !== beg) {
-        console.log('sel replace');
 		// selection replace
 		let temp = util.replaceText(this.typedValue, k, beg, end, 'X');
 		const value = this.setValue(temp, true);

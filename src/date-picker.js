@@ -19,7 +19,7 @@ class DatePicker extends BaseComponent {
 <div class="cal-header" ref="headerNode">
 	<button class="cal-yr-lft" ref="lftYrNode" tabindex="0" aria-label="Previous Year"></button>
 	<button class="cal-lft" ref="lftMoNode" tabindex="0" aria-label="Previous Month"></button>
-	<label class="cal-month" ref="monthNode" role="alert"></label>	
+	<label class="cal-month" ref="monthNode"></label>	
 	<button class="cal-rgt" ref="rgtMoNode" tabindex="0"  aria-label="Next Month"></button>
 	<button class="cal-yr-rgt" ref="rgtYrNode" tabindex="0" aria-label="Next Year"></button>
 </div>
@@ -58,7 +58,6 @@ class DatePicker extends BaseComponent {
         if (this.timeInput) {
             this.timeInput.max = value;
         }
-        console.log('this.maxDate', this.maxDate);
         this.render();
     }
 
@@ -100,8 +99,16 @@ class DatePicker extends BaseComponent {
             this.timeInput ?
                 util.toDateTimeAriaLabel(this.valueDate) :
                 util.toDateAriaLabel(this.valueDate) :
-                'not set';
+            'not set';
         this.setAttribute('aria-label', `Date Picker, current date: ${ariaLabel}`);
+    }
+
+    setAriaMonthYearAlert(enabled) {
+        if (enabled) {
+            this.monthNode.setAttribute('role', 'alert');
+        } else {
+            this.monthNode.removeAttribute('role', 'alert');
+        }
     }
 
     emitEvent(silent) {
@@ -160,6 +167,7 @@ class DatePicker extends BaseComponent {
             this.current = dates.copy(this.valueDate);
             onDomReady(this, () => {
                 this.render();
+                this.setAriaLabel();
             });
         }
     }
@@ -396,7 +404,7 @@ class DatePicker extends BaseComponent {
         this.eventName = this['event-name'] || EVENT_NAME;
         this.emitType = this.eventName === EVENT_NAME ? 'emit' : 'fire';
         this.setAttribute('tabindex', '0');
-        
+
         if (this['range-left']) {
             this.classList.add('left-range');
             this['range-picker'] = true;
@@ -632,6 +640,17 @@ class DatePicker extends BaseComponent {
         this.on(this.footerLink, 'click', () => {
             this.setValue(new Date());
             this.emitEvent();
+        });
+
+        [this.lftMoNode, this.rgtMoNode, this.lftYrNode, this.rgtYrNode].forEach((node) => {
+            this.on(node, 'blur', () => {
+                this.setAriaMonthYearAlert(false);
+            });
+            this.on(node, 'focus', () => {
+                setTimeout(() => {
+                    this.setAriaMonthYearAlert(true);
+                }, 30);
+            });
         });
 
         if (this['range-picker']) {

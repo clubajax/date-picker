@@ -345,7 +345,7 @@
 
 			suite('date input', function () {
 
-				test('it should handle arrow keys', function (done) {
+				test.only('it should handle arrow keys', function (done) {
 					const node = dom('date-input', {
 						label: 'handle arrow keys',
 						value: '12/25/2017',
@@ -726,7 +726,7 @@
 
 			suite('date picker', function () {
 
-                test.only('it should render a picker (MANUAL)', function (done) {
+                test('it should render a picker (MANUAL)', function (done) {
                     const node = dom('date-picker', {label: 'manual picker', value: '12/12/2017 02:20 am'}, body);
                     ready(node, function () {
                         done();

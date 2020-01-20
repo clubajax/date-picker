@@ -71,7 +71,7 @@ module.exports = function (grunt) {
                     // transform not using babel in dev-mode.
                     // if developing in IE or using very new features,
                     // change devBabel to `true`
-                    transform: babelTransform,
+                    transform: devTransform,
                     postBundleCB: function (err, src, next) {
                         console.timeEnd('build');
                         next(err, src);
@@ -84,7 +84,7 @@ module.exports = function (grunt) {
                 },
                 options: {
                     external: [...vendorAliases],
-                    transform: babelTransform,
+                    transform: devTransform,
                     browserifyOptions: {
                         standalone: 'date-picker',
                         debug: false
