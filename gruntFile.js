@@ -2,26 +2,33 @@
 
 const path = require('path');
 const sass = require('node-sass');
+const uglifyify = require('uglifyify');
 
 module.exports = function (grunt) {
-    
+
     // collect dependencies from node_modules
     let nm = path.resolve(__dirname, 'node_modules'),
         vendorAliases = ['@clubajax/custom-elements-polyfill', '@clubajax/dom', '@clubajax/on', '@clubajax/base-component'],
-		baseAliases = ['./src/date-picker'],
-		allAliases = vendorAliases.concat(baseAliases),
-		sourceMaps = 1,
+        baseAliases = ['./src/date-picker'],
+        allAliases = vendorAliases.concat(baseAliases),
+        sourceMaps = 1,
         watch = false,
         watchPort = 35750,
-		devBabel = 0,
-		babelTransform = devBabel ? [[
-			'babelify', {
-			global: true,
-    		presets: ['@babel/preset-env']
-    	}]] : [];
-    
+        devBabel = 0,
+        babelTransform = ['babelify', {
+            global: true,
+            presets: ['@babel/preset-env']
+        }],
+        uglifyTransform = [
+            'uglifyify', {
+                global: true
+            }
+        ],
+        devTransform = devBabel ? [babelTransform] : [],
+        buildTransform = [babelTransform, uglifyTransform];
+
     grunt.initConfig({
-        
+
         browserify: {
             // source maps have to be inline.
             // grunt-exorcise promises to do this, but it seems overly complicated
@@ -40,7 +47,7 @@ module.exports = function (grunt) {
                     }),
                     // not consuming any modules
                     external: null,
-					transform: babelTransform,
+                    transform: devTransform,
                     browserifyOptions: {
                         debug: sourceMaps
                     }
@@ -55,9 +62,9 @@ module.exports = function (grunt) {
                     watch: false,
                     keepAlive: false,
                     external: vendorAliases,
-					alias: {
-                    	//'BaseComponent': './src/BaseComponent'
-					},
+                    alias: {
+                        //'BaseComponent': './src/BaseComponent'
+                    },
                     browserifyOptions: {
                         debug: sourceMaps
                     },
@@ -71,79 +78,79 @@ module.exports = function (grunt) {
                     }
                 }
             },
-			DatePicker:{
-            	files:{
-            		'dist/date-picker.js': ['src/date-picker.js']
-				},
-				options: {
-					external: [...vendorAliases],
-					transform: babelTransform,
-					browserifyOptions: {
-						standalone: 'date-picker',
-						debug: false
-					}
-				}
-			},
+            DatePicker: {
+                files: {
+                    'dist/date-picker.js': ['src/date-picker.js']
+                },
+                options: {
+                    external: [...vendorAliases],
+                    transform: babelTransform,
+                    browserifyOptions: {
+                        standalone: 'date-picker',
+                        debug: false
+                    }
+                }
+            },
             deploy: {
                 files: {
                     'dist/date-picker.js': ['tests/src/date-picker-tests.js']
                 },
                 options: {
-					transform: babelTransform,
+                    transform: buildTransform,
                     browserifyOptions: {
-						standalone: 'date-picker',
+                        standalone: 'date-picker',
                         debug: false
                     }
                 }
             }
         },
 
-		sass: {
-			deploy: {
-				options: {
+        sass: {
+            deploy: {
+                options: {
                     // case sensitive!
                     implementation: sass,
-					sourceMap: true
-				},
-				// 'path/to/result.css': 'path/to/source.scss'
-				files: {
-					'dist/date-picker.css': 'src/date-picker.scss'
-				}
-			},
-			dev: {
-				options: {
+                    sourceMap: true
+                },
+                // 'path/to/result.css': 'path/to/source.scss'
+                files: {
+                    'dist/date-picker.css': 'src/date-picker.scss'
+                }
+            },
+            dev: {
+                options: {
                     // case sensitive!
                     implementation: sass,
-					sourceMap: true
-				},
-				// 'path/to/result.css': 'path/to/source.scss'
-				files: {
-					'tests/dist/date-picker.css': 'src/date-picker.scss'
-				}
-			}
-		},
-        
+                    sourceMap: true
+                },
+                // 'path/to/result.css': 'path/to/source.scss'
+                files: {
+                    'tests/dist/date-picker.css': 'src/date-picker.scss'
+                }
+            }
+        },
+
         watch: {
-			less: {
-				files: ['./src/date-picker.scss'],
-				tasks: ['sass'],
-				options: {
-					// keep from refreshing the page
-					// the page does not care if a less file has changed
-					livereload: false
-				}
-			},
-			// css module is needed for css reload
-			// watch the main file. When it changes it will notify the page
-			// the livereload.js file will check if this is CSS - and if so, reload
-			// the stylesheet, and not the whole page
-			css: {
-				files: 'tests/dist/date-picker.css'
-			},
-			html: {
-				files: ['tests/*.html'],
-				tasks: []
-			},
+            less: {
+                files: ['./src/date-picker.scss'],
+                tasks: ['sass'],
+                options: {
+                    // keep from refreshing the page
+                    // the page does not care if a less file has changed
+                    livereload: false
+                }
+            },
+            // css module is needed for css reload
+            // watch the main file. When it changes it will notify the page
+            // the livereload.js file will check if this is CSS - and if so, reload
+            // the stylesheet, and not the whole page
+            css: {
+                files: 'tests/dist/date-picker.css'
+            },
+            html: {
+                files: ['tests/*.html'],
+                tasks: []
+            },
             scripts: {
                 files: ['tests/src/*.js', 'src/*.js'],
                 tasks: ['build-dev']
@@ -184,7 +191,7 @@ module.exports = function (grunt) {
     // watch build task
     grunt.registerTask('build-dev', function (which) {
         console.time('build');
-		grunt.task.run('sass');
+        grunt.task.run('sass');
         grunt.task.run('browserify:dev');
 
     });
@@ -206,19 +213,19 @@ module.exports = function (grunt) {
         grunt.task.run('http-server');
     });
 
-	grunt.registerTask('deploy', function (which) {
-		grunt.task.run('browserify:deploy');
-		grunt.task.run('sass:deploy');
-		// const compile = require('./scripts/compile');
-		// compile('BaseComponent');
-		// compile('properties');
-		// compile('template');
-		// compile('refs');
-		// compile('item-template');
-	});
+    grunt.registerTask('deploy', function (which) {
+        grunt.task.run('browserify:deploy');
+        grunt.task.run('sass:deploy');
+        // const compile = require('./scripts/compile');
+        // compile('BaseComponent');
+        // compile('properties');
+        // compile('template');
+        // compile('refs');
+        // compile('item-template');
+    });
 
-	grunt.loadNpmTasks('grunt-sass');
-	grunt.loadNpmTasks('grunt-concurrent');
+    grunt.loadNpmTasks('grunt-sass');
+    grunt.loadNpmTasks('grunt-concurrent');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-browserify');
     grunt.loadNpmTasks('grunt-http-server');
