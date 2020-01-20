@@ -94,7 +94,15 @@
 			node.input.selectionStart = pos;
 			node.input.selectionEnd = pos;
 			on.emit(node.input, 'keyup', { key: value });
-		}
+        }
+        
+        function backspace(node) {
+            select(node, 0, 20);
+            // on.emit(node.input, 'keyup', {key: '9'});
+            console.log('BK');
+            on.emit(node.input, 'keypress', {key: 'Backspace'});
+            // on.emit(node.input, 'keyup', {key: 'Backspace'});
+        }
 
 		function clear (node) {
 			node.input.value = '';
@@ -154,7 +162,6 @@
 
         // FIXME: 
         //  time-input blur does not close calendar
-        //  icon does not have index
 
 		suite('tests', function () {
 
@@ -441,6 +448,11 @@
 
                 });
 
+                test.only('it should open to the top left', function () {
+                    const node = dom('date-input', {label: 'open to top left', class: 'BR'}, body);
+                    expect(dom.isNode(node)).to.equal(true);
+                });
+
 				test.skip('it should submit in a form (MANUAL)', function (done) {
 
 					// click submit, view result in URL
@@ -489,7 +501,33 @@
 			});
 
 			suite('time input', function () {
-
+                test.only('it should handle clearing the input and re-typing', function (done) {
+                    const node = dom('time-input', {label: 'clear retype', step: 15}, body);
+                    ready(node, function () {
+                        let emitted;
+                        const events = [];
+                        node.on('change', function (e) {
+                            // console.log('change', e.value);
+                            events.push(1);
+                            emitted = events.join(',')
+                        });
+                        node.focus();
+                        key(node, 1, 1);
+                        key(node, 1, 2);
+                        key(node, 1, 3);
+                        key(node, 1, 4);
+                        node.blur();
+                        expect(node.valid).to.equal(true);
+                        expect(emitted).to.equal('1');
+                        expect(node.value).to.equal('11:11 pm');
+                        node.focus();
+                        
+                        
+                        backspace(node);
+                        // key(node, 'Backspace', 0)
+                        done();
+                    });
+                });
 				test('it should handle valid and invalid from blank', function (done) {
 					const node = dom('time-input', { label: 'valid and invalid from blank', step: 15 }, body);
 					ready(node, function () {
@@ -769,11 +807,6 @@
 						expect(error).to.equal(MAX);
 						done();
 					});
-				});
-
-				test('it should open to the top left', function () {
-					const node = dom('date-input', { label: 'open to top left',  class: 'BR' }, body);
-					expect(dom.isNode(node)).to.equal(true);
 				});
 			});
 

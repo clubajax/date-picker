@@ -4,7 +4,8 @@ function onKey (e, type) {
 	let str = this.typedValue || '';
 	const beg = e.target.selectionStart;
 	const end = e.target.selectionEnd;
-	const k = e.key;
+    const k = e.key;
+    console.log('KEY::::', k);
 
 	if (k === 'Enter') {
 		const valid = this.validate();
@@ -18,9 +19,17 @@ function onKey (e, type) {
 
 	if (k === 'Escape') {
 		this.blur();
-	}
+    }
 
-	if (util.isControl(e)) {
+    // if (k === 'Backspace') {
+    //     // this.blur();
+    //     return true;
+    // }
+    
+    
+
+    if (util.isControl(e)) {
+        console.log('block control key');
 		util.stopEvent(e);
 		return;
 	}
@@ -29,7 +38,9 @@ function onKey (e, type) {
 		e.target.selectionEnd = pos;
 	}
 
-	if (!util.isNum(k)) {
+    console.log('KEY', k);
+    if (!util.isNum(k)) {
+        console.log('NOT NUM');
 		let value = this.input.value;
 
 		// handle paste, backspace
@@ -84,7 +95,8 @@ function onKey (e, type) {
 		return;
 	}
 
-	if (str.length !== end && beg === end) {
+    if (str.length !== end && beg === end) {
+        console.log('mid edit');
 		// handle selection or middle-string edit
 		let temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end + 1);
 		const nextCharPos = util.nextNumPos(beg + 1, temp);
@@ -95,7 +107,8 @@ function onKey (e, type) {
 		util.stopEvent(e);
 		return;
 
-	} else if (end !== beg) {
+    } else if (end !== beg) {
+        console.log('sel replace');
 		// selection replace
 		let temp = util.replaceText(this.typedValue, k, beg, end, 'X');
 		const value = this.setValue(temp, true);

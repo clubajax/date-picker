@@ -13,7 +13,6 @@ function isValid (value = this.input.value, type) {
 		emitError.call(this, 'Not a valid date and time');
 		return false;
 	}
-    console.log('type', type);
 	if (type !== 'time' && type !== 'date' && type !== 'datetime') {
 		// incomplete string
 		emitError.call(this, 'Not a valid date and time');
@@ -79,7 +78,6 @@ function emitError (msg) {
 		return;
 	}
     this.validationError = msg;
-    console.log('EMIT');
 	this.fire('validation', { message: msg }, true);
 }
 

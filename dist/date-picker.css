@@ -181,31 +181,35 @@ date-range-input {
     color: #999;
     display: block;
     margin-bottom: 3px; }
-  date-time-input label .input-wrapper,
-  time-input label .input-wrapper,
-  date-input label .input-wrapper,
-  date-range-input label .input-wrapper {
+  date-time-input label .date-input-wrapper,
+  time-input label .date-input-wrapper,
+  date-input label .date-input-wrapper,
+  date-range-input label .date-input-wrapper {
     position: relative; }
-    date-time-input label .input-wrapper input,
-    time-input label .input-wrapper input,
-    date-input label .input-wrapper input,
-    date-range-input label .input-wrapper input {
-      padding: 5px;
-      border-radius: 2px;
-      font-size: 13px;
-      width: calc(100% - 45px);
-      border: 1px solid #ccc;
-      transition: background-color 300ms ease, border-color 300ms ease; }
-      date-time-input label .input-wrapper input::placeholder,
-      time-input label .input-wrapper input::placeholder,
-      date-input label .input-wrapper input::placeholder,
-      date-range-input label .input-wrapper input::placeholder {
-        font-style: italic; }
-      date-time-input label .input-wrapper input:-ms-input-placeholder,
-      time-input label .input-wrapper input:-ms-input-placeholder,
-      date-input label .input-wrapper input:-ms-input-placeholder,
-      date-range-input label .input-wrapper input:-ms-input-placeholder {
-        font-style: italic; }
+    date-time-input label .date-input-wrapper input,
+    time-input label .date-input-wrapper input,
+    date-input label .date-input-wrapper input,
+    date-range-input label .date-input-wrapper input {
+      width: calc(100% - 45px); }
+  date-time-input label input,
+  time-input label input,
+  date-input label input,
+  date-range-input label input {
+    padding: 5px;
+    border-radius: 2px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    transition: background-color 300ms ease, border-color 300ms ease; }
+    date-time-input label input::placeholder,
+    time-input label input::placeholder,
+    date-input label input::placeholder,
+    date-range-input label input::placeholder {
+      font-style: italic; }
+    date-time-input label input:-ms-input-placeholder,
+    time-input label input:-ms-input-placeholder,
+    date-input label input:-ms-input-placeholder,
+    date-range-input label input:-ms-input-placeholder {
+      font-style: italic; }
   date-time-input.invalid .input-wrapper input,
   date-time-input.invalid input,
   time-input.invalid .input-wrapper input,
@@ -278,7 +282,11 @@ date-range-input {
       left: auto; }
 
 time-input input {
-  width: 70px; }
+  width: 70px;
+  border: 1px solid #ccc;
+  padding: 6px;
+  border-radius: 2px;
+  font-size: 13px; }
 
 date-range-input input {
   width: 50px; }

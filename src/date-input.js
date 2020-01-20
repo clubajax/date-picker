@@ -76,7 +76,7 @@ class DateInput extends BaseComponent {
 		return `
 <label>
 	<span ref="labelNode"></span>
-	<div class="input-wrapper">
+	<div class="date-input-wrapper">
 		<input ref="input" class="empty" />
 		<button class="icon-button" ref="icon"><icon-calendar /></button>
     </div>
@@ -230,7 +230,7 @@ class DateInput extends BaseComponent {
 	}
 
 	connectKeys () {
-		this.on(this.input, 'keydown', util.stopEvent);
+		// this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
 			onKey.call(this, e, this.dateType);

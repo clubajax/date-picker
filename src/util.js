@@ -222,7 +222,7 @@ function isNum (k) {
 const control = {
 	'Shift': 1,
 	'Enter': 1,
-	'Backspace': 1,
+	// 'Backspace': 1,
 	'Delete': 1,
 	'ArrowLeft': 1,
 	'ArrowRight': 1,

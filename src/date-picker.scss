@@ -267,21 +267,24 @@ date-range-input {
             display: block;
             margin-bottom: 3px;
         }
-        .input-wrapper {
+        .date-input-wrapper {
             position: relative;
             input {
-                padding: 5px;
-                border-radius: 2px;
-                font-size: 13px;
                 width: calc(100% - 45px);
-                border: 1px solid $brd;
-                transition: background-color 300ms ease, border-color 300ms ease;
-                &::placeholder {
-                    font-style: italic;
-                }
-                &:-ms-input-placeholder {
-                    font-style: italic;
-                }
+            }
+        }
+        input {
+            padding: 5px;
+            border-radius: 2px;
+            font-size: 13px;
+            
+            border: 1px solid $brd;
+            transition: background-color 300ms ease, border-color 300ms ease;
+            &::placeholder {
+                font-style: italic;
+            }
+            &:-ms-input-placeholder {
+                font-style: italic;
             }
         }
     }
@@ -330,6 +333,10 @@ date-range-input {
 time-input {
     input {
         width: 70px;
+        border: 1px solid #ccc;
+        padding: 6px;
+        border-radius: 2px;
+        font-size: 13px;
     }
 }
 
@@ -400,7 +407,7 @@ date-time-input {
     }
 }
 
-.input-error{
+.input-error {
     font-size: 12px;
     color: red;
 }

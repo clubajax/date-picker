@@ -71,7 +71,8 @@ class TimeInput extends BaseComponent {
 		this.typedValue = '';
 	}
 
-	setValue (value, silent, ampm) {
+    setValue(value, silent, ampm) {
+        console.log('setValue', value);
 		let valid = this.validate(value);
 		const isReady = /[ap]m/i.test(value) || value.replace(/(?!X)\D/g, '').length >= 4;
 		if (isReady) {
@@ -192,18 +193,14 @@ class TimeInput extends BaseComponent {
 	}
 
 	connectKeys () {
-		this.on(this.input, 'keydown', util.stopEvent);
+		// this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
 			onKey.call(this, e, this.dateType);
 			this.onChange(e);
 		});
-		this.on(this.input, 'blur', () => {
-			this.blur();
-		});
-		this.on(this.input, 'input', (e) => {
-			this.onChange(e);
-		});
+        this.on(this.input, 'blur', () => this.blur.bind(this));
+		this.on(this.input, 'input', (e) => this.onChange.bind(this));
 	}
 }
 
