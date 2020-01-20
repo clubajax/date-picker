@@ -99,7 +99,7 @@
         function backspace(node) {
             select(node, 0, 20);
             // on.emit(node.input, 'keyup', {key: '9'});
-            console.log('BK');
+            // console.log('BK');
             on.emit(node.input, 'keypress', {key: 'Backspace'});
             // on.emit(node.input, 'keyup', {key: 'Backspace'});
         }
@@ -448,7 +448,7 @@
 
                 });
 
-                test.only('it should open to the top left', function () {
+                test('it should open to the top left', function () {
                     const node = dom('date-input', {label: 'open to top left', class: 'BR'}, body);
                     expect(dom.isNode(node)).to.equal(true);
                 });
@@ -725,6 +725,13 @@
 			});
 
 			suite('date picker', function () {
+
+                test.only('it should render a picker (MANUAL)', function (done) {
+                    const node = dom('date-picker', {label: 'manual picker', value: '12/12/2017 02:20 am'}, body);
+                    ready(node, function () {
+                        done();
+                    });
+                });
 
 				test('it should add a time to the picker', function (done) {
 					const node = dom('date-picker', { label: 'add a time to the picker', time: true, value: '12/12/2017 02:20 am' }, body);

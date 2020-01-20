@@ -1,4 +1,4 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.datePicker = f()}})(function(){var define,module,exports;return (function(){function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s}return e})()({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.datePicker = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 const on = require('@clubajax/on');
 
 class BaseComponent extends HTMLElement {
@@ -317,6 +317,18 @@ function makeGlobalListeners (name, eventName) {
 makeGlobalListeners('onDomReady', 'domready');
 makeGlobalListeners('onConnected', 'connected');
 
+BaseComponent.injectProps = function (Constructor, { props = [], bools = [], attrs = [] }) {
+	Constructor.observedAttributes = [...props, ...bools, ...attrs];
+	Constructor.bools = bools;
+	Constructor.props = props;
+};
+
+BaseComponent.define = function (tagName, Constructor, options) {
+	BaseComponent.injectProps(Constructor, options);
+	customElements.define(tagName, Constructor);
+	return Constructor;
+};
+
 module.exports = BaseComponent;
 },{"@clubajax/on":9}],2:[function(require,module,exports){
 module.exports = require('@clubajax/base-component/src/BaseComponent');
@@ -337,6 +349,7 @@ function setBoolean (node, prop) {
 		},
 		set (value) {
 			this.isSettingAttribute = true;
+			value = (value !== false && value !== null && value !== undefined);
 			if (value) {
 				this.setAttribute(prop, '');
 			} else {
@@ -372,9 +385,13 @@ function setProperty (node, prop) {
 		},
 		set (value) {
 			this.isSettingAttribute = true;
-			this.setAttribute(prop, value);
-			if (this.attributeChanged) {
-				this.attributeChanged(prop, value);
+			if (typeof value === 'object') {
+				propValue = value;
+			} else {
+				this.setAttribute(prop, value);
+				if (this.attributeChanged) {
+					this.attributeChanged(prop, value);
+				}
 			}
 			const fn = this[onify(prop)];
 			if(fn){
@@ -392,21 +409,8 @@ function setProperty (node, prop) {
 	});
 }
 
-function setObject (node, prop) {
-	Object.defineProperty(node, prop, {
-		enumerable: true,
-		configurable: true,
-		get () {
-			return this['__' + prop];
-		},
-		set (value) {
-			this['__' + prop] = value;
-		}
-	});
-}
-
 function setProperties (node) {
-	let props = node.props || node.properties;
+	let props = node.constructor.props || node.props;
 	if (props) {
 		props.forEach(function (prop) {
 			if (prop === 'disabled') {
@@ -420,19 +424,10 @@ function setProperties (node) {
 }
 
 function setBooleans (node) {
-	let props = node.bools || node.booleans;
+	let props = node.constructor.bools || node.bools;
 	if (props) {
 		props.forEach(function (prop) {
 			setBoolean(node, prop);
-		});
-	}
-}
-
-function setObjects (node) {
-	let props = node.objects;
-	if (props) {
-		props.forEach(function (prop) {
-			setObject(node, prop);
 		});
 	}
 }
@@ -679,7 +674,8 @@ var supportsV1 = 'customElements' in window;
 var nativeShimBase64 = "ZnVuY3Rpb24gbmF0aXZlU2hpbSgpeygoKT0+eyd1c2Ugc3RyaWN0JztpZighd2luZG93LmN1c3RvbUVsZW1lbnRzKXJldHVybjtjb25zdCBhPXdpbmRvdy5IVE1MRWxlbWVudCxiPXdpbmRvdy5jdXN0b21FbGVtZW50cy5kZWZpbmUsYz13aW5kb3cuY3VzdG9tRWxlbWVudHMuZ2V0LGQ9bmV3IE1hcCxlPW5ldyBNYXA7bGV0IGY9ITEsZz0hMTt3aW5kb3cuSFRNTEVsZW1lbnQ9ZnVuY3Rpb24oKXtpZighZil7Y29uc3Qgaj1kLmdldCh0aGlzLmNvbnN0cnVjdG9yKSxrPWMuY2FsbCh3aW5kb3cuY3VzdG9tRWxlbWVudHMsaik7Zz0hMDtjb25zdCBsPW5ldyBrO3JldHVybiBsfWY9ITE7fSx3aW5kb3cuSFRNTEVsZW1lbnQucHJvdG90eXBlPWEucHJvdG90eXBlO09iamVjdC5kZWZpbmVQcm9wZXJ0eSh3aW5kb3csJ2N1c3RvbUVsZW1lbnRzJyx7dmFsdWU6d2luZG93LmN1c3RvbUVsZW1lbnRzLGNvbmZpZ3VyYWJsZTohMCx3cml0YWJsZTohMH0pLE9iamVjdC5kZWZpbmVQcm9wZXJ0eSh3aW5kb3cuY3VzdG9tRWxlbWVudHMsJ2RlZmluZScse3ZhbHVlOihqLGspPT57Y29uc3QgbD1rLnByb3RvdHlwZSxtPWNsYXNzIGV4dGVuZHMgYXtjb25zdHJ1Y3Rvcigpe3N1cGVyKCksT2JqZWN0LnNldFByb3RvdHlwZU9mKHRoaXMsbCksZ3x8KGY9ITAsay5jYWxsKHRoaXMpKSxnPSExO319LG49bS5wcm90b3R5cGU7bS5vYnNlcnZlZEF0dHJpYnV0ZXM9ay5vYnNlcnZlZEF0dHJpYnV0ZXMsbi5jb25uZWN0ZWRDYWxsYmFjaz1sLmNvbm5lY3RlZENhbGxiYWNrLG4uZGlzY29ubmVjdGVkQ2FsbGJhY2s9bC5kaXNjb25uZWN0ZWRDYWxsYmFjayxuLmF0dHJpYnV0ZUNoYW5nZWRDYWxsYmFjaz1sLmF0dHJpYnV0ZUNoYW5nZWRDYWxsYmFjayxuLmFkb3B0ZWRDYWxsYmFjaz1sLmFkb3B0ZWRDYWxsYmFjayxkLnNldChrLGopLGUuc2V0KGosayksYi5jYWxsKHdpbmRvdy5jdXN0b21FbGVtZW50cyxqLG0pO30sY29uZmlndXJhYmxlOiEwLHdyaXRhYmxlOiEwfSksT2JqZWN0LmRlZmluZVByb3BlcnR5KHdpbmRvdy5jdXN0b21FbGVtZW50cywnZ2V0Jyx7dmFsdWU6KGopPT5lLmdldChqKSxjb25maWd1cmFibGU6ITAsd3JpdGFibGU6ITB9KTt9KSgpO30=";
 
 if(supportsV1 && !window['force-ce-shim']){
-if(!window['no-native-shim']) {
+	var noNativeShim = typeof NO_NATIVE_SHIM !== "undefined" ? NO_NATIVE_SHIM : window['no-native-shim'];
+if(!noNativeShim) {
 eval(window.atob(nativeShimBase64));
 nativeShim();
 }
@@ -711,7 +707,7 @@ a=I.call(this,a,c);if(l(this))for(c=0;c<d.length;c++)x(b,d[c]);return a}d=l(a);c
 return a});q(Node.prototype,"removeChild",function(a){var c=l(a),d=J.call(this,a);c&&z(b,a);return d});q(Node.prototype,"replaceChild",function(a,c){if(a instanceof DocumentFragment){var d=Array.prototype.slice.apply(a.childNodes);a=K.call(this,a,c);if(l(this))for(z(b,c),c=0;c<d.length;c++)x(b,d[c]);return a}var d=l(a),e=K.call(this,a,c),f=l(this);f&&z(b,c);d&&z(b,a);f&&x(b,a);return e});L&&L.get?a(Node.prototype,L):t(b,function(b){a(b,{enumerable:!0,configurable:!0,get:function(){for(var a=[],b=
 0;b<this.childNodes.length;b++)a.push(this.childNodes[b].textContent);return a.join("")},set:function(a){for(;this.firstChild;)J.call(this,this.firstChild);H.call(this,document.createTextNode(a))}})})};function sa(b){var a=Element.prototype;a.before=function(a){for(var c=[],d=0;d<arguments.length;++d)c[d-0]=arguments[d];d=c.filter(function(a){return a instanceof Node&&l(a)});ja.apply(this,c);for(var e=0;e<d.length;e++)z(b,d[e]);if(l(this))for(d=0;d<c.length;d++)e=c[d],e instanceof Element&&x(b,e)};a.after=function(a){for(var c=[],d=0;d<arguments.length;++d)c[d-0]=arguments[d];d=c.filter(function(a){return a instanceof Node&&l(a)});ka.apply(this,c);for(var e=0;e<d.length;e++)z(b,d[e]);if(l(this))for(d=
 0;d<c.length;d++)e=c[d],e instanceof Element&&x(b,e)};a.replaceWith=function(a){for(var c=[],d=0;d<arguments.length;++d)c[d-0]=arguments[d];var d=c.filter(function(a){return a instanceof Node&&l(a)}),e=l(this);la.apply(this,c);for(var f=0;f<d.length;f++)z(b,d[f]);if(e)for(z(b,this),d=0;d<c.length;d++)e=c[d],e instanceof Element&&x(b,e)};a.remove=function(){var a=l(this);ma.call(this);a&&z(b,this)}};function ta(){var b=Y;function a(a,c){Object.defineProperty(a,"innerHTML",{enumerable:c.enumerable,configurable:!0,get:c.get,set:function(a){var d=this,e=void 0;l(this)&&(e=[],n(this,function(a){a!==d&&e.push(a)}));c.set.call(this,a);if(e)for(var f=0;f<e.length;f++){var h=e[f];1===h.__CE_state&&b.disconnectedCallback(h)}this.ownerDocument.__CE_hasRegistry?A(b,this):v(b,this);return a}})}function e(a,c){q(a,"insertAdjacentElement",function(a,d){var e=l(d);a=c.call(this,a,d);e&&z(b,d);l(a)&&x(b,d);
-return a})}M?q(Element.prototype,"attachShadow",function(a){return this.__CE_shadowRoot=a=M.call(this,a)}):console.warn("Custom Elements: `Element#attachShadow` was not patched.");if(N&&N.get)a(Element.prototype,N);else if(W&&W.get)a(HTMLElement.prototype,W);else{var c=F.call(document,"div");t(b,function(b){a(b,{enumerable:!0,configurable:!0,get:function(){return G.call(this,!0).innerHTML},set:function(a){var b="template"===this.localName?this.content:this;for(c.innerHTML=a;0<b.childNodes.length;)J.call(b,
+return a})}M?q(Element.prototype,"attachShadow",function(a){return this.__CE_shadowRoot=a=M.call(this,a)}):null;if(N&&N.get)a(Element.prototype,N);else if(W&&W.get)a(HTMLElement.prototype,W);else{var c=F.call(document,"div");t(b,function(b){a(b,{enumerable:!0,configurable:!0,get:function(){return G.call(this,!0).innerHTML},set:function(a){var b="template"===this.localName?this.content:this;for(c.innerHTML=a;0<b.childNodes.length;)J.call(b,
 b.childNodes[0]);for(;0<c.childNodes.length;)H.call(b,c.childNodes[0])}})})}q(Element.prototype,"setAttribute",function(a,c){if(1!==this.__CE_state)return Q.call(this,a,c);var d=O.call(this,a);Q.call(this,a,c);c=O.call(this,a);d!==c&&b.attributeChangedCallback(this,a,d,c,null)});q(Element.prototype,"setAttributeNS",function(a,c,e){if(1!==this.__CE_state)return T.call(this,a,c,e);var d=S.call(this,a,c);T.call(this,a,c,e);e=S.call(this,a,c);d!==e&&b.attributeChangedCallback(this,c,d,e,a)});q(Element.prototype,
 "removeAttribute",function(a){if(1!==this.__CE_state)return R.call(this,a);var c=O.call(this,a);R.call(this,a);null!==c&&b.attributeChangedCallback(this,a,c,null,null)});q(Element.prototype,"removeAttributeNS",function(a,c){if(1!==this.__CE_state)return U.call(this,a,c);var d=S.call(this,a,c);U.call(this,a,c);var e=S.call(this,a,c);d!==e&&b.attributeChangedCallback(this,c,d,e,a)});X?e(HTMLElement.prototype,X):V?e(Element.prototype,V):console.warn("Custom Elements: `Element#insertAdjacentElement` was not patched.");
 pa(b,Element.prototype,{i:ha,append:ia});sa(b)};
@@ -738,13 +734,13 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 
 	const
 		// tests that it is a date string, not a valid date. 88/88/8888 would be true
-		dateRegExp = /^(\d{1,2})([\/-])(\d{1,2})([\/-])(\d{4})\b/,
+		dateRegExp = /^(\d{1,4})([\/-])(\d{1,2})([\/-])(\d{1,4})\b/,
 
 		// 2015-05-26T00:00:00
 		tsRegExp = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\b/,
 
 		// 12:30 am
-		timeRegExp = /(\d\d):(\d\d)(?:\s|:)(\d\d|[ap]m)(?:\s)*([ap]m)*/i,
+		timeRegExp = /(\d+):(\d\d)(?:\s|:)(\d\d|[ap]m)(?:\s)*([ap]m)*/i,
 
 		daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
 		days = [],
@@ -758,7 +754,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 
 		// https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html
 		//
-		datePattern = /yyyy|yy|MMMM|MMM|MM|M|dd|d|E|e|H|h|m|s|A|a/g,
+		datePattern = /yyyy|yy|MMMM|MMM|MM|M|dd|d|E|e|H|hh|h|m|s|A|a/g,
 		datePatternLibrary = {
 			yyyy: function (date) {
 				return date.getFullYear();
@@ -794,6 +790,16 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 			H: function (date) {
 				return pad(date.getHours());
 			},
+			hh: function (date) {
+				var hr = date.getHours();
+				if (hr > 12) {
+					hr -= 12;
+				}
+				if (hr === 0) {
+					hr = 12;
+                }
+				return pad(hr);
+			},
 			h: function (date) {
 				var hr = date.getHours();
 				if (hr > 12) {
@@ -801,8 +807,8 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 				}
 				if (hr === 0) {
 					hr = 12;
-				}
-				return pad(hr);
+                }
+				return hr;
 			},
 			m: function (date) {
 				return pad(date.getMinutes());
@@ -864,21 +870,21 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		monthDict[abbr] = index;
 	});
 
-	function isLeapYear (dateOrYear) {
+	function isLeapYear(dateOrYear) {
 		const year = dateOrYear instanceof Date ? dateOrYear.getFullYear() : dateOrYear;
 		return !(year % 400) || (!(year % 4) && !!(year % 100));
 	}
 
-	function isValidObject (date) {
+	function isValidObject(date) {
 		let ms;
 		if (typeof date === 'object' && date instanceof Date) {
 			ms = date.getTime();
-			return !isNaN(ms) && ms > 0;
+			return !isNaN(ms);
 		}
 		return false;
 	}
 
-	function isDate (value) {
+	function isDate(value) {
 		if (typeof value === 'object') {
 			return isValidObject(value);
 		}
@@ -916,8 +922,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 			month = +parts[1];
 			day = +parts[3];
 			year = +parts[5];
-			// rough check of a year
-			if (0 < year && year < 2100 && 1 <= month && month <= 12 && 1 <= day &&
+			if (1 <= month && month <= 12 && 1 <= day &&
 				day <= (month === 2 && isLeapYear(year) ? 29 : monthLengths[month - 1])) {
 				return true;
 			}
@@ -941,42 +946,66 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return false;
 	}
 
-	function pad (num) {
+	function padded(value) {
+		const time = timeRegExp.exec(value);
+		const date = dateRegExp.exec(value);
+		let str = '';
+		if (date) {
+			str += pad(date[1]) + date[2] + pad(date[3]) + date[4] + date[5];
+		}
+		if (date && time) {
+			str += ' ';
+		}
+		if (time) {
+			if (time[4]) {
+				str += pad(time[1]) + ':' + time[2] + ':' + time[3] + ' ' + time[4];
+			} else {
+				str += pad(time[1]) + ':' + time[2] + ' ' + time[3];
+			}
+
+		}
+		return str;
+	}
+
+	function pad(num) {
+		if (typeof num === 'string') {
+			return num.length === 1 ? '0' + num : num;
+		}
 		return (num < 10 ? '0' : '') + num;
 	}
 
-	function getMonth (dateOrIndex) {
+	function getMonth(dateOrIndex) {
 		return typeof dateOrIndex === 'number' ? dateOrIndex : dateOrIndex.getMonth();
 	}
 
-	function getMonthIndex (name) {
+	function getMonthIndex(name) {
 		const index = monthDict[name];
 		return typeof index === 'number' ? index : void 0;
 	}
 
-	function getMonthName (date) {
+	function getMonthName(date) {
 		return months[getMonth(date)];
 	}
 
-	function getFirstSunday (date) {
+	function getFirstSunday(date) {
 		// returns a negative index related to the 1st of the month
 		const d = new Date(date.getTime());
 		d.setDate(1);
 		return -d.getDay();
 	}
 
-	function getDaysInPrevMonth (date) {
+	function getDaysInPrevMonth(date) {
 		const d = new Date(date);
 		d.setMonth(d.getMonth() - 1);
 		return getDaysInMonth(d);
 	}
 
-	function getDaysInMonth (date) {
+	function getDaysInMonth(date) {
 		const month = date.getMonth();
 		return month === 1 && isLeapYear(date) ? 29 : monthLengths[month];
 	}
 
-	function toDate (value) {
+	function toDate(value) {
 		if (typeof value !== 'string') {
 			return value;
 		}
@@ -986,9 +1015,13 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		}
 		let date = new Date(-1);
 
-		// 11/20/2000
+
 		let parts = dateRegExp.exec(value);
-		if (parts && parts[2] === parts[4]) {
+		if (parts && parts[1].length === 4) {
+			// 2000-02-20
+			date = new Date(+parts[1], +parts[3] - 1, +parts[5]);
+		} else if (parts && parts[2] === parts[4]) {
+			// 11/20/2000
 			date = new Date(+parts[5], +parts[1] - 1, +parts[3]);
 		}
 
@@ -1022,25 +1055,26 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return date;
 	}
 
-	function formatDatePattern (date, pattern) {
+	function formatDatePattern(date, pattern) {
 		// 'M d, yyyy' Dec 5, 2015
 		// 'MM dd yy' December 05 15
 		// 'm-d-yy' 1-1-15
 		// 'mm-dd-yyyy' 01-01-2015
 		// 'm/d/yy' 12/25/15
 		// time:
-		// 'yyyy/MM/dd h:m A' 2016/01/26 04:23 AM
+		// 'yyyy/MM/dd h:m A' 2016/01/26 4:23 AM
+		// 'yyyy/MM/dd hh:m A' 2016/01/26 04:23 AM
 
 		if (/^m\/|\/m\//.test(pattern)) {
 			console.warn('Invalid pattern. Did you mean:', pattern.replace('m', 'M'));
 		}
 
-		return pattern.replace(datePattern, function (name) {
+        return pattern.replace(datePattern, function (name) {
 			return datePatternLibrary[name](date);
 		});
 	}
 
-	function format (date, delimiterOrPattern) {
+	function format(date, delimiterOrPattern) {
 		if (delimiterOrPattern && delimiterOrPattern.length > 1) {
 			return formatDatePattern(date, delimiterOrPattern);
 		}
@@ -1053,7 +1087,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return [pad(m), pad(d), y].join(del);
 	}
 
-	function toISO (date, includeTZ) {
+	function toISO(date, includeTZ) {
 		const
 			now = new Date(),
 			then = new Date(date.getTime());
@@ -1066,7 +1100,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return str;
 	}
 
-	function natural (date) {
+	function natural(date) {
 		if (typeof date === 'string') {
 			date = this.from(date);
 		}
@@ -1090,11 +1124,11 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return hours + ':' + pad(minutes) + ' ' + period + ' on ' + pad(month) + '/' + pad(day) + '/' + year;
 	}
 
-	function add (date, amount, dateType) {
+	function add(date, amount, dateType) {
 		return subtract(date, -amount, dateType);
 	}
 
-	function subtract (date, amount, dateType) {
+	function subtract(date, amount, dateType) {
 		// subtract N days from date
 		const
 			time = date.getTime(),
@@ -1112,7 +1146,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return new Date(time - length.day * amount);
 	}
 
-	function subtractDate (date1, date2, dateType) {
+	function subtractDate(date1, date2, dateType) {
 		// dateType: week, day, hr, min, sec
 		// past dates have a positive value
 		// future dates have a negative value
@@ -1133,21 +1167,43 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return Math.floor((utc2 - utc1) / divideBy[dateType]);
 	}
 
-	function isLess (d1, d2) {
+	function isLess(d1, d2) {
 		if (isValidObject(d1) && isValidObject(d2)) {
 			return d1.getTime() < d2.getTime();
 		}
 		return false;
 	}
 
-	function isGreater (d1, d2) {
+	function isGreater(d1, d2) {
 		if (isValidObject(d1) && isValidObject(d2)) {
 			return d1.getTime() > d2.getTime();
 		}
 		return false;
 	}
 
-	function diff (date1, date2) {
+	function max(d1, d2) {
+		const args = Array.isArray(arguments[0]) ? arguments[0] : arguments;
+		let maxDate = new Date(1901, 1, 1);
+		for (let i = 0; i < args.length; i++) {
+			if (isGreater(args[i], maxDate)) {
+				maxDate = args[i];
+			}
+		}
+		return maxDate;
+	}
+
+	function min() {
+		const args = Array.isArray(arguments[0]) ? arguments[0] : arguments;
+		let minDate = new Date(2099, 0, 1);
+		for (let i = 0; i < args.length; i++) {
+			if (isLess(args[i], minDate)) {
+				minDate = args[i];
+			}
+		}
+		return minDate;
+	}
+
+	function diff(date1, date2) {
 		// return the difference between 2 dates in days
 		const
 			utc1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate()),
@@ -1156,14 +1212,14 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return Math.abs(Math.floor((utc2 - utc1) / length.day));
 	}
 
-	function copy (date) {
+	function copy(date) {
 		if (isValidObject(date)) {
 			return new Date(date.getTime());
 		}
 		return date;
 	}
 
-	function getNaturalDay (date, compareDate, noDaysOfWeek) {
+	function getNaturalDay(date, compareDate, noDaysOfWeek) {
 
 		const
 			today = compareDate || new Date(),
@@ -1187,7 +1243,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return !noDaysOfWeek && daysAgo < daysOfWeek.length ? daysOfWeek[date.getDay()] : format(date);
 	}
 
-	function zeroTime (date) {
+	function zeroTime(date) {
 		date = copy(date);
 		date.setHours(0);
 		date.setMinutes(0);
@@ -1196,12 +1252,20 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return date;
 	}
 
-	function toTimestamp (date) {
-		return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' +
-			pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+	function minutesToTime(mins) {
+		const sign = mins > 0 ? '-' : '+';
+		const h = Math.floor(mins / 60);
+		const m = ((mins / 60) - h) * 60;
+		return sign + pad(h) + ':' + pad(m);
 	}
 
-	function fromTimestamp (str) {
+	function toTimestamp(date, offset) {
+		const tz = !offset ? '' : minutesToTime(date.getTimezoneOffset());
+		return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T' +
+			pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds()) + tz;
+	}
+
+	function fromTimestamp(str) {
 		// 2015-05-26T00:00:00
 
 		// strip timezone // 2015-05-26T00:00:00Z
@@ -1215,15 +1279,15 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return new Date(-1);
 	}
 
-	function isTimestamp (str) {
+	function isTimestamp(str) {
 		return typeof str === 'string' && tsRegExp.test(str);
 	}
 
-	function toUtcTimestamp (date) {
+	function toUtcTimestamp(date) {
 		return toTimestamp(toUTC(date));
 	}
 
-	function fromUtcTimestamp (date) {
+	function fromUtcTimestamp(date) {
 		date = toDate(date);
 		const tz = date.getTimezoneOffset() * 60000;
 		const time = date.getTime() + tz;
@@ -1231,49 +1295,49 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return new Date(tzDate.toUTCString());
 	}
 
-	function toUTC (date) {
+	function toUTC(date) {
 		date = toDate(date);
 		return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()));
 	}
 
-	function is (d1) {
+	function is(d1) {
 		return {
-			less (d2) {
+			less: function (d2) {
 				return isLess(d1, d2);
 			},
-			greater (d2) {
+			greater: function (d2) {
 				return isGreater(d1, d2);
 			},
-			valid () {
+			valid: function () {
 				return isDate(d1);
 			},
-			timestamp () {
+			timestamp: function () {
 				return isTimestamp(d1);
 			},
-			equal(d2) {
+			equal: function (d2) {
 				return toDate(d1).getTime() === toDate(d2).getTime();
 			},
-			equalDate (d2) {
+			equalDate: function (d2) {
 				return d1.getFullYear() === d2.getFullYear() &&
 					d1.getMonth() === d2.getMonth() &&
 					d1.getDate() === d2.getDate();
 			},
-			equalTime (d2) {
+			equalTime: function (d2) {
 				return d1.getHours() === d2.getHours() &&
 					d1.getMinutes() && d2.getMinutes() &&
 					d1.getSeconds() === d2.getSeconds();
 			},
-			time () {
+			time: function () {
 				if (typeof d1 !== 'string') {
 					throw new Error('value should be a string');
 				}
 				return timeRegExp.test(d1);
 			},
-			date () {
+			date: function () {
 				if (typeof d1 !== 'string') {
 					throw new Error('value should be a string');
 				}
-				return dateRegExp.test(d1);
+				return isDate(d1);
 			}
 		}
 	}
@@ -1299,6 +1363,8 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		subtractDate: subtractDate,
 		isLess: isLess,
 		isGreater: isGreater,
+		min: min,
+		max: max,
 		// special types
 		isLeapYear: isLeapYear,
 		getMonthIndex: getMonthIndex,
@@ -1316,6 +1382,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		clone: copy,
 		length: length,
 		pad: pad,
+		padded: padded,
 		// lists
 		months: {
 			full: months,
@@ -1330,6 +1397,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		}
 	};
 }));
+
 },{}],8:[function(require,module,exports){
 /* UMD.define */
 (function (root, factory) {
@@ -1384,7 +1452,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 	}
 
 	function style (node, prop, value) {
-		var key, computed, result;
+		var computed, result;
 		if (typeof prop === 'object') {
 			// object setter
 			Object.keys(prop).forEach(function (key) {
@@ -1427,14 +1495,13 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 	}
 
 	function attr (node, prop, value) {
-		var key;
-
 		if (typeof prop === 'object') {
 
 			var bools = {};
 			var strings = {};
 			var objects = {};
 			var events = {};
+			var functions = {};
 			Object.keys(prop).forEach(function (key) {
 				if (typeof prop[key] === 'boolean') {
 					bools[key] = prop[key];
@@ -1444,7 +1511,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 					if (/on[A-Z]/.test(key)) {
 						events[key] = prop[key];
 					} else {
-						console.warn('dom warning: function used with `onEvent` syntax');
+						functions[key] = prop[key];
 					}
 				} else {
 					strings[key] = prop[key];
@@ -1456,6 +1523,7 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 			Object.keys(strings).forEach(function (key) { attr(node, key, prop[key]); });
 			Object.keys(events).forEach(function (key) { attr(node, key, prop[key]); });
 			Object.keys(objects).forEach(function (key) { attr(node, key, prop[key]); });
+			Object.keys(functions).forEach(function (key) { attr(node, key, prop[key]); });
 
 			return null;
 		}
@@ -1475,7 +1543,11 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 				attr(node, value);
 			}
 			else if (typeof value === 'function') {
-				attachEvent(node, prop, value);
+				if (/on[A-Z]/.test(prop)) {
+					attachEvent(node, prop, value);
+				} else {
+					node[prop] = value;
+				}
 			}
 			else if (typeof value === 'object') {
 				// object, like 'data'
@@ -1494,10 +1566,10 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 	}
 
 	function attachEvent (node, prop, value) {
-		var event = prop.replace('on', '').toLowerCase();
+		var event = toEventName(prop);
 		node.addEventListener(event, value);
 
-		var callback = function(mutationsList) {
+		var callback = function (mutationsList) {
 			mutationsList.forEach(function (mutation) {
 				for (var i = 0; i < mutation.removedNodes.length; i++) {
 					var n = mutation.removedNodes[i];
@@ -1539,9 +1611,9 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 	}
 
 	function relBox (node, parentNode) {
-		const parent = parentNode || node.parentNode;
-		const pBox = box(parent);
-		const bx = box(node);
+		var parent = parentNode || node.parentNode;
+		var pBox = box(parent);
+		var bx = box(node);
 
 		return {
 			w: bx.w,
@@ -1660,6 +1732,15 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		}
 	}
 
+	function removeChildren (node) {
+		var children = [];
+		while (node.children.length) {
+			var child = node.children[0];
+			children.push(node.removeChild(child));
+		}
+		return children;
+	}
+
 	function addContent (node, options) {
 		var html;
 		if (options.html !== undefined || options.innerHTML !== undefined) {
@@ -1715,6 +1796,19 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 			refNode.parentNode.insertBefore(node, sibling);
 		}
 		return sibling;
+	}
+
+	function place (parent, node, position) {
+		if (!parent.children.length ||
+			position === null ||
+			position === undefined ||
+			position === -1 ||
+			position >= parent.children.length
+		) {
+			parent.appendChild(node);
+			return;
+		}
+		parent.insertBefore(node, parent.children[position]);
 	}
 
 	function destroy (node) {
@@ -1799,17 +1893,6 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		}
 	};
 
-	function toArray (names) {
-		if (!names) {
-			return [];
-		}
-		return names.split(' ').map(function (name) {
-			return name.trim();
-		}).filter(function (name) {
-			return !!name;
-		});
-	}
-
 	function normalize (val) {
 		if (typeof val === 'string') {
 			val = val.trim();
@@ -1832,6 +1915,30 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 		return val;
 	}
 
+	function toArray (names) {
+		if (!names) {
+			return [];
+		}
+		return names.split(' ').map(function (name) {
+			return name.trim();
+		}).filter(function (name) {
+			return !!name;
+		});
+	}
+
+	function toEventName (s) {
+		s = s.replace('on', '');
+		var str = '';
+		for (var i = 0; i < s.length; i++) {
+			if (i === 0 || s.charCodeAt(i) > 90) {
+				str += s[i].toLowerCase();
+			} else {
+				str += '-' + s[i].toLowerCase();
+			}
+		}
+		return str;
+	}
+
 	dom.normalize = normalize;
 	dom.clean = clean;
 	dom.query = query;
@@ -1848,6 +1955,8 @@ var Z=window.customElements;if(!Z||Z.forcePolyfill||"function"!=typeof Z.define|
 	dom.insertAfter = insertAfter;
 	dom.size = size;
 	dom.relBox = relBox;
+	dom.place = place;
+	dom.removeChildren = removeChildren;
 
 	return dom;
 }));
@@ -2260,28 +2369,23 @@ const dom = require('@clubajax/dom');
 const dates = require('@clubajax/dates');
 const util = require('./util');
 const onKey = require('./onKey');
+const isValid = require('./isValid');
 const focusManager = require('./focusManager');
 require('./icon-calendar');
 
 const defaultPlaceholder = 'MM/DD/YYYY';
 const defaultMask = 'XX/XX/XXXX';
-const props = ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time'];
-const bools = ['required', 'time', 'static'];
 
 const FLASH_TIME = 1000;
 
+
+
 class DateInput extends BaseComponent {
 
-	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
+	constructor () {
+		super();
+		this.dateType = 'date';
+		this.showing = false;
 	}
 
 	attributeChanged (name, value) {
@@ -2296,6 +2400,8 @@ class DateInput extends BaseComponent {
 			return;
 		}
 		const isInit = !this.strDate;
+		value = dates.padded(value);
+
 		this.strDate = dates.isValid(value) ? value : '';
 		onDomReady(this, () => {
 			this.setValue(this.strDate, isInit);
@@ -2315,57 +2421,67 @@ class DateInput extends BaseComponent {
 	}
 
 	onMin (value) {
-		const d = dates.toDate(value);
-		this.minDate = d;
-		this.minInt = d.getTime();
+		this.minDate = util.getMinDate(value === 'now' ? new Date() : dates.toDate(value));
 		this.picker.min = value;
 	}
 
 	onMax (value) {
-		const d = dates.toDate(value);
-		this.maxDate = d;
-		this.maxInt = d.getTime();
-		this.picker.max = value;
-	}
-
+		this.maxDate = util.getMaxDate(value === 'now' ? new Date() : dates.toDate(value));
+        this.picker.max = value;
+        console.log('this.maxDate', this.maxDate);
+    }
+    
+    onValidation (e) {
+        console.log('onValidation', e.detail);
+        // if (e.detail.message)
+        this.errorNode.innerHTML = e.detail.message || '';
+    }
 
 	get templateString () {
 		return `
 <label>
 	<span ref="labelNode"></span>
-	<div class="input-wrapper">
+	<div class="date-input-wrapper">
 		<input ref="input" class="empty" />
-		<icon-calendar />
-	</div>
+		<button class="icon-button" ref="icon"><icon-calendar /></button>
+    </div>
+    <div class="input-error" ref="errorNode"></div>
 </label>`;
-	}
-
-	constructor () {
-		super();
-		this.showing = false;
 	}
 
 	setValue (value, silent) {
 		if (value === this.typedValue) {
 			return;
 		}
+		if (this.dateType === 'datetime' && value.length === 10 && this.typedValue.length > 16) { // 19 total
+			value = util.mergeTime(value, this.typedValue);
+		}
 		value = this.format(value);
 		this.typedValue = value;
 		this.input.value = value;
-		const len = this.input.value.length === this.mask.length;
-		const valid = this.validate();
+        const valid = this.validate();
+        console.log('VALID', valid);
 		if (valid) {
 			this.strDate = value;
 			this.picker.value = value;
 			if (!silent) {
-				this.emit('change', { value: value });
+				this.emitEvent();
 			}
 		}
 
-		if (!silent && valid && !this.static) {
+		if (!silent && valid) {
 			setTimeout(this.hide.bind(this), 300);
 		}
 		return value;
+	}
+
+	emitEvent () {
+		const value = this.value;
+		if (value === this.lastValue || !this.isValid(value)) {
+			return;
+		}
+		this.lastValue = value;
+		this.emit('change', { value });
 	}
 
 	format (value) {
@@ -2373,14 +2489,11 @@ class DateInput extends BaseComponent {
 	}
 
 	isValid (value = this.input.value) {
-		if(!value && !this.required){
-			return true;
-		}
-		return dates.isValid(this.input.value);
+		return isValid.call(this, value, this.dateType);
 	}
 
 	validate () {
-		if (this.isValid(this.input.value)) {
+		if (this.isValid()) {
 			this.classList.remove('invalid');
 			return true;
 		}
@@ -2420,13 +2533,12 @@ class DateInput extends BaseComponent {
 	}
 
 	hide () {
-		if (!this.showing || window.keepPopupsOpen) {
+		if (this.static || !this.showing || window.keepPopupsOpen) {
 			return;
 		}
 		this.showing = false;
 		dom.classList.remove(this.picker, 'right-align bottom-align show');
 		dom.classList.toggle(this, 'invalid', !this.isValid());
-		console.log('ONHIDE');
 		this.picker.onHide();
 	}
 
@@ -2442,10 +2554,23 @@ class DateInput extends BaseComponent {
 		}
 	}
 
+	onBlur () {
+		const valid = this.validate();
+		if (valid) {
+			this.emitEvent();
+		} else {
+			this.reset();
+		}
+	}
+
+	reset () {
+		this.typedValue = '';
+		this.setValue(this.strDate || '', true);
+	}
+
 	domReady () {
 		this.time = this.time || this.hasTime;
 		this.mask = this.mask || defaultMask;
-		this.maskLength = this.mask.match(/X/g).join('').length;
 		this.input.setAttribute('type', 'text');
 		this.input.setAttribute('placeholder', this.placeholder || defaultPlaceholder);
 		if (this.name) {
@@ -2456,10 +2581,10 @@ class DateInput extends BaseComponent {
 		}
 		this.connectKeys();
 
-		this.picker = dom('date-picker', { time: this.time, tabindex: '0' }, this);
+		this.picker = dom('date-picker', { time: this.time, tabindex: '0', 'event-name': 'date-change' }, this);
 		this.picker.onDomReady(() => {
-			this.picker.on('change', (e) => {
-				this.setValue(e.value, e.silent);
+			this.picker.on('date-change', (e) => {
+				this.setValue(e.detail.value, e.detail.silent);
 			});
 			if (this.static) {
 				this.show();
@@ -2470,11 +2595,12 @@ class DateInput extends BaseComponent {
 	}
 
 	connectKeys () {
-		this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
-			onKey.call(this, e);
+			onKey.call(this, e, this.dateType);
 		});
+        this.on(this.input, 'blur', this.onBlur.bind(this));
+        this.on(this, 'validation', this.onValidation.bind(this));
 	}
 
 	destroy () {
@@ -2484,700 +2610,719 @@ class DateInput extends BaseComponent {
 	}
 }
 
-customElements.define('date-input', DateInput);
+module.exports = BaseComponent.define('date-input', DateInput, {
+	bools: ['required', 'time', 'static'],
+	props: ['label', 'name', 'placeholder', 'mask', 'min', 'max', 'time', 'validation'],
+	attrs: ['value']
+});
 
-module.exports = DateInput;
-},{"./date-picker":11,"./focusManager":16,"./icon-calendar":17,"./onKey":18,"./util":20,"@clubajax/base-component":2,"@clubajax/dates":7,"@clubajax/dom":8}],11:[function(require,module,exports){
+},{"./date-picker":11,"./focusManager":16,"./icon-calendar":17,"./isValid":18,"./onKey":19,"./util":21,"@clubajax/base-component":2,"@clubajax/dates":7,"@clubajax/dom":8}],11:[function(require,module,exports){
 const BaseComponent = require('@clubajax/base-component');
 const dates = require('@clubajax/dates');
 const dom = require('@clubajax/dom');
 const util = require('./util');
+const isValid = require('./isValid');
 require('./time-input');
 
-// TODO:
+// ref:
 // https://axesslab.com/accessible-datepickers/
 // http://whatsock.com/tsg/Coding%20Arena/ARIA%20Date%20Pickers/ARIA%20Date%20Picker%20(Basic)/demo.htm
 
-const props = ['min', 'max'];
-
-// range-left/range-right mean that this is one side of a date-range-picker
-const bools = ['range-picker', 'range-left', 'range-right', 'time'];
+const EVENT_NAME = 'change';
 
 class DatePicker extends BaseComponent {
 
-	static get observedAttributes () {
-		return [...props, ...bools];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
-
-	get templateString () {
-		return `
+    get templateString() {
+        return `
 <div class="calendar" ref="calNode">
 <div class="cal-header" ref="headerNode">
-	<span class="cal-yr-lft" ref="lftYrNode" tabindex="0" role="button" aria-label="Previous Year"></span>
-	<span class="cal-lft" ref="lftMoNode" tabindex="0" role="button" aria-label="Previous Month"></span>
-	<span class="cal-month" ref="monthNode" role="presentation"></span>	
-	<span class="cal-rgt" ref="rgtMoNode" tabindex="0"  role="button" aria-label="Next Month"></span>
-	<span class="cal-yr-rgt" ref="rgtYrNode" tabindex="0" role="button" aria-label="Next Year"></span>
+	<button class="cal-yr-lft" ref="lftYrNode" tabindex="0" aria-label="Previous Year"></button>
+	<button class="cal-lft" ref="lftMoNode" tabindex="0" aria-label="Previous Month"></button>
+	<label class="cal-month" ref="monthNode" role="alert"></label>	
+	<button class="cal-rgt" ref="rgtMoNode" tabindex="0"  aria-label="Next Month"></button>
+	<button class="cal-yr-rgt" ref="rgtYrNode" tabindex="0" aria-label="Next Year"></button>
 </div>
 <div class="cal-container" ref="container"></div>
 <div class="cal-footer" ref="calFooter">
-	<span ref="footerLink" tabindex="0" role="button" aria-label="Set Date to Today"></span>
+	<button ref="footerLink" class="today-button" aria-label="Set Date to Today"></button>
 </div>
 </div>
 <input class="focus-loop" aria-hidden="true"/>
 `;
-	}
-
-	set value (value) {
-		this.setValue(dates.isDate(value) ? dates.toDate(value) : today);
-	}
-
-	get value () {
-		if (!this.valueDate) {
-			const value = this.getAttribute('value') || today;
-			this.valueDate = dates.toDate(value);
-		}
-		return this.valueDate;
-	}
-
-	onMin (value) {
-		this.minDate = util.getMinDate(value);
-		if (this.timeInput) {
-			this.timeInput.min = value;
-		}
-		this.render();
-	}
-
-	onMax (value) {
-		this.maxDate = util.getMaxDate(value);
-		if (this.timeInput) {
-			this.timeInput.max = value;
-		}
-		this.render();
-	}
-
-	constructor () {
-		super();
-		this.current = new Date();
-		this.previous = {};
-	}
-
-	setDisplay (...args) {
-		// used by date-range-picker
-		if (args.length === 2) {
-			this.current.setFullYear(args[0]);
-			this.current.setMonth(args[1]);
-		} else if (typeof args[0] === 'object') {
-			this.current.setFullYear(args[0].getFullYear());
-			this.current.setMonth(args[0].getMonth());
-		} else if (args[0] > 12) {
-			this.current.setFullYear(args[0]);
-		} else {
-			this.current.setMonth(args[0]);
-		}
-		this.valueDate = dates.copy(this.current);
-		this.noEvents = true;
-		this.render();
-	}
-
-	getFormattedValue () {
-		let str = this.valueDate === today ? '' : !!this.valueDate ? dates.format(this.valueDate) : '';
-		if (this.time) {
-			str += ` ${this.timeInput.value}`;
-		}
-		return str;
-	}
-
-	emitEvent (silent) {
-		const date = this.valueDate;
-		if (this.time) {
-			if (!this.timeInput.valid) {
-				this.timeInput.validate();
-				return;
-			}
-			util.addTimeToDate(this.timeInput.value, date);
-		}
-		const event = {
-			value: this.getFormattedValue(),
-			silent,
-			date
-		};
-		if (this['range-picker']) {
-			event.first = this.firstRange;
-			event.second = this.secondRange;
-		}
-		this.emit('change', event);
-	}
-
-	emitDisplayEvents () {
-		const month = this.current.getMonth(),
-			year = this.current.getFullYear();
-
-		if (!this.noEvents && (month !== this.previous.month || year !== this.previous.year)) {
-			this.fire('display-change', { month: month, year: year });
-		}
-
-		this.noEvents = false;
-		this.previous = {
-			month: month,
-			year: year
-		};
-	}
-
-	onHide () {
-		// not an attribute; called by owner
-	}
-
-	onShow () {
-		this.current = dates.copy(this.valueDate);
-		this.render();
-	}
-
-	setValue (valueObject) {
-		this.valueDate = valueObject;
-		this.current = dates.copy(this.valueDate);
-		onDomReady(this, () => {
-			this.render();
-		});
-	}
-
-	onClickDay (node, silent) {
-		const
-			day = +node.textContent,
-			isFuture = node.classList.contains('future'),
-			isPast = node.classList.contains('past'),
-			isDisabled = node.classList.contains('disabled');
-
-		if (isDisabled) {
-			return;
-		}
-
-		this.current.setDate(day);
-		if (isFuture) {
-			this.current.setMonth(this.current.getMonth() + 1);
-		}
-		if (isPast) {
-			this.current.setMonth(this.current.getMonth() - 1);
-		}
-
-		this.valueDate = dates.copy(this.current);
-
-		if (this.timeInput) {
-			this.timeInput.setDate(this.valueDate);
-		}
-
-		this.emitEvent(silent);
-
-		if (this['range-picker']) {
-			this.clickSelectRange();
-		}
-
-		if (isFuture || isPast) {
-			this.render();
-		} else {
-			this.selectDay();
-		}
-	}
-
-	selectDay () {
-		if (this['range-picker']) {
-			return;
-		}
-		console.log('SELECT DAY');
-		const now = this.querySelector('.selected');
-		const node = this.dayMap[this.current.getDate()];
-		if (now) {
-			now.classList.remove('selected');
-		}
-		node.classList.add('selected');
-
-	}
-
-	focusDay () {
-		const node = this.container.querySelector('div.highlighted[tabindex="0"]') ||
-			this.container.querySelector('div.selected[tabindex="0"]');
-		if (node) {
-			node.focus();
-		}
-	}
-
-	highlightDay (date) {
-		let node;
-		if (this.isValidDate(date)) {
-			node = this.container.querySelector('div[tabindex="0"]');
-			if (node) {
-				node.setAttribute('tabindex', '-1');
-			}
-
-			const shouldRerender = date.getMonth() !== this.current || date.getFullYear() !== this.current.getFullYear();
-
-			this.current = date;
-			if (shouldRerender) {
-				this.render();
-			} else {
-				const dateSelector = util.toAriaLabel(this.current);
-				node = this.container.querySelector(`div[aria-label="${dateSelector}"]`);
-				node.setAttribute('tabindex', '0');
-			}
-			this.focusDay();
-		}
-	}
-
-	isValidDate (date) {
-		// used by arrow keys
-		date = dates.zeroTime(date);
-		if (this.minDate) {
-			if (dates.is(date).less(this.minDate)) {
-				return false;
-			}
-		}
-		if (this.maxDate) {
-			if (dates.is(date).greater(this.maxDate)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	onClickMonth (direction) {
-		this.current.setMonth(this.current.getMonth() + direction);
-		this.render();
-	}
-
-	onClickYear (direction) {
-		this.current.setFullYear(this.current.getFullYear() + direction);
-		this.render();
-	}
-
-	clearRange () {
-		this.hoverDate = 0;
-		this.setRange(null, null);
-	}
-
-	setRange (firstRange, secondRange) {
-		this.firstRange = firstRange;
-		this.secondRange = secondRange;
-		this.displayRange();
-		this.setRangeEndPoints();
-	}
-
-	clickSelectRange () {
-		const
-			prevFirst = !!this.firstRange,
-			prevSecond = !!this.secondRange,
-			rangeDate = dates.copy(this.current);
-
-		if (this.isOwned) {
-			this.fire('select-range', {
-				first: this.firstRange,
-				second: this.secondRange,
-				current: rangeDate
-			});
-			return;
-		}
-		if (this.secondRange) {
-			this.fire('reset-range');
-			this.firstRange = null;
-			this.secondRange = null;
-		}
-		if (this.firstRange && this.isValidRange(rangeDate)) {
-			this.secondRange = rangeDate;
-			this.hoverDate = 0;
-			this.setRange(this.firstRange, this.secondRange);
-		} else {
-			this.firstRange = null;
-		}
-		if (!this.firstRange) {
-			this.hoverDate = 0;
-			this.setRange(rangeDate, null);
-		}
-		this.fire('select-range', {
-			first: this.firstRange,
-			second: this.secondRange,
-			prevFirst: prevFirst,
-			prevSecond: prevSecond
-		});
-	}
-
-	hoverSelectRange (e) {
-		if (this.firstRange && !this.secondRange && e.target.classList.contains('on')) {
-			this.hoverDate = e.target._date;
-			this.displayRange();
-		}
-	}
-
-	displayRangeToEnd () {
-		if (this.firstRange) {
-			this.hoverDate = dates.copy(this.current);
-			this.hoverDate.setMonth(this.hoverDate.getMonth() + 1);
-			this.displayRange();
-		}
-	}
-
-	displayRange () {
-		let beg = this.firstRange;
-		let end = this.secondRange ? this.secondRange.getTime() : this.hoverDate;
-		const map = this.dayMap;
-		if (!beg || !end) {
-			Object.keys(map).forEach(function (key, i) {
-				map[key].classList.remove('range');
-			});
-		} else {
-			beg = beg.getTime();
-			Object.keys(map).forEach(function (key, i) {
-				if (inRange(map[key]._date, beg, end)) {
-					map[key].classList.add('range');
-				} else {
-					map[key].classList.remove('range');
-				}
-			});
-		}
-	}
-
-	hasRange () {
-		return !!this.firstRange && !!this.secondRange;
-	}
-
-	isValidRange (date) {
-		if (!this.firstRange) {
-			return true;
-		}
-		return date.getTime() > this.firstRange.getTime();
-	}
-
-	setRangeEndPoints () {
-		this.clearEndPoints();
-		if (this.firstRange) {
-			if (this.firstRange.getMonth() === this.current.getMonth()) {
-				this.dayMap[this.firstRange.getDate()].classList.add('range-first');
-			}
-			if (this.secondRange && this.secondRange.getMonth() === this.current.getMonth()) {
-				this.dayMap[this.secondRange.getDate()].classList.add('range-second');
-			}
-		}
-	}
-
-	clearEndPoints () {
-		const first = this.querySelector('.range-first'),
-			second = this.querySelector('.range-second');
-		if (first) {
-			first.classList.remove('range-first');
-		}
-		if (second) {
-			second.classList.remove('range-second');
-		}
-	}
-
-	domReady () {
-		if (this['range-left']) {
-			this.classList.add('left-range');
-			this['range-picker'] = true;
-			this.isOwned = true;
-		}
-		if (this['range-right']) {
-			this.classList.add('right-range');
-			this['range-picker'] = true;
-			this.isOwned = true;
-		}
-		if (this.isOwned) {
-			this.classList.add('minimal');
-		}
-		this.current = dates.copy(this.value);
-		this.render();
-		this.connect();
-	}
-
-	render () {
-		// dateNum increments, starting with the first Sunday
-		// showing on the monthly calendar. This is usually the
-		// previous month, so dateNum will start as a negative number
-		destroy(this.bodyNode);
-
-		this.dayMap = {};
-
-		let
-			node = dom('div', { class: 'cal-body' }),
-			i, tx, isThisMonth, day, css, isSelected, isToday, hasSelected, defaultDateSelector, minmax, isHighlighted,
-			nextMonth = 0,
-			isRange = this['range-picker'],
-			d = this.current,
-			incDate = dates.copy(d),
-			daysInPrevMonth = dates.getDaysInPrevMonth(d),
-			daysInMonth = dates.getDaysInMonth(d),
-			dateNum = dates.getFirstSunday(d),
-			dateToday = getSelectedDate(today, d),
-			dateSelected = getSelectedDate(this.valueDate, d, true),
-			highlighted = d.getDate(),
-			dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum),
-			defaultDate = 15;
-
-		this.monthNode.innerHTML = dates.getMonthName(d) + ' ' + d.getFullYear();
-
-		for (i = 0; i < 7; i++) {
-			dom("div", { html: dates.days.abbr[i], class: 'day-of-week' }, node);
-		}
-
-		for (i = 0; i < 42; i++) {
-
-			minmax = dates.isLess(dateObj, this.minDate) || dates.isGreater(dateObj, this.maxDate);
-
-			tx = dateNum + 1 > 0 && dateNum + 1 <= daysInMonth ? dateNum + 1 : "&nbsp;";
-
-			isThisMonth = false;
-			isSelected = false;
-			isHighlighted = false;
-			isToday = false;
-
-			if (dateNum + 1 > 0 && dateNum + 1 <= daysInMonth) {
-				// current month
-				tx = dateNum + 1;
-				isThisMonth = true;
-				css = 'day on';
-				if (dateToday === tx) {
-					isToday = true;
-					css += ' today';
-				}
-				if (dateSelected === tx && !isRange) {
-					isSelected = true;
-					hasSelected = true;
-					css += ' selected';
-				} else if (tx === highlighted) {
-					css += ' highlighted';
-					isHighlighted = true;
-				}
-
-				// if (tx === defaultDate) {
-				// 	defaultDateSelector = util.toAriaLabel(dateObj);
-				// }
-			} else if (dateNum < 0) {
-				// previous month
-				tx = daysInPrevMonth + dateNum + 1;
-				css = 'day off past';
-			} else {
-				// next month
-				tx = ++nextMonth;
-				css = 'day off future';
-			}
-
-			if (minmax) {
-				css = 'day disabled';
-				if (isSelected) {
-					css += ' selected';
-				}
-				if (isToday) {
-					css += ' today';
-				}
-			}
-
-			const ariaLabel = util.toAriaLabel(dateObj);
-			day = dom("div", {
-				html: `<span>${tx}</span>`,
-				class: css,
-				'aria-label': ariaLabel,
-				tabindex: isSelected || isHighlighted ? 0 : -1
-			}, node);
-
-			dateNum++;
-			dateObj.setDate(dateObj.getDate() + 1);
-			if (isThisMonth) {
-				// Keep a map of all the days
-				// use it for adding and removing selection/hover classes
-				incDate.setDate(tx);
-				day._date = incDate.getTime();
-				this.dayMap[tx] = day;
-			}
-		}
-
-		this.container.appendChild(node);
-		this.bodyNode = node;
-		this.setFooter();
-		this.displayRange();
-		this.setRangeEndPoints();
-
-		this.emitDisplayEvents();
-
-		if (this.timeInput) {
-			this.timeInput.setDate(this.current);
-		}
-	}
-
-	setFooter () {
-		if (this.timeInput) {
-			if (this.current) {
-				this.timeInput.value = this.valueDate;
-			}
-			return;
-		}
-		if (this.time) {
-			this.timeInput = dom('time-input', {
-				label: 'Time:',
-				required: true,
-				value: this.value,
-				min: this.minDate,
-				max: this.maxDate,
-				'event-name': 'time-change'
-			}, this.calFooter);
-			this.timeInput.setDate(this.current);
-			this.timeInput.on('time-change', this.emitEvent.bind(this));
-			destroy(this.footerLink);
-		} else {
-			const d = new Date();
-			this.footerLink.innerHTML = dates.format(d, 'E MMMM dd, yyyy');
-		}
-	}
-
-	connect () {
-		this.on(this.container, 'click', (e) => {
-			this.fire('pre-click', e, true, true);
-			const node = e.target.closest('.day');
-			if (node) {
-				this.onClickDay(node);
-			}
-		});
-
-		this.on(this.container, 'keydown', (e) => {
-			let date;
-			let stopEvent = false;
-			let num;
-			console.log('container.key', e.key);
-			switch (e.key) {
-				case 'ArrowLeft' :
-					num = -1;
-					break;
-				case 'ArrowRight' :
-					num = 1;
-					break;
-				case 'ArrowUp' :
-					num = -7;
-					break;
-				case 'ArrowDown':
-					num = 7;
-					break;
-				case 'Enter':
-					this.onClickDay(e.target);
-					break;
-				case ' ':
-					this.onClickDay(e.target, true);
-					this.focusDay();
-					return util.stopEvent(e);
-			}
-
-			if (num) {
-				this.highlightDay(dates.add(this.current, num));
-				e.preventDefault();
-				e.stopImmediatePropagation();
-				return false;
-			}
-		});
-
-		this.on(document, 'keydown', (e) => {
-			console.log('doc.key', e.key);
-			if (e.key === ' ' && isControl(e.target, this)) {
-				on.emit(e.target, 'click');
-				return util.stopEvent(e);
-			}
-		});
-
-		this.on(this.lftMoNode, 'click', () => {
-			this.onClickMonth(-1);
-		});
-
-		this.on(this.rgtMoNode, 'click', () => {
-			this.onClickMonth(1);
-		});
-
-		this.on(this.lftYrNode, 'click', () => {
-			this.onClickYear(-1);
-		});
-
-		this.on(this.rgtYrNode, 'click', () => {
-			this.onClickYear(1);
-		});
-
-		this.on(this.footerLink, 'click', () => {
-			this.setValue(new Date());
-		});
-
-		if (this['range-picker']) {
-			this.on(this.container, 'mouseover', this.hoverSelectRange.bind(this));
-		}
-	}
+    }
+
+    set value(value) {
+        this.setValue(dates.isDate(value) ? dates.toDate(value) : today);
+    }
+
+    get value() {
+        if (!this.valueDate) {
+            const value = this.getAttribute('value') || today;
+            this.valueDate = dates.toDate(value);
+        }
+        return this.valueDate;
+    }
+
+    onMin(value) {
+        this.minDate = util.getMinDate(value);
+        this.minDate.setDate(this.minDate.getDate() - 1);
+        if (this.timeInput) {
+            this.timeInput.min = value;
+        }
+        this.render();
+    }
+
+    onMax(value) {
+        this.maxDate = util.getMaxDate(value);
+        if (this.timeInput) {
+            this.timeInput.max = value;
+        }
+        console.log('this.maxDate', this.maxDate);
+        this.render();
+    }
+
+    constructor() {
+        super();
+        this.dateType = 'date';
+        this.current = new Date();
+        this.previous = {};
+    }
+
+    setDisplay(...args) {
+        // used by date-range-picker
+        if (args.length === 2) {
+            this.current.setFullYear(args[0]);
+            this.current.setMonth(args[1]);
+        } else if (typeof args[0] === 'object') {
+            this.current.setFullYear(args[0].getFullYear());
+            this.current.setMonth(args[0].getMonth());
+        } else if (args[0] > 12) {
+            this.current.setFullYear(args[0]);
+        } else {
+            this.current.setMonth(args[0]);
+        }
+        this.valueDate = dates.copy(this.current);
+        this.noEvents = true;
+        this.render();
+    }
+
+    getFormattedValue() {
+        let str = this.valueDate === today ? '' : !!this.valueDate ? dates.format(this.valueDate) : '';
+        if (this.time) {
+            str += ` ${this.timeInput.value}`;
+        }
+        return str;
+    }
+
+    setAriaLabel() {
+        const ariaLabel = this.valueDate ?
+            this.timeInput ?
+                util.toDateTimeAriaLabel(this.valueDate) :
+                util.toDateAriaLabel(this.valueDate) :
+                'not set';
+        this.setAttribute('aria-label', `Date Picker, current date: ${ariaLabel}`);
+    }
+
+    emitEvent(silent) {
+        const date = this.valueDate;
+        if (this.time) {
+            if (!this.timeInput.valid) {
+                this.timeInput.validate();
+                return;
+            }
+            util.addTimeToDate(this.timeInput.value, date);
+        }
+        const event = {
+            value: this.getFormattedValue(),
+            silent,
+            date
+        };
+        if (this['range-picker']) {
+            event.first = this.firstRange;
+            event.second = this.secondRange;
+        }
+        this[this.emitType](this.eventName, event, true);
+
+        this.setAriaLabel();
+    }
+
+    emitDisplayEvents() {
+        const month = this.current.getMonth(),
+            year = this.current.getFullYear();
+
+        if (!this.noEvents && (month !== this.previous.month || year !== this.previous.year)) {
+            this.fire('display-change', {month: month, year: year});
+        }
+
+        this.noEvents = false;
+        this.previous = {
+            month: month,
+            year: year
+        };
+    }
+
+    onHide() {
+        // not an attribute; called by owner
+    }
+
+    onShow() {
+        this.current = dates.copy(this.valueDate);
+        this.render();
+        setTimeout(this.focus.bind(this), 100);
+    }
+
+    setValue(valueObject) {
+        this.hasTime = !!this.timeInput;
+        const strDate = dates.format(valueObject, this.timeInput ? 'MM/dd/yyyy h:m a' : 'MM/dd/yyyy');
+        if (isValid.call(this, strDate, this.dateType)) {
+            this.valueDate = valueObject;
+            this.current = dates.copy(this.valueDate);
+            onDomReady(this, () => {
+                this.render();
+            });
+        }
+    }
+
+    onClickDay(node, silent) {
+        const
+            day = +node.textContent,
+            isFuture = node.classList.contains('future'),
+            isPast = node.classList.contains('past'),
+            isDisabled = node.classList.contains('disabled');
+
+        if (isDisabled) {
+            if (this.focusNode) {
+                this.focusNode.focus();
+            }
+            return;
+        }
+
+        this.current.setDate(day);
+        if (isFuture) {
+            this.current.setMonth(this.current.getMonth() + 1);
+        }
+        if (isPast) {
+            this.current.setMonth(this.current.getMonth() - 1);
+        }
+
+        this.valueDate = dates.copy(this.current);
+
+        if (this.timeInput) {
+            this.timeInput.setDate(this.valueDate);
+        }
+
+        this.emitEvent(silent);
+
+        if (this['range-picker']) {
+            this.clickSelectRange();
+        }
+
+        if (isFuture || isPast) {
+            this.render();
+        } else {
+            this.selectDay();
+        }
+    }
+
+    selectDay() {
+        if (this['range-picker']) {
+            return;
+        }
+        const now = this.querySelector('.selected');
+        const node = this.dayMap[this.current.getDate()];
+        if (now) {
+            now.classList.remove('selected');
+        }
+        node.classList.add('selected');
+    }
+
+    focusDay() {
+        const node = this.container.querySelector('div.highlighted[tabindex="0"]') ||
+            this.container.querySelector('div.selected[tabindex="0"]');
+        if (node) {
+            node.focus();
+        }
+    }
+
+    highlightDay(date) {
+        let node;
+        if (this.isValidDate(date)) {
+            node = this.container.querySelector('div[tabindex="0"]');
+            if (node) {
+                node.setAttribute('tabindex', '-1');
+            }
+
+            const shouldRerender = date.getMonth() !== this.current || date.getFullYear() !== this.current.getFullYear();
+
+            this.current = date;
+            if (shouldRerender) {
+                this.render();
+            } else {
+                const dateSelector = util.toAriaLabel(this.current);
+                node = this.container.querySelector(`div[aria-label="${dateSelector}"]`);
+                node.setAttribute('tabindex', '0');
+            }
+            this.focusDay();
+        }
+    }
+
+    isValidDate(date) {
+        // used by arrow keys
+        date = dates.zeroTime(date);
+        if (this.minDate) {
+            if (dates.is(date).less(this.minDate)) {
+                return false;
+            }
+        }
+        if (this.maxDate) {
+            if (dates.is(date).greater(this.maxDate)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    onClickMonth(direction) {
+        this.current.setMonth(this.current.getMonth() + direction);
+        this.render();
+    }
+
+    onClickYear(direction) {
+        this.current.setFullYear(this.current.getFullYear() + direction);
+        this.render();
+    }
+
+    clearRange() {
+        this.hoverDate = 0;
+        this.setRange(null, null);
+    }
+
+    setRange(firstRange, secondRange) {
+        this.firstRange = firstRange;
+        this.secondRange = secondRange;
+        this.displayRange();
+        this.setRangeEndPoints();
+    }
+
+    clickSelectRange() {
+        const
+            prevFirst = !!this.firstRange,
+            prevSecond = !!this.secondRange,
+            rangeDate = dates.copy(this.current);
+
+        if (this.isOwned) {
+            this.fire('select-range', {
+                first: this.firstRange,
+                second: this.secondRange,
+                current: rangeDate
+            });
+            return;
+        }
+        if (this.secondRange) {
+            this.fire('reset-range');
+            this.firstRange = null;
+            this.secondRange = null;
+        }
+        if (this.firstRange && this.isValidRange(rangeDate)) {
+            this.secondRange = rangeDate;
+            this.hoverDate = 0;
+            this.setRange(this.firstRange, this.secondRange);
+        } else {
+            this.firstRange = null;
+        }
+        if (!this.firstRange) {
+            this.hoverDate = 0;
+            this.setRange(rangeDate, null);
+        }
+        this.fire('select-range', {
+            first: this.firstRange,
+            second: this.secondRange,
+            prevFirst: prevFirst,
+            prevSecond: prevSecond
+        });
+    }
+
+    hoverSelectRange(e) {
+        if (this.firstRange && !this.secondRange && e.target.classList.contains('on')) {
+            this.hoverDate = e.target._date;
+            this.displayRange();
+        }
+    }
+
+    displayRangeToEnd() {
+        if (this.firstRange) {
+            this.hoverDate = dates.copy(this.current);
+            this.hoverDate.setMonth(this.hoverDate.getMonth() + 1);
+            this.displayRange();
+        }
+    }
+
+    displayRange() {
+        let beg = this.firstRange;
+        let end = this.secondRange ? this.secondRange.getTime() : this.hoverDate;
+        const map = this.dayMap;
+        if (!beg || !end) {
+            Object.keys(map).forEach(function (key, i) {
+                map[key].classList.remove('range');
+            });
+        } else {
+            beg = beg.getTime();
+            Object.keys(map).forEach(function (key, i) {
+                if (inRange(map[key]._date, beg, end)) {
+                    map[key].classList.add('range');
+                } else {
+                    map[key].classList.remove('range');
+                }
+            });
+        }
+    }
+
+    hasRange() {
+        return !!this.firstRange && !!this.secondRange;
+    }
+
+    isValidRange(date) {
+        if (!this.firstRange) {
+            return true;
+        }
+        return date.getTime() > this.firstRange.getTime();
+    }
+
+    setRangeEndPoints() {
+        this.clearEndPoints();
+        if (this.firstRange) {
+            if (this.firstRange.getMonth() === this.current.getMonth()) {
+                this.dayMap[this.firstRange.getDate()].classList.add('range-first');
+            }
+            if (this.secondRange && this.secondRange.getMonth() === this.current.getMonth()) {
+                this.dayMap[this.secondRange.getDate()].classList.add('range-second');
+            }
+        }
+    }
+
+    clearEndPoints() {
+        const first = this.querySelector('.range-first'),
+            second = this.querySelector('.range-second');
+        if (first) {
+            first.classList.remove('range-first');
+        }
+        if (second) {
+            second.classList.remove('range-second');
+        }
+    }
+
+    domReady() {
+        this.eventName = this['event-name'] || EVENT_NAME;
+        this.emitType = this.eventName === EVENT_NAME ? 'emit' : 'fire';
+        this.setAttribute('tabindex', '0');
+        
+        if (this['range-left']) {
+            this.classList.add('left-range');
+            this['range-picker'] = true;
+            this.isOwned = true;
+        }
+        if (this['range-right']) {
+            this.classList.add('right-range');
+            this['range-picker'] = true;
+            this.isOwned = true;
+        }
+        if (this.isOwned) {
+            this.classList.add('minimal');
+        }
+        this.current = dates.copy(this.value);
+        this.render();
+        this.connect();
+        this.setAriaLabel();
+    }
+
+    render() {
+
+        const focused = getFocusedDay();
+        // dateNum increments, starting with the first Sunday
+        // showing on the monthly calendar. This is usually the
+        // previous month, so dateNum will start as a negative number
+        destroy(this.bodyNode);
+
+        this.dayMap = {};
+
+        let
+            node = dom('div', {class: 'cal-body'}),
+            i, tx, isThisMonth, day, css, isSelected, isToday, hasSelected, defaultDateSelector, minmax, isHighlighted,
+            nextMonth = 0,
+            isRange = this['range-picker'],
+            d = this.current,
+            incDate = dates.copy(d),
+            daysInPrevMonth = dates.getDaysInPrevMonth(d),
+            daysInMonth = dates.getDaysInMonth(d),
+            dateNum = dates.getFirstSunday(d),
+            dateToday = getSelectedDate(today, d),
+            dateSelected = getSelectedDate(this.valueDate, d, true),
+            highlighted = d.getDate(),
+            dateObj = dates.add(new Date(d.getFullYear(), d.getMonth(), 1), dateNum);
+
+        this.monthNode.innerHTML = dates.getMonthName(d) + ' ' + d.getFullYear();
+
+        for (i = 0; i < 7; i++) {
+            dom("div", {html: dates.days.abbr[i], class: 'day-of-week'}, node);
+        }
+
+        for (i = 0; i < 42; i++) {
+
+            minmax = dates.isLess(dateObj, this.minDate) || dates.isGreater(dateObj, this.maxDate);
+
+            tx = dateNum + 1 > 0 && dateNum + 1 <= daysInMonth ? dateNum + 1 : "&nbsp;";
+
+            isThisMonth = false;
+            isSelected = false;
+            isHighlighted = false;
+            isToday = false;
+
+            if (dateNum + 1 > 0 && dateNum + 1 <= daysInMonth) {
+                // current month
+                tx = dateNum + 1;
+                isThisMonth = true;
+                css = 'day on';
+                if (dateToday === tx) {
+                    isToday = true;
+                    css += ' today';
+                }
+                if (dateSelected === tx && !isRange) {
+                    isSelected = true;
+                    hasSelected = true;
+                    css += ' selected';
+                } else if (tx === highlighted) {
+                    css += ' highlighted';
+                    isHighlighted = true;
+                }
+
+                // if (tx === defaultDate) {
+                // 	defaultDateSelector = util.toAriaLabel(dateObj);
+                // }
+            } else if (dateNum < 0) {
+                // previous month
+                tx = daysInPrevMonth + dateNum + 1;
+                css = 'day off past';
+            } else {
+                // next month
+                tx = ++nextMonth;
+                css = 'day off future';
+            }
+
+            if (minmax) {
+                css = 'day disabled';
+                if (isSelected) {
+                    css += ' selected';
+                }
+                if (isToday) {
+                    css += ' today';
+                }
+            }
+
+            const ariaLabel = util.toDateAriaLabel(dateObj);
+            day = dom("div", {
+                html: `<span>${tx}</span>`,
+                class: css,
+                'aria-label': ariaLabel,
+                tabindex: isSelected || isHighlighted ? 0 : -1
+            }, node);
+
+            dateNum++;
+            dateObj.setDate(dateObj.getDate() + 1);
+            if (isThisMonth) {
+                // Keep a map of all the days
+                // use it for adding and removing selection/hover classes
+                incDate.setDate(tx);
+                day._date = incDate.getTime();
+                this.dayMap[tx] = day;
+            }
+        }
+
+        this.container.appendChild(node);
+        this.bodyNode = node;
+        this.setFooter();
+        this.displayRange();
+        this.setRangeEndPoints();
+
+        this.emitDisplayEvents();
+
+        if (this.timeInput) {
+            this.timeInput.setDate(this.current);
+        }
+
+        if (focused) {
+            this.focusNode = dom.query(this.bodyNode, `[aria-label="${focused}"]`);
+            if (this.focusNode) {
+                this.focusNode.focus();
+            }
+        }
+    }
+
+    setFooter() {
+        if (this.timeInput) {
+            if (this.current) {
+                this.timeInput.value = this.valueDate;
+            }
+            return;
+        }
+        if (this.time) {
+            this.timeInput = dom('time-input', {
+                label: 'Time:',
+                required: true,
+                value: this.value,
+                min: this.minDate,
+                max: this.maxDate,
+                'event-name': 'time-change'
+            }, this.calFooter);
+            this.timeInput.setDate(this.current);
+            this.timeInput.on('time-change', (e) => {
+                this.emitEvent(e.detail.silent);
+            });
+            destroy(this.footerLink);
+        } else {
+            const d = new Date();
+            this.footerLink.innerHTML = dates.format(d, 'E MMMM dd, yyyy');
+        }
+    }
+
+    connect() {
+        this.on(this.container, 'click', (e) => {
+            this.fire('pre-click', e, true, true);
+            const node = e.target.closest('.day');
+            if (node) {
+                this.onClickDay(node);
+            }
+        });
+
+        this.on(this.container, 'keydown', (e) => {
+            let num;
+            switch (e.key) {
+                case 'ArrowLeft':
+                    num = -1;
+                    break;
+                case 'ArrowRight':
+                    num = 1;
+                    break;
+                case 'ArrowUp':
+                    num = -7;
+                    break;
+                case 'ArrowDown':
+                    num = 7;
+                    break;
+                case 'Enter':
+                    this.onClickDay(e.target);
+                    break;
+                case ' ':
+                    this.onClickDay(e.target, true);
+                    this.focusDay();
+                    return util.stopEvent(e);
+            }
+
+            if (num) {
+                this.highlightDay(dates.add(this.current, num));
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+        });
+
+        this.on(document, 'keydown', (e) => {
+            if (e.key === ' ' && isControl(e.target, this)) {
+                this.emit(e.target, 'click');
+                return util.stopEvent(e);
+            }
+        });
+
+        this.on(this.lftMoNode, 'click', () => {
+            this.onClickMonth(-1);
+        });
+
+        this.on(this.rgtMoNode, 'click', () => {
+            this.onClickMonth(1);
+        });
+
+        this.on(this.lftYrNode, 'click', () => {
+            this.onClickYear(-1);
+        });
+
+        this.on(this.rgtYrNode, 'click', () => {
+            this.onClickYear(1);
+        });
+
+        this.on(this.footerLink, 'click', () => {
+            this.setValue(new Date());
+            this.emitEvent();
+        });
+
+        if (this['range-picker']) {
+            this.on(this.container, 'mouseover', this.hoverSelectRange.bind(this));
+        }
+    }
 }
 
 const today = new Date();
 
-function isControl (node, picker) {
-	console.log('isControl');
-	return node === picker.lftMoNode || node === picker.rgtMoNode || node === picker.lftYrNode || node === picker.rgtYrNode || node === picker.footerLink;
+function isControl(node, picker) {
+    return node === picker.lftMoNode || node === picker.rgtMoNode || node === picker.lftYrNode || node === picker.rgtYrNode || node === picker.footerLink;
 }
 
-function getSelectedDate (date, current) {
-	if (date.getMonth() === current.getMonth() && date.getFullYear() === current.getFullYear()) {
-		return date.getDate();
-	}
-	return -999; // index must be out of range, and -1 is the last day of the previous month
+function getSelectedDate(date, current) {
+    if (date.getMonth() === current.getMonth() && date.getFullYear() === current.getFullYear()) {
+        return date.getDate();
+    }
+    return -999; // index must be out of range, and -1 is the last day of the previous month
 }
 
-function destroy (node) {
-	if (node) {
-		dom.destroy(node);
-	}
+function destroy(node) {
+    if (node) {
+        dom.destroy(node);
+    }
 }
 
-function inRange (dateTime, begTime, endTime) {
-	return dateTime >= begTime && dateTime <= endTime;
+function inRange(dateTime, begTime, endTime) {
+    return dateTime >= begTime && dateTime <= endTime;
 }
 
-customElements.define('date-picker', DatePicker);
+function getFocusedDay() {
+    const node = document.activeElement;
+    if (!node || !dom.classList.contains(node, 'day')) {
+        return null;
+    }
+    return node.getAttribute('aria-label');
+}
 
-module.exports = DatePicker;
-},{"./time-input":19,"./util":20,"@clubajax/base-component":2,"@clubajax/dates":7,"@clubajax/dom":8}],12:[function(require,module,exports){
+// range-left/range-right mean that this is one side of a date-range-picker
+module.exports = BaseComponent.define('date-picker', DatePicker, {
+    bools: ['range-picker', 'range-left', 'range-right', 'time'],
+    props: ['min', 'max', 'event-name']
+});
+
+},{"./isValid":18,"./time-input":20,"./util":21,"@clubajax/base-component":2,"@clubajax/dates":7,"@clubajax/dom":8}],12:[function(require,module,exports){
 require('./date-range-picker');
 const DateInput = require('./date-input');
 const dates = require('@clubajax/dates');
 
-const props = ['label', 'name', 'placeholder'];
-const bools = ['range-expands'];
-
 class DateRangeInput extends DateInput {
 
-	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	get templateString () {
 		return `
 <label>
 	<span ref="labelNode"></span>
-	<input ref="input" />
-	
+	<div class="input-wrapper">
+		<input ref="input" class="empty" />
+		<button class="icon-button" ref="icon"><icon-calendar /></button>
+    </div>
+    <div class="input-error" ref="errorNode"></div>
 </label>
 <date-range-picker ref="picker" tabindex="0"></date-range-picker>`;
 	}
 
-	constructor () {
-		super();
+	connected () {
 		this.mask = 'XX/XX/XXXX - XX/XX/XXXX'
 	}
 
 	isValid (value) {
-		const ds = value.split(/\s*-\s*/);
+		const ds = (value || '').split(/\s*-\s*/);
 		return dates.isDate(ds[0]) && dates.isDate(ds[1]);
 	}
 }
@@ -3185,30 +3330,16 @@ class DateRangeInput extends DateInput {
 customElements.define('date-range-input', DateRangeInput);
 
 module.exports = DateRangeInput;
+
 },{"./date-input":10,"./date-range-picker":14,"@clubajax/dates":7}],13:[function(require,module,exports){
 const BaseComponent = require('@clubajax/base-component');
 require('./date-input');
 const dates = require('@clubajax/dates');
 const dom = require('@clubajax/dom');
 
-const props = ['left-label', 'right-label', 'name', 'placeholder'];
-const bools = ['range-expands', 'required'];
-
 const DELIMITER = ' - ';
 
 class DateRangeInputs extends BaseComponent {
-
-	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	set value (value) {
 		this.setValue(value);
@@ -3342,31 +3473,18 @@ class DateRangeInputs extends BaseComponent {
 	}
 }
 
-customElements.define('date-range-inputs', DateRangeInputs);
-
-module.exports = DateRangeInputs;
+module.exports = BaseComponent.define('date-range-inputs', DateRangeInputs, {
+	bools: ['range-expands', 'required'],
+	props: ['left-label', 'right-label', 'name', 'placeholder'],
+	attrs: ['value']
+});
 },{"./date-input":10,"@clubajax/base-component":2,"@clubajax/dates":7,"@clubajax/dom":8}],14:[function(require,module,exports){
 require('./date-picker');
 const BaseComponent = require('@clubajax/base-component');
 const dates = require('@clubajax/dates');
 const dom = require('@clubajax/dom');
 
-const props = ['value'];
-const bools = ['range-expands'];
-
 class DateRangePicker extends BaseComponent {
-
-	static get observedAttributes () {
-		return [...props, ...bools];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	onValue (value) {
 		// might need attributeChanged
@@ -3594,28 +3712,35 @@ function isDateCloserToLeft (date, left, right) {
 	return diff1 <= diff2;
 }
 
-customElements.define('date-range-picker', DateRangePicker);
-
-module.exports = DateRangePicker;
+module.exports = BaseComponent.define('date-range-picker', DateRangePicker, {
+	bools: ['range-expands'],
+	props: ['value']
+});
 },{"./date-picker":11,"@clubajax/base-component":2,"@clubajax/dates":7,"@clubajax/dom":8}],15:[function(require,module,exports){
 const DateInput = require('./date-input');
+const dates = require('@clubajax/dates');
 const util = require('./util');
-
-// FIXME: time-input blur does not close calendar
 
 class DateTimeInput extends DateInput {
 	constructor () {
 		super();
-		this.hasTime = true;
+		this.dateType = 'datetime';
+		this.hasTime = false;
 	}
 
 	domReady () {
 		this.mask = 'XX/XX/XXXX XX:XX pm';
 		super.domReady();
+		if (!this.value) {
+			this.value = dates.format(new Date(), 'MM/dd/yyyy h:m a');
+		}
 	}
 
 	format (value) {
 		const parts = value.split(' ');
+		if (parts.length !== 3 ) {
+			return value;
+		}
 		const dateStr = parts[0] || '';
 		const timeStr = `${parts[1] || ''} ${parts[2] || ''}`;
 		const date = util.formatDate(dateStr, this.mask);
@@ -3643,11 +3768,12 @@ class DateTimeInput extends DateInput {
 customElements.define('date-time-input', DateTimeInput);
 
 module.exports = DateTimeInput;
-},{"./date-input":10,"./util":20}],16:[function(require,module,exports){
+},{"./date-input":10,"./util":21,"@clubajax/dates":7}],16:[function(require,module,exports){
 const on = require('@clubajax/on');
 
 module.exports = function (component, show, hide) {
-	const input = component.input;
+    const icon = component.icon;
+    const input = component.input;
 	const picker = component.picker;
 	const timeInput = picker.timeInput;
 	const focusLoop = picker.querySelector('input.focus-loop');
@@ -3669,7 +3795,6 @@ module.exports = function (component, show, hide) {
 		}
 
 		if (e.target === focusLoop) {
-			console.log('focus-loop');
 			first.focus();
 			return stop(e);
 		}
@@ -3693,7 +3818,7 @@ module.exports = function (component, show, hide) {
 		}
 	});
 
-	on(input, 'focus', show);
+	on(icon, 'click', show);
 
 	const docHandle = on(document.body, 'mousedown', (e) => {
 		return onNavigate(e);
@@ -3720,8 +3845,6 @@ module.exports = function (component, show, hide) {
 		e.stopImmediatePropagation();
 		return false;
 	}
-
-	//show();
 
 	return on.makeMultiHandle([upHandle, docHandle]);
 };
@@ -3759,27 +3882,122 @@ module.exports = Icon;
 
 },{"@clubajax/base-component":2}],18:[function(require,module,exports){
 const util = require('./util');
+const dates = require('@clubajax/dates');
 
-function onKey (e) {
-	let str = this.typedValue || '';
-	const beg = e.target.selectionStart;
-	const end = e.target.selectionEnd;
-	const k = e.key;
-
-	if (k === 'Enter') {
-		this.hide();
-		this.emit('change', { value: this.value });
+function isValid (value = this.input.value, type) {
+	if (!value && this.required) {
+		this.emitError('This field is required');
+		return false;
+	} else if (!value) {
+		return true;
 	}
 
-	if (k === 'Escape') {
-		if (!this.isValid()) {
-			this.value = this.strDate;
-			this.hide();
-			this.input.blur();
+	if (value.length > 19) {
+		emitError.call(this, 'Not a valid date and time');
+		return false;
+	}
+	if (type !== 'time' && type !== 'date' && type !== 'datetime') {
+		// incomplete string
+		emitError.call(this, 'Not a valid date and time');
+		return false;
+	}
+
+	if (type === 'time' && !util.isTimeValid(value)) {
+		emitError.call(this, 'Not a valid time');
+		return false;
+    }
+    
+    if (type === 'date' && !util.isDateValid(value)) {
+        emitError.call(this, 'Not a valid date');
+        return false;
+    }
+
+	if (type === 'datetime' && !util.isDateTimeValid(value)) {
+		emitError.call(this, 'Not a valid date and time');
+		return false;
+	}
+	let msg;
+	const strValue = value;
+	value = dates.toDate(value);
+
+	if (this.minDate) {
+		if (dates.is(value).less(this.minDate)) {
+			emitError.call(this, getMinMsg(this.min));
+			return false;
 		}
 	}
 
-	if (util.isControl(e)) {
+	if (this.maxDate) {
+		if (dates.is(value).greater(this.maxDate)) {
+			emitError.call(this, getMaxMsg(this.max));
+			return false;
+		}
+	}
+
+	// if (type === 'datetime' && this.minDate && dates.is(value).equalDate(this.minDate)) {
+	// 	console.log('CHECK TIME', value, this.minDate);
+	// }
+
+	if (/time/.test(type) && !util.isTimeValid(strValue)) {
+		return false;
+	}
+
+	emitError.call(this, null);
+
+	return true;
+}
+
+
+function getMinMsg (min) {
+	return min === 'now' ? 'Value must be in the future' : `Value is less than the minimum, ${min}`
+}
+
+function getMaxMsg (max) {
+	return max === 'now' ? 'Value must be in the future' : `Value is greater than the maximum, ${max}`
+}
+
+function emitError (msg) {
+	if (msg === this.validationError) {
+		return;
+	}
+    this.validationError = msg;
+	this.fire('validation', { message: msg }, true);
+}
+
+module.exports = isValid;
+
+},{"./util":21,"@clubajax/dates":7}],19:[function(require,module,exports){
+const util = require('./util');
+
+function onKey (e, type) {
+	let str = this.typedValue || '';
+	const beg = e.target.selectionStart;
+	const end = e.target.selectionEnd;
+    const k = e.key;
+
+	if (k === 'Enter') {
+		const valid = this.validate();
+		if (valid) {
+			if (this.hide) {
+				this.hide();
+			}
+			this.emit('change', { value: this.value });
+		}
+	}
+
+	if (k === 'Escape') {
+		this.blur();
+    }
+
+    // if (k === 'Backspace') {
+    //     // this.blur();
+    //     return true;
+    // }
+    
+    
+
+    if (util.isControl(e)) {
+        console.log('block control key');
 		util.stopEvent(e);
 		return;
 	}
@@ -3788,20 +4006,28 @@ function onKey (e) {
 		e.target.selectionEnd = pos;
 	}
 
-	if (!util.isNum(k)) {
+    if (!util.isNum(k)) {
+        console.log('NOT NUM');
+		let value = this.input.value;
+
 		// handle paste, backspace
-		if (this.input.value !== this.typedValue) {
-			this.setValue(this.input.value, true);
+		if (type === 'datetime' && k === ' ' && util.charCount(value, ' ') !== 2) {
+			// insert missing space
+			this.typedValue = '';
+			value = value.replace(' ', '');
+			this.setValue(`${value.substring(0, 10)} ${value.substring(10, 15)} ${value.substring(15)}`, true);
+			setSelection(11);
+			util.stopEvent(e);
+			return;
+
+		} else if (value !== this.typedValue) {
+			// console.log('not typed');
+			this.setValue(value, true);
 		}
 
-		const value = this.input.value;
-		const type = util.is(value).type();
-
 		if (util.isArrowKey[k]) {
-
 			// FIXME: test is not adding picker time
 			// 12/12/2017 06:30 am'
-
 			const inc = k === 'ArrowUp' ? 1 : -1;
 			if (/time/.test(type)) {
 				const HR = type === 'time' ? [0,2] : [11,13];
@@ -3810,9 +4036,8 @@ function onKey (e) {
 					this.setValue(util.incHours(value, inc), true);
 				} else if (end >= MN[0] && end <= MN[1]) {
 					this.setValue(util.incMinutes(value, inc, 15), true);
-				} else {
+				} else if (type === 'time' || beg > 16) {
 					this.setValue(value.replace(/([ap]m)/i, str => /a/i.test(str) ? 'pm' : 'am' ), true);
-					// this.setValue(value, true, /a/i.test(value) ? 'pm' : 'am');
 				}
 			}
 
@@ -3828,28 +4053,29 @@ function onKey (e) {
 
 		} else if (/[ap]/i.test(k) && /time/.test(type)) {
 			this.setValue(this.setAMPM(value, k === 'a' ? 'am' : 'pm'), true);
+		} else {
+			//console.log('CHAR IS', k);
 		}
 
 		setSelection(beg);
 		util.stopEvent(e);
 		return;
 	}
-	if (str.length !== end && beg === end) {
-		// handle selection or middle-string edit
-		let temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end);
-		const nextCharPos = util.nextNumPos(beg + 1, temp);
-		if (nextCharPos > -1) {
-			temp = util.removeCharAtPos(temp, beg + 1);
-		}
 
+    if (str.length !== end && beg === end) {
+        console.log('mid edit');
+		// handle selection or middle-string edit
+		let temp = this.typedValue.substring(0, beg) + k + this.typedValue.substring(end + 1);
+		const nextCharPos = util.nextNumPos(beg + 1, temp);
 		const value = this.setValue(temp, true);
-		const nextChar = value.charAt(beg + 1);
+		const nextChar = str.charAt(beg + 1);
 
 		setSelection(/[\s\/:]/.test(nextChar) ? beg + 2 : beg + 1);
 		util.stopEvent(e);
 		return;
 
-	} else if (end !== beg) {
+    } else if (end !== beg) {
+        console.log('sel replace');
 		// selection replace
 		let temp = util.replaceText(this.typedValue, k, beg, end, 'X');
 		const value = this.setValue(temp, true);
@@ -3864,32 +4090,22 @@ function onKey (e) {
 }
 
 module.exports = onKey;
-},{"./util":20}],19:[function(require,module,exports){
+
+},{"./util":21}],20:[function(require,module,exports){
 const BaseComponent = require('@clubajax/base-component');
 const dom = require('@clubajax/dom');
 const on = require('@clubajax/on');
 const dates = require('@clubajax/dates');
 const util = require('./util');
 const onKey = require('./onKey');
+const isValid = require('./isValid');
 
 const defaultPlaceholder = 'HH:MM am/pm';
 const defaultMask = 'XX:XX';
-const props = ['label', 'name', 'placeholder', 'mask', 'event-name', 'min', 'max'];
-const bools = ['required'];
 const EVENT_NAME = 'change';
 
+
 class TimeInput extends BaseComponent {
-	static get observedAttributes () {
-		return [...props, ...bools, 'value'];
-	}
-
-	get props () {
-		return props;
-	}
-
-	get bools () {
-		return bools;
-	}
 
 	attributeChanged (name, value) {
 		// need to manage value manually
@@ -3924,13 +4140,13 @@ class TimeInput extends BaseComponent {
 	}
 
 	onMin (value) {
-		this.minTime = dates.format(util.getMinTime(value), 'h:m a');
+		// this.minTime = dates.format(util.getMinTime(value), 'h:m a');
 		this.minDate = util.getMinDate(value);
 		this.validate();
 	}
 
 	onMax (value) {
-		this.maxTime = dates.format(util.getMaxTime(value), 'h:m a');
+		// this.maxTime = dates.format(util.getMaxTime(value), 'h:m a');
 		this.maxDate = util.getMaxDate(value);
 		this.validate();
 	}
@@ -3945,10 +4161,12 @@ class TimeInput extends BaseComponent {
 
 	constructor () {
 		super();
+		this.dateType = 'time';
 		this.typedValue = '';
 	}
 
-	setValue (value, silent, ampm) {
+    setValue(value, silent, ampm) {
+		let valid = this.validate(value);
 		const isReady = /[ap]m/i.test(value) || value.replace(/(?!X)\D/g, '').length >= 4;
 		if (isReady) {
 			this.setAMPM(value, getAMPM(value, ampm));
@@ -3960,7 +4178,7 @@ class TimeInput extends BaseComponent {
 
 		this.typedValue = value;
 		this.input.value = value;
-		const valid = this.validate();
+		valid = this.validate();
 
 		if (valid) {
 			this.strDate = value;
@@ -3979,42 +4197,13 @@ class TimeInput extends BaseComponent {
 	}
 
 	isValid (value = this.input.value) {
-		if (!value && this.required) {
-			this.emitError('This field is required');
-			return false;
+		if (this.date) {
+			if (/X/.test(value)) {
+				return false;
+			}
+			value = dates.format(util.addTimeToDate(value, this.date), 'MM/dd/yyyy h:m a');
 		}
-		if (this.date && value) {
-			if (this.minDate && dates.is(this.date).equalDate(this.minDate)) {
-				if (util.is(value).less(this.minTime)) {
-					const msg = this.min === 'now' ? 'Value must be in the future' : `Value is less than the minimum, ${this.min}`;
-					this.emitError(msg);
-					return false;
-				}
-			}
-			if (this.maxDate && dates.is(this.date).equalDate(this.maxDate)) {
-				if (util.is(value).greater(this.maxTime)) {
-					const msg = this.max === 'now' ? 'Value must be in the past' : `Value is greater than the maximum, ${this.max}`;
-					this.emitError(msg);
-					return false;
-				}
-			}
-		} else if (value) {
-			if (this.minTime) {
-				if (util.is(value).less(this.minTime)) {
-					const msg = this.min === 'now' ? 'Value must be in the future' : `Value is less than the minimum, ${this.min}`;
-					this.emitError(msg);
-					return false;
-				}
-			}
-			if (this.maxTime) {
-				if (util.is(value).greater(this.maxTime)) {
-					const msg = this.max === 'now' ? 'Value must be in the past' : `Value is greater than the maximum, ${this.max}`;
-					this.emitError(msg);
-					return false;
-				}
-			}
-		}
-		return util.timeIsValid(value);
+		return isValid.call(this, value, this.dateType);
 	}
 
 	validate () {
@@ -4025,6 +4214,13 @@ class TimeInput extends BaseComponent {
 		}
 		this.classList.add('invalid');
 		return false;
+	}
+
+	onChange (e) {
+		if (this.date && this.isValid(e.target.value)) {
+			this.setValue(e.target.value, true);
+			this.emitEvent(true);
+		}
 	}
 
 	setAMPM (value, ampm) {
@@ -4072,13 +4268,13 @@ class TimeInput extends BaseComponent {
 		this.connectKeys();
 	}
 
-	emitEvent () {
+	emitEvent (silent) {
 		const value = this.value;
 		if (value === this.lastValue || !this.isValid(value)) {
 			return;
 		}
 		this.lastValue = value;
-		this[this.emitType](this.eventName, { value }, true);
+		this[this.emitType](this.eventName, { value, silent }, true);
 	}
 
 	emitError (msg) {
@@ -4090,14 +4286,13 @@ class TimeInput extends BaseComponent {
 	}
 
 	connectKeys () {
-		this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
-			onKey.call(this, e);
+			onKey.call(this, e, this.dateType);
+			this.onChange(e);
 		});
-		this.on(this.input, 'blur', () => {
-			this.blur();
-		});
+        this.on(this.input, 'blur', () => this.blur.bind(this));
+		this.on(this.input, 'input', (e) => this.onChange.bind(this));
 	}
 }
 
@@ -4114,10 +4309,15 @@ function getAMPM (value, ampm) {
 	return '';
 }
 
-customElements.define('time-input', TimeInput);
+module.exports = BaseComponent.define('time-input', TimeInput, {
+	bools: ['required', 'range-expands'],
+	props: ['label', 'name', 'placeholder', 'mask', 'event-name', 'min', 'max'],
+	attrs: ['value']
+});
 
-module.exports = TimeInput;
-},{"./onKey":18,"./util":20,"@clubajax/base-component":2,"@clubajax/dates":7,"@clubajax/dom":8,"@clubajax/on":9}],20:[function(require,module,exports){
+},{"./isValid":18,"./onKey":19,"./util":21,"@clubajax/base-component":2,"@clubajax/dates":7,"@clubajax/dom":8,"@clubajax/on":9}],21:[function(require,module,exports){
+const dates = require('@clubajax/dates');
+
 function round (n, r, down) {
 	return (Math.ceil(n / r) * r) - (down ? r : 0);
 }
@@ -4186,7 +4386,7 @@ function incDate (value, inc) {
 function incYear (value, inc) {
 	let yr = parseInt(value.substring(6,10));
 	yr += inc;
-	return `${value.substring(0,5)}${pad(yr)}${value.substring(11)}`;
+	return `${value.substring(0,5)}/${pad(yr)} ${value.substring(11)}`;
 }
 
 function pad (num) {
@@ -4216,7 +4416,7 @@ function toDateTime (value) {
 	return date;
 }
 
-function timeIsValid (value) {
+function isTimeValid (value) {
 	// 12:34 am
 	if (value.length < 8) {
 		return false;
@@ -4236,6 +4436,40 @@ function timeIsValid (value) {
 		return false;
 	}
 	return true;
+}
+
+function isDateTimeValid (value) {
+	// 04/10/2018 19:11 am
+	if (value.length !== 19) {
+		return false;
+	}
+	if (charCount(value, ' ') !== 2) {
+		return false;
+	}
+	if (charCount(value, ':') !== 1) {
+		return false;
+	}
+	if (charCount(value, '/') !== 2) {
+		return false;
+	}
+	const date = value.substring(0, 10);
+	const time = value.substring(11);
+	return dates.is(date).valid() && isTimeValid(time);
+}
+
+function isDateValid(value) {
+    return dates.isValid(value);
+}
+
+function charCount (str, char) {
+	str = str.trim();
+	let count = 0;
+	for (let i = 0; i < str.length; i++) {
+		if (str.charAt(i) === char) {
+			count++;
+		}
+	}
+	return count;
 }
 
 function timeIsInRange (time, min, max, date) {
@@ -4264,8 +4498,8 @@ function timeIsInRange (time, min, max, date) {
 }
 
 function addTimeToDate (time, date) {
-	if (!timeIsValid(time)) {
-		console.warn('time is not valid', time);
+	if (!isTimeValid(time)) {
+		//console.warn('time is not valid', time);
 		return date;
 	}
 	let hr = getHours(time);
@@ -4306,7 +4540,7 @@ function isNum (k) {
 const control = {
 	'Shift': 1,
 	'Enter': 1,
-	'Backspace': 1,
+	// 'Backspace': 1,
 	'Delete': 1,
 	'ArrowLeft': 1,
 	'ArrowRight': 1,
@@ -4431,10 +4665,7 @@ function getMinDate (value) {
 	} else {
 		value = dates.toDate(value);
 	}
-	value.setHours(0);
-	value.setMinutes(0);
-	value.setSeconds(0);
-	value.setMilliseconds(0);
+	value.setMinutes(value.getMinutes() - 2);
 	return value;
 }
 
@@ -4444,10 +4675,7 @@ function getMaxDate (value) {
 	} else {
 		value = dates.toDate(value);
 	}
-	value.setHours(23);
-	value.setMinutes(59);
-	value.setSeconds(59);
-	value.setMilliseconds(999);
+	value.setMinutes(value.getMinutes() + 2);
 	return value;
 }
 
@@ -4471,9 +4699,18 @@ function getMaxTime (value) {
 	return value;
 }
 
-function toAriaLabel (date) {
-	date = dates.toDate(date);
-	return dates.format(date, 'd, E MMMM yyyy');
+function mergeTime (date, datetime) {
+	return `${date.trim()} ${datetime.substring(11)}`;
+}
+
+function toDateAriaLabel(date) {
+    date = dates.toDate(date);
+    return dates.format(date, 'd, E MMMM yyyy');
+}
+
+function toDateTimeAriaLabel(date) {
+    date = dates.toDate(date);
+    return dates.format(date, 'd, E MMMM yyyy');
 }
 
 function is (value) {
@@ -4511,7 +4748,9 @@ function is (value) {
 module.exports = {
 	is,
 	addTimeToDate,
-	timeIsValid,
+	isTimeValid,
+    isDateTimeValid,
+    isDateValid,
 	incMinutes,
 	incHours,
 	incMonth,
@@ -4532,16 +4771,19 @@ module.exports = {
 	getAMPM,
 	getMinDate,
 	getMaxDate,
-	toAriaLabel,
+    toDateAriaLabel,
+    toDateTimeAriaLabel,
 	getMinTime,
 	getMaxTime,
 	timeIsInRange,
 	toDateTime,
 	timeToSeconds,
-	stripDate
+	stripDate,
+	charCount,
+	mergeTime
 };
 
-},{}],21:[function(require,module,exports){
+},{"@clubajax/dates":7}],22:[function(require,module,exports){
 require('./globals');
 require('../../src/date-picker');
 require('../../src/date-input');
@@ -4550,12 +4792,12 @@ require('../../src/date-range-picker');
 require('../../src/date-range-input');
 require('../../src/date-range-inputs');
 require('../../src/date-time-input');
-},{"../../src/date-input":10,"../../src/date-picker":11,"../../src/date-range-input":12,"../../src/date-range-inputs":13,"../../src/date-range-picker":14,"../../src/date-time-input":15,"../../src/time-input":19,"./globals":22}],22:[function(require,module,exports){
+},{"../../src/date-input":10,"../../src/date-picker":11,"../../src/date-range-input":12,"../../src/date-range-inputs":13,"../../src/date-range-picker":14,"../../src/date-time-input":15,"../../src/time-input":20,"./globals":23}],23:[function(require,module,exports){
 window['no-native-shim'] = 1;
 require('@clubajax/custom-elements-polyfill');
 window.on = require('@clubajax/on');
 window.dom = require('@clubajax/dom');
 window.dates = require('@clubajax/dates');
 window.util = require('../../src/util');
-},{"../../src/util":20,"@clubajax/custom-elements-polyfill":6,"@clubajax/dates":7,"@clubajax/dom":8,"@clubajax/on":9}]},{},[21])(21)
+},{"../../src/util":21,"@clubajax/custom-elements-polyfill":6,"@clubajax/dates":7,"@clubajax/dom":8,"@clubajax/on":9}]},{},[22])(22)
 });

@@ -385,9 +385,14 @@ function mergeTime (date, datetime) {
 	return `${date.trim()} ${datetime.substring(11)}`;
 }
 
-function toAriaLabel (date) {
-	date = dates.toDate(date);
-	return dates.format(date, 'd, E MMMM yyyy');
+function toDateAriaLabel(date) {
+    date = dates.toDate(date);
+    return dates.format(date, 'd, E MMMM yyyy');
+}
+
+function toDateTimeAriaLabel(date) {
+    date = dates.toDate(date);
+    return dates.format(date, 'd, E MMMM yyyy');
 }
 
 function is (value) {
@@ -448,7 +453,8 @@ module.exports = {
 	getAMPM,
 	getMinDate,
 	getMaxDate,
-	toAriaLabel,
+    toDateAriaLabel,
+    toDateTimeAriaLabel,
 	getMinTime,
 	getMaxTime,
 	timeIsInRange,

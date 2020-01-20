@@ -5,7 +5,6 @@ function onKey (e, type) {
 	const beg = e.target.selectionStart;
 	const end = e.target.selectionEnd;
     const k = e.key;
-    console.log('KEY::::', k);
 
 	if (k === 'Enter') {
 		const valid = this.validate();
@@ -38,7 +37,6 @@ function onKey (e, type) {
 		e.target.selectionEnd = pos;
 	}
 
-    console.log('KEY', k);
     if (!util.isNum(k)) {
         console.log('NOT NUM');
 		let value = this.input.value;

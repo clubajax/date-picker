@@ -230,7 +230,6 @@ class DateInput extends BaseComponent {
 	}
 
 	connectKeys () {
-		// this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
 			onKey.call(this, e, this.dateType);

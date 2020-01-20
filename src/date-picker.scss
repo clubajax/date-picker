@@ -211,7 +211,9 @@ date-picker {
     .cal-footer {
         text-align: center;
         padding: 5px;
-        span {
+        .today-button {
+            background: none;
+            border: 0;
             cursor: pointer;
             color: $link;
             text-decoration: none;
@@ -277,7 +279,7 @@ date-range-input {
             padding: 5px;
             border-radius: 2px;
             font-size: 13px;
-            
+
             border: 1px solid $brd;
             transition: background-color 300ms ease, border-color 300ms ease;
             &::placeholder {

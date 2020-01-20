@@ -72,7 +72,6 @@ class TimeInput extends BaseComponent {
 	}
 
     setValue(value, silent, ampm) {
-        console.log('setValue', value);
 		let valid = this.validate(value);
 		const isReady = /[ap]m/i.test(value) || value.replace(/(?!X)\D/g, '').length >= 4;
 		if (isReady) {
@@ -193,7 +192,6 @@ class TimeInput extends BaseComponent {
 	}
 
 	connectKeys () {
-		// this.on(this.input, 'keydown', util.stopEvent);
 		this.on(this.input, 'keypress', util.stopEvent);
 		this.on(this.input, 'keyup', (e) => {
 			onKey.call(this, e, this.dateType);
