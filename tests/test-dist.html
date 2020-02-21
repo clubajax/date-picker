@@ -1,31 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<title>Test Pickers</title>
-	<link rel="stylesheet" href="../dist/date-picker.css" />
-	<script src="../dist/date-picker.js"></script>
-	<style>
-		html, body{
-			height: 100%;
-		}
-		body{
-			font-family: Arial, sans-serif;
-			padding: 20px;
-		}
-		section {
 
-		}
-	</style>
+<head>
+    <title>Test Pickers</title>
+    <link rel="stylesheet" href="../dist/date-picker.css" />
+    <script src="../dist/date-picker.js"></script>
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        section {}
+    </style>
 </head>
+
 <body>
-	<h1>Date Custom Elements</h1>
-	<section>
-		<h2>Date Input</h2>
-		<date-input />
-	</section>
-	<section>
-		<h2>Date Range Input</h2>
-		<date-range-input />
-	</section>
+    <h1>Date Custom Elements</h1>
+    <section>
+        <h2>Date Input</h2>
+        <date-input placeholder="MM/DD/YYYY" value="12/25/2003" name="date" label="Date of Birth"
+             onchange="console.log(this.value);"></date-input>
+        <!-- <date-input 
+            value="12/12/1980" 
+            placeholder="MM/DD/YYYY" 
+            aria-label="date" 
+            role="application" 
+            name="date"
+            label="Date of Birth" 
+            mask="XX/XX/XXXX"
+            onchange="console.log(value)"
+        ></date-input> -->
+        <!-- <date-input 
+            value="01/02/1912" 
+            name="date2"
+            label="Date of Birth" 
+            onchange="console.log(value)"
+        ></date-input> -->
+    </section>
+    <!-- <section>
+        <h2>Date Range Input</h2>
+        <date-range-input />
+    </section> -->
 </body>
+
 </html>

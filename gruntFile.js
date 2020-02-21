@@ -2,6 +2,7 @@
 
 const path = require('path');
 const sass = require('node-sass');
+const fs = require('fs');
 const uglifyify = require('uglifyify');
 
 module.exports = function (grunt) {
@@ -185,6 +186,14 @@ module.exports = function (grunt) {
                     logConcurrentOutput: true
                 }
             }
+        },
+
+        copy: {
+            package: {
+                files: [
+                    {src: './src/package.json', dest: 'dist/package.json'}
+                ]
+            }
         }
     });
 
@@ -214,8 +223,10 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('deploy', function (which) {
+        grunt.task.run('version');
         grunt.task.run('browserify:deploy');
         grunt.task.run('sass:deploy');
+        grunt.task.run('copy:package');
         // const compile = require('./scripts/compile');
         // compile('BaseComponent');
         // compile('properties');
@@ -224,6 +235,26 @@ module.exports = function (grunt) {
         // compile('item-template');
     });
 
+    grunt.registerTask('version', function () {
+        const buildPackage = JSON.parse(fs.readFileSync('./src/package.json').toString());
+        const mainPackage = JSON.parse(fs.readFileSync('./package.json').toString());
+        if (mainPackage.version !== buildPackage.version) {
+            // has been manually updated
+        } else {
+            // increment main version
+            const version = mainPackage.version.split('.');
+            version[2] = parseInt(version[2], 10) + 1;
+            mainPackage.version = version.join('.');
+            console.log('package.version changed to:', mainPackage.version);
+        }
+        buildPackage.version = mainPackage.version;
+        // copy over updated dependencies
+        // buildPackage.dependencies = mainPackage.dependencies;
+        fs.writeFileSync('./src/package.json', JSON.stringify(buildPackage, null, 2));
+        fs.writeFileSync('./package.json', JSON.stringify(mainPackage, null, 2));
+    });
+
+    grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-sass');
     grunt.loadNpmTasks('grunt-concurrent');
     grunt.loadNpmTasks('grunt-contrib-watch');

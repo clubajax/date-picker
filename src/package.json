@@ -1,0 +1,10 @@
+{
+  "name": "@clubajax/date-picker",
+  "version": "1.2.4",
+  "description": "Calendar custom-element",
+  "main": "date-picker.js",
+  "files": [
+    "*"
+  ],
+  "license": "MIT"
+}
