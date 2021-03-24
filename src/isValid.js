@@ -70,7 +70,7 @@ function getMinMsg (min) {
 }
 
 function getMaxMsg (max) {
-	return max === 'now' ? 'Value must be in the future' : `Value is greater than the maximum, ${max}`
+	return max === 'now' ? 'Value must be in the past' : `Value is greater than the maximum, ${max}`
 }
 
 function emitError (msg) {

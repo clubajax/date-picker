@@ -13,6 +13,19 @@ const defaultMask = 'XX/XX/XXXX';
 
 const FLASH_TIME = 1000;
 
+// BIG TODO:
+// Move this into FORM
+// create a separate DIST for calendar
+//
+// TODO: 
+//      disabled, read only
+//      clean up unused properties
+//      now for value (not just min & max)
+// mask throws errors
+// min disables wrong dates: 
+//  value="02/24/2020"
+//  min="02/04/2020"
+//  max="03/17/2020"
 
 
 class DateInput extends BaseComponent {
